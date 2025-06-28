@@ -5,7 +5,50 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <InvariantGlobalization>true</InvariantGlobalization>
-        <PublishAot>true</PublishAot>
+        <PublishAot>false</PublishAot>
     </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Remove="Reshebnik.EntityFramework\**" />
+      <Compile Remove="Reshebnik.Domain\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Reshebnik.EntityFramework\**" />
+      <EmbeddedResource Remove="Reshebnik.Domain\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="Reshebnik.EntityFramework\**" />
+      <Content Remove="Reshebnik.Domain\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Reshebnik.EntityFramework\**" />
+      <None Remove="Reshebnik.Domain\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Reshebnik.EntityFramework\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.EntityFramework\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.EntityFramework\obj\Reshebnik.EntityFramework.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.Domain\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.Domain\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.Domain\obj\Reshebnik.Domain.csproj.nuget.dgspec.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.6" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.6" />
+      <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.12.1" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.1" />
+      <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="9.0.1" />
+      <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="Reshebnik.EntityFramework\Reshebnik.EntityFramework.csproj" />
+    </ItemGroup>
 
 </Project>

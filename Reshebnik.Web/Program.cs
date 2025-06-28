@@ -1,8 +1,136 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+
+using Reshebnik.EntityFramework;
+
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 var builder = WebApplication.CreateSlimBuilder(args);
 
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.Never;
+    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+builder.Services.ConfigureHttpJsonOptions(_ => { });
+
+// DB
+builder.Services.AddDbContext<ReshebnikContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// AuthTokens
+var secretKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKey123!";
+var key = Encoding.UTF8.GetBytes(secretKey);
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new()
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key)
+        };
+    });
+
+// HttpRequests
+builder.Services.AddResponseCaching();
+builder.Services.AddAuthorization();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevCors", policy =>
+    {
+#if DEBUG
+        policy
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+#else
+        policy
+            .WithOrigins("https://reshebnik.ru")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+#endif
+    });
+});
+
+// swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("Client", new OpenApiInfo { Title = "Client API", Version = "v1" });
+
+    // Optional: remove default grouping by controller name
+    options.TagActionsBy(api =>
+    {
+        var groupName = api.GroupName;
+        return [groupName ?? api.ActionDescriptor.RouteValues["controller"]];
+    });
+    options.DocInclusionPredicate((docName, apiDesc) =>
+    {
+        var groupName = apiDesc.GroupName;
+        return groupName == docName;
+    });
+
+    options.AddSecurityDefinition("Bearer", new()
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter: Bearer {your JWT token}"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new() { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            new List<string>()
+        }
+    });
+});
+
+// services
+builder.Services.AddHttpContextAccessor();
+
 var app = builder.Build();
+app.UseCors("DevCors");
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ReshebnikContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<ReshebnikContext>>();
+    logger.LogInformation("before database migration");
+    await db.Database.MigrateAsync(); // ⬅️ Applies any pending migrations
+    logger.LogInformation("migrated");
+}
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/Client/swagger.json", "Client API"); });
+}
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+#if RELEASE
+        app.UseHttpsRedirection();
+#endif
 app.MapGet("/", () => "❤️");
 
 await app.RunAsync();

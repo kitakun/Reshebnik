@@ -1,0 +1,21 @@
+﻿namespace Reshebnik.Domain.Entities;
+
+public class CompanyEntity
+{
+    public int Id { get; set; }
+    public required string Name { get; set; }
+    public string? Industry { get; set; }
+    public int EmployeesCount { get; set; }
+    public required CompanyTypeEnum Type { get; set; }
+    public string Email { get; set; }
+    public string? Phone { get; set; }
+    
+    // settings
+    public bool NotifyAboutLoweringMetrics { get; set; }
+    public SystemNotificationTypeEnum NotificationType { get; set; }
+    public string LanguageCode { get; set; }
+    
+    // refs
+    public List<EmployeeEntity> Employees { get; set; }
+    public List<DepartmentEntity> Departments { get; set; }
+}
