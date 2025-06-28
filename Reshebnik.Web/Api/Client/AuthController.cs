@@ -2,6 +2,7 @@
 
 using Reshebnik.Domain.Models;
 using Reshebnik.Handlers.Auth;
+using Reshebnik.Web.DTO.Auth;
 
 using System.Text.Json;
 
@@ -25,7 +26,7 @@ public class AuthController : ControllerBase
 
         var result = await handler.HandleAsync(code, password, cancellationToken);
         if (result == null) return BadRequest();
-        return Ok(result);
+        return Ok(new AdminLoginResponse(result.Value.User, result.Value.Jwt, result.Value.CurrentCompanyId));
     }
 
     [HttpGet("invite")]
@@ -47,6 +48,6 @@ public class AuthController : ControllerBase
     {
         var result = await handler.HandleAsync(request, cancellationToken);
         if (result == null) return Forbid();
-        return Ok(result);
+        return Ok(new AdminLoginResponse(result.Value.User, result.Value.Jwt, result.Value.CurrentCompanyId));
     }
 }

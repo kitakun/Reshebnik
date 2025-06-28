@@ -1,4 +1,8 @@
-﻿namespace Reshebnik.Domain.Entities;
+﻿using Reshebnik.Domain.Enums;
+
+using System.Text.Json.Serialization;
+
+namespace Reshebnik.Domain.Entities;
 
 public class CompanyEntity
 {
@@ -16,6 +20,8 @@ public class CompanyEntity
     public string LanguageCode { get; set; } = null!;
     
     // refs
+    [JsonIgnore]
     public List<EmployeeEntity> Employees { get; set; } = new();
+    [JsonIgnore]
     public List<DepartmentEntity> Departments { get; set; } = new();
 }

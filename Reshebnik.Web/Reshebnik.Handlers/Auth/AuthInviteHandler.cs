@@ -17,7 +17,10 @@ public class AuthInviteHandler(
     {
         if (string.IsNullOrEmpty(password)) return null;
 
-        var existingUser = await context.Employees.FirstOrDefaultAsync(f => f.EmailInvitationCode!.ToLower() == code.ToLower(), cancellationToken);
+        var existingUser = await context
+            .Employees
+            .Include(i => i.Comment)
+            .FirstOrDefaultAsync(f => f.EmailInvitationCode!.ToLower() == code.ToLower(), cancellationToken);
         if (existingUser is not { IsActive: true }) return null;
 
         existingUser.Password = securityHandler.GenerateSaltedHash(password, out var generatedSalt);
@@ -27,6 +30,6 @@ public class AuthInviteHandler(
         existingUser.LastLoginAt = DateTime.UtcNow;
         await context.SaveChangesAsync(cancellationToken);
         var curCompany = await companyContext.CurrentCompanyAsync;
-        return jwtHandler.CreateToken(existingUser, configuration, curCompany?.Id);
+        return jwtHandler.CreateToken(existingUser, configuration, curCompany?.Id ?? existingUser.CompanyId);
     }
 }

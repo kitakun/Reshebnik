@@ -7,6 +7,7 @@ public class AdminLoginResponse(EmployeeEntity User, string Jwt, int? currentCom
 {
     public int Id { get; set; } = User.Id;
     public string Username { get; set; } = User.FIO;
+    public string CompanyName { get; set; } = User.Company.Name;
     public RootRolesEnum Role { get; set; } = User.Role;
     public bool IsActive { get; set; } = User.IsActive;
     public string Jwt { get; set; } = Jwt;

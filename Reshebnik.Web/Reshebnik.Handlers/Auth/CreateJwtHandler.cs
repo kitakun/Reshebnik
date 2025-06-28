@@ -2,6 +2,7 @@
 using Microsoft.IdentityModel.Tokens;
 
 using Reshebnik.Domain.Entities;
+using Reshebnik.Domain.Extensions;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,6 +16,8 @@ public class CreateJwtHandler
 
     public JwtResponseRecord CreateToken(EmployeeEntity user, IConfiguration configuration, int? currentCompanyId, DateTime? expires = null)
     {
+        user.EnsurePropertyExists(p => p.Company);
+
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!);
 
@@ -32,6 +35,9 @@ public class CreateJwtHandler
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
         var jwt = tokenHandler.WriteToken(token);
+        user.Password = null!;
+        user.Salt = null!;
+        // TODO separate modal
         return new JwtResponseRecord(user, jwt, currentCompanyId ?? -1);
     }
 }

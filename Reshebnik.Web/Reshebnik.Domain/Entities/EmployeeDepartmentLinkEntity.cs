@@ -1,4 +1,6 @@
-﻿namespace Reshebnik.Domain.Entities;
+﻿using Reshebnik.Domain.Enums;
+
+namespace Reshebnik.Domain.Entities;
 
 public class EmployeeDepartmentLinkEntity
 {

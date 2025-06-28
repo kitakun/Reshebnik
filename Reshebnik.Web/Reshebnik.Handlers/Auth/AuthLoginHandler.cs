@@ -16,7 +16,10 @@ public class AuthLoginHandler(
 {
     public async ValueTask<CreateJwtHandler.JwtResponseRecord?> HandleAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
-        var existingUser = await context.Employees.FirstOrDefaultAsync(f => f.Email.ToLower() == request.Email.ToLower(), cancellationToken);
+        var existingUser = await context
+            .Employees
+            .Include(i => i.Company)
+            .FirstOrDefaultAsync(f => f.Email.ToLower() == request.Email.ToLower(), cancellationToken);
         if (existingUser == null) return null;
 
         var isCorrect = securityHandler.VerifyPassword(request.Password, existingUser.Salt, existingUser.Password);
@@ -25,6 +28,6 @@ public class AuthLoginHandler(
         existingUser.LastLoginAt = DateTime.UtcNow;
         await context.SaveChangesAsync(cancellationToken);
         var curCompany = await companyContext.CurrentCompanyAsync;
-        return jwtHandler.CreateToken(existingUser, configuration, curCompany?.Id);
+        return jwtHandler.CreateToken(existingUser, configuration, curCompany?.Id ?? existingUser.CompanyId);
     }
 }

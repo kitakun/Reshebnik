@@ -1,4 +1,4 @@
-﻿namespace Reshebnik.Domain.Entities;
+﻿namespace Reshebnik.Domain.Enums;
 
 public enum SystemNotificationTypeEnum
 {

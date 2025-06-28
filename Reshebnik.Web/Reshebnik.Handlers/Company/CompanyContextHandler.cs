@@ -25,7 +25,7 @@ public class CompanyContextHandler
         _companyEntity = new(async () =>
         {
             var companyId = await CurrentCompanyIdAsync;
-            if (companyId == null) return null;
+            if (companyId == 0) return null;
 
             return await db
                 .Companies
