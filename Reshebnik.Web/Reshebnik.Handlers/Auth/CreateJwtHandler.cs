@@ -12,7 +12,7 @@ namespace Reshebnik.Handlers.Auth;
 public class CreateJwtHandler
 {
     public readonly record struct JwtResponseRecord(EmployeeEntity User, string Jwt, int CurrentCompanyId);
-    
+
     public JwtResponseRecord CreateToken(EmployeeEntity user, IConfiguration configuration, int? currentCompanyId, DateTime? expires = null)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -23,7 +23,7 @@ public class CreateJwtHandler
             Subject = new ClaimsIdentity([
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.FIO),
-                // new Claim(ClaimTypes.Role, user..ToString()),
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
                 new Claim("company", $"{currentCompanyId ?? user.CompanyId}"),
             ]),
             Expires = expires ?? DateTime.UtcNow.AddMonths(1),

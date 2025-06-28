@@ -3,12 +3,6 @@ using Reshebnik.Domain.Enums;
 
 namespace Reshebnik.Web.DTO.Auth;
 
-public record LoginRequest
-{
-    public string Email { get; set; }
-    public string Password { get; set; }
-}
-
 public class AdminLoginResponse(EmployeeEntity User, string Jwt, int? currentCompanyId)
 {
     public int Id { get; set; } = User.Id;

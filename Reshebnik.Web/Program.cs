@@ -109,6 +109,9 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<CreateJwtHandler>();
 builder.Services.AddSingleton<SecurityHandler>();
 builder.Services.AddScoped<UserContextHandler>();
+builder.Services.AddScoped<AuthInviteHandler>();
+builder.Services.AddScoped<AuthGetInviteHandler>();
+builder.Services.AddScoped<AuthLoginHandler>();
 
 // SU
 builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();
