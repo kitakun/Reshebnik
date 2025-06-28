@@ -12,12 +12,17 @@ namespace Reshebnik.EntityFramework.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateSequence<int>(
+                name: "companies_id_seq");
+
+            migrationBuilder.CreateSequence<int>(
+                name: "employee_id_seq");
+
             migrationBuilder.CreateTable(
                 name: "companies",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Id = table.Column<int>(type: "integer", nullable: false, defaultValueSql: "nextval('\"companies_id_seq\"')"),
                     name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     industry = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
                     employees_count = table.Column<int>(type: "integer", nullable: false),
@@ -30,7 +35,7 @@ namespace Reshebnik.EntityFramework.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_companies", x => x.id);
+                    table.PrimaryKey("PK_companies", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -52,15 +57,14 @@ namespace Reshebnik.EntityFramework.Migrations
                         name: "FK_departments_companies_CompanyEntityId",
                         column: x => x.CompanyEntityId,
                         principalTable: "companies",
-                        principalColumn: "id");
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
                 name: "employees",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Id = table.Column<int>(type: "integer", nullable: false, defaultValueSql: "nextval('\"employee_id_seq\"')"),
                     company_id = table.Column<int>(type: "integer", nullable: false),
                     fio = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     job_title = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
@@ -77,13 +81,36 @@ namespace Reshebnik.EntityFramework.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_employees", x => x.id);
+                    table.PrimaryKey("PK_employees", x => x.Id);
                     table.ForeignKey(
                         name: "FK_employees_companies_company_id",
                         column: x => x.company_id,
                         principalTable: "companies",
-                        principalColumn: "id",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "system_notifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Caption = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Message = table.Column<string>(type: "character varying(200000)", maxLength: 200000, nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false),
+                    CreaetedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CompanyId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_system_notifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_system_notifications_companies_CompanyId",
+                        column: x => x.CompanyId,
+                        principalTable: "companies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -143,7 +170,33 @@ namespace Reshebnik.EntityFramework.Migrations
                         name: "FK_employee_department_links_employees_employee_id",
                         column: x => x.employee_id,
                         principalTable: "employees",
-                        principalColumn: "id",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "user_notifications",
+                columns: table => new
+                {
+                    EmployeeId = table.Column<int>(type: "integer", nullable: false),
+                    NotificationId = table.Column<int>(type: "integer", nullable: false),
+                    IsRead = table.Column<bool>(type: "boolean", nullable: false),
+                    ReadAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_user_notifications", x => new { x.EmployeeId, x.NotificationId });
+                    table.ForeignKey(
+                        name: "FK_user_notifications_employees_EmployeeId",
+                        column: x => x.EmployeeId,
+                        principalTable: "employees",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_user_notifications_system_notifications_NotificationId",
+                        column: x => x.NotificationId,
+                        principalTable: "system_notifications",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -181,6 +234,16 @@ namespace Reshebnik.EntityFramework.Migrations
                 name: "IX_employees_company_id_email",
                 table: "employees",
                 columns: new[] { "company_id", "email" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_system_notifications_CompanyId",
+                table: "system_notifications",
+                column: "CompanyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_user_notifications_NotificationId",
+                table: "user_notifications",
+                column: "NotificationId");
         }
 
         /// <inheritdoc />
@@ -193,13 +256,25 @@ namespace Reshebnik.EntityFramework.Migrations
                 name: "employee_department_links");
 
             migrationBuilder.DropTable(
+                name: "user_notifications");
+
+            migrationBuilder.DropTable(
                 name: "departments");
 
             migrationBuilder.DropTable(
                 name: "employees");
 
             migrationBuilder.DropTable(
+                name: "system_notifications");
+
+            migrationBuilder.DropTable(
                 name: "companies");
+
+            migrationBuilder.DropSequence(
+                name: "companies_id_seq");
+
+            migrationBuilder.DropSequence(
+                name: "employee_id_seq");
         }
     }
 }

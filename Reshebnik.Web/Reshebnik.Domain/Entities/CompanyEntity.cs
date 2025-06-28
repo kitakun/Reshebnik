@@ -7,15 +7,15 @@ public class CompanyEntity
     public string? Industry { get; set; }
     public int EmployeesCount { get; set; }
     public required CompanyTypeEnum Type { get; set; }
-    public string Email { get; set; }
+    public string Email { get; set; } = null!;
     public string? Phone { get; set; }
     
     // settings
     public bool NotifyAboutLoweringMetrics { get; set; }
     public SystemNotificationTypeEnum NotificationType { get; set; }
-    public string LanguageCode { get; set; }
+    public string LanguageCode { get; set; } = null!;
     
     // refs
-    public List<EmployeeEntity> Employees { get; set; }
-    public List<DepartmentEntity> Departments { get; set; }
+    public List<EmployeeEntity> Employees { get; set; } = new();
+    public List<DepartmentEntity> Departments { get; set; } = new();
 }

@@ -12,7 +12,7 @@ using Reshebnik.EntityFramework;
 namespace Reshebnik.EntityFramework.Migrations
 {
     [DbContext(typeof(ReshebnikContext))]
-    [Migration("20250628145350_Initial")]
+    [Migration("20250628162521_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -25,14 +25,16 @@ namespace Reshebnik.EntityFramework.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.HasSequence<int>("companies_id_seq");
+
+            modelBuilder.HasSequence<int>("employee_id_seq");
+
             modelBuilder.Entity("Reshebnik.Domain.Entities.CompanyEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasDefaultValueSql("nextval('\"companies_id_seq\"')");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -196,9 +198,7 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasDefaultValueSql("nextval('\"employee_id_seq\"')");
 
                     b.Property<string>("Comment")
                         .IsRequired()
@@ -272,6 +272,61 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.ToTable("employees", (string)null);
                 });
 
+            modelBuilder.Entity("Reshebnik.Domain.Entities.SystemNotificationEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Caption")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("CompanyId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreaetedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(200000)
+                        .HasColumnType("character varying(200000)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("system_notifications", (string)null);
+                });
+
+            modelBuilder.Entity("Reshebnik.Domain.Entities.UserNotification", b =>
+                {
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NotificationId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("EmployeeId", "NotificationId");
+
+                    b.HasIndex("NotificationId");
+
+                    b.ToTable("user_notifications", (string)null);
+                });
+
             modelBuilder.Entity("Reshebnik.Domain.Entities.DepartmentEntity", b =>
                 {
                     b.HasOne("Reshebnik.Domain.Entities.CompanyEntity", null)
@@ -336,6 +391,35 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.Navigation("Company");
                 });
 
+            modelBuilder.Entity("Reshebnik.Domain.Entities.SystemNotificationEntity", b =>
+                {
+                    b.HasOne("Reshebnik.Domain.Entities.CompanyEntity", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("Reshebnik.Domain.Entities.UserNotification", b =>
+                {
+                    b.HasOne("Reshebnik.Domain.Entities.EmployeeEntity", "User")
+                        .WithMany("UserNotification")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Reshebnik.Domain.Entities.SystemNotificationEntity", "Notification")
+                        .WithMany()
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Notification");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Reshebnik.Domain.Entities.CompanyEntity", b =>
                 {
                     b.Navigation("Departments");
@@ -355,6 +439,8 @@ namespace Reshebnik.EntityFramework.Migrations
             modelBuilder.Entity("Reshebnik.Domain.Entities.EmployeeEntity", b =>
                 {
                     b.Navigation("DepartmentLinks");
+
+                    b.Navigation("UserNotification");
                 });
 #pragma warning restore 612, 618
         }

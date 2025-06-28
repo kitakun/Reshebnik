@@ -6,6 +6,7 @@ namespace Reshebnik.Handlers.Auth;
 
 public class AuthGetInviteHandler(ReshebnikContext context)
 {
+    // ReSharper disable once MemberCanBePrivate.Global
     public readonly record struct InviteInfoRecord(string Name, string Email);
 
     public async ValueTask<InviteInfoRecord?> HandleAsync(string code, CancellationToken cancellationToken = default)

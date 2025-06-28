@@ -16,7 +16,7 @@ public class CreateJwtHandler
     public JwtResponseRecord CreateToken(EmployeeEntity user, IConfiguration configuration, int? currentCompanyId, DateTime? expires = null)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(configuration["Jwt:AdminKey"]!);
+        var key = Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {

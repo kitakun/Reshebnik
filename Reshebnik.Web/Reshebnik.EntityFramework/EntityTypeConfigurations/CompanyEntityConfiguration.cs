@@ -13,9 +13,7 @@ public class CompanyEntityConfiguration : IEntityTypeConfiguration<CompanyEntity
 
         builder.HasKey(e => e.Id);
 
-        builder.Property(e => e.Id)
-            .HasColumnName("id")
-            .ValueGeneratedOnAdd();
+        builder.Property(p => p.Id).HasDefaultValueSql("nextval('\"companies_id_seq\"')");
 
         builder.Property(e => e.Name)
             .HasColumnName("name")

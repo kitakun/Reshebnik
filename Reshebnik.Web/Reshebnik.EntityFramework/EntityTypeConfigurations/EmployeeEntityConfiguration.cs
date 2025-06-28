@@ -14,9 +14,7 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
         builder.HasKey(e => e.Id);
         builder.HasIndex(i => new { i.CompanyId, i.Email });
 
-        builder.Property(e => e.Id)
-            .HasColumnName("id")
-            .ValueGeneratedOnAdd();
+        builder.Property(p => p.Id).HasDefaultValueSql("nextval('\"employee_id_seq\"')");
 
         builder.Property(e => e.CompanyId)
             .HasColumnName("company_id")

@@ -51,6 +51,7 @@ builder.Services.AddCors(options =>
     {
 #if DEBUG
         policy
+            .WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -69,6 +70,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("Client", new OpenApiInfo { Title = "Client API", Version = "v1" });
+    options.SwaggerDoc("Super", new OpenApiInfo { Title = "Super API", Version = "v1" });
 
     // Optional: remove default grouping by controller name
     options.TagActionsBy(api =>
@@ -109,9 +111,10 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<CreateJwtHandler>();
 builder.Services.AddSingleton<SecurityHandler>();
 builder.Services.AddScoped<UserContextHandler>();
+builder.Services.AddScoped<CompanyContextHandler>();
+builder.Services.AddScoped<AuthLoginHandler>();
 builder.Services.AddScoped<AuthInviteHandler>();
 builder.Services.AddScoped<AuthGetInviteHandler>();
-builder.Services.AddScoped<AuthLoginHandler>();
 
 // SU
 builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();
@@ -133,6 +136,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/Client/swagger.json", "Client API"); });
+    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/Super/swagger.json", "Super API"); });
 }
 
 app.UseAuthentication();

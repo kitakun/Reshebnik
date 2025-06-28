@@ -1,14 +1,14 @@
-﻿using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
+using Reshebnik.Domain.Models;
 using Reshebnik.Handlers.Auth;
 
 using System.Text.Json;
 
-namespace Reshebnik.Web.Api.Admin;
+namespace Reshebnik.Web.Api.Client;
 
 [ApiController]
-[ApiExplorerSettings(GroupName = "Admin")]
+[ApiExplorerSettings(GroupName = "Client")]
 [Route("api/admin/[controller]")]
 public class AuthController : ControllerBase
 {
@@ -36,7 +36,7 @@ public class AuthController : ControllerBase
     {
         var result = await handler.HandleAsync(code, cancellationToken);
         if (result == null) return BadRequest();
-        return Ok(new { name = result.Name, email = result.Email });
+        return Ok(new { name = result.Value.Name, email = result.Value.Email });
     }
 
     [HttpPost("login")]

@@ -16,8 +16,14 @@ public class ReshebnikContext(DbContextOptions<ReshebnikContext> options) : DbCo
     public DbSet<DepartmentSchemeEntity> DepartmentSchemaEntities { get; set; }
     public DbSet<EmployeeDepartmentLinkEntity> EmployeeDepartmentLinkEntities { get; set; }
     
+    public DbSet<UserNotification> UserNotifications { get; set; }
+    public DbSet<SystemNotificationEntity> SystemNotifications { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasSequence<int>("employee_id_seq");
+        modelBuilder.HasSequence<int>("companies_id_seq");
+        
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             foreach (var property in entityType.GetProperties())

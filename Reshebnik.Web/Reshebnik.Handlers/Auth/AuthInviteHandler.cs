@@ -18,7 +18,7 @@ public class AuthInviteHandler(
         if (string.IsNullOrEmpty(password)) return null;
 
         var existingUser = await context.Employees.FirstOrDefaultAsync(f => f.EmailInvitationCode!.ToLower() == code.ToLower(), cancellationToken);
-        if (existingUser == null || !existingUser.IsActive) return null;
+        if (existingUser is not { IsActive: true }) return null;
 
         existingUser.Password = securityHandler.GenerateSaltedHash(password, out var generatedSalt);
         existingUser.Salt = generatedSalt;
