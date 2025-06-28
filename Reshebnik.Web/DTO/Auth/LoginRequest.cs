@@ -1,0 +1,21 @@
+﻿using Reshebnik.Domain.Entities;
+using Reshebnik.Domain.Enums;
+
+namespace Reshebnik.Web.DTO.Auth;
+
+public record LoginRequest
+{
+    public string Email { get; set; }
+    public string Password { get; set; }
+}
+
+public class AdminLoginResponse(EmployeeEntity User, string Jwt, int? currentCompanyId)
+{
+    public int Id { get; set; } = User.Id;
+    public string Username { get; set; } = User.FIO;
+    public RootRolesEnum Role { get; set; } = User.Role;
+    public bool IsActive { get; set; } = User.IsActive;
+    public string Jwt { get; set; } = Jwt;
+    public int? CompanyId { get; set; } = currentCompanyId;
+    public bool IsReadonly { get; set; } = User.Email == "demo";
+}

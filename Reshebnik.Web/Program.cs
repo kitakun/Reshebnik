@@ -4,6 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 using Reshebnik.EntityFramework;
+using Reshebnik.Handlers.Auth;
+using Reshebnik.Handlers.Company;
 
 using System.Text;
 using System.Text.Json;
@@ -104,6 +106,13 @@ builder.Services.AddSwaggerGen(options =>
 
 // services
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<CreateJwtHandler>();
+builder.Services.AddSingleton<SecurityHandler>();
+builder.Services.AddScoped<UserContextHandler>();
+
+// SU
+builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();
+builder.Services.AddScoped<SuAllCompanyIdsHandler>();
 
 var app = builder.Build();
 app.UseCors("DevCors");

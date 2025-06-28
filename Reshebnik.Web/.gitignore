@@ -1,3 +1,14 @@
-obj/**
-.idea/**
+# Ignore all bin and obj folders recursively
+**/bin/**
 **/obj/**
+
+# Optional: ignore user-specific VS/JetBrains files
+.vs/
+*.user
+*.suo
+.idea/**
+
+# Optional: ignore build outputs
+*.dll
+*.exe
+*.pdb

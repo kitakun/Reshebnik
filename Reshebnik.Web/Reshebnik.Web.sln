@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reshebnik.Domain", "Reshebn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reshebnik.EntityFramework", "Reshebnik.EntityFramework\Reshebnik.EntityFramework.csproj", "{F6596C6A-D742-421C-8FA9-9B46FBBA81E2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reshebnik.Handlers", "Reshebnik.Handlers\Reshebnik.Handlers.csproj", "{0DB8DDDC-91EF-4D74-BA3E-FE284586057C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{F6596C6A-D742-421C-8FA9-9B46FBBA81E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F6596C6A-D742-421C-8FA9-9B46FBBA81E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F6596C6A-D742-421C-8FA9-9B46FBBA81E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DB8DDDC-91EF-4D74-BA3E-FE284586057C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DB8DDDC-91EF-4D74-BA3E-FE284586057C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DB8DDDC-91EF-4D74-BA3E-FE284586057C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DB8DDDC-91EF-4D74-BA3E-FE284586057C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

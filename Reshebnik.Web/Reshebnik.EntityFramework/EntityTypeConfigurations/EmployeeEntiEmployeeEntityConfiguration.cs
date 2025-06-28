@@ -12,6 +12,7 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
         builder.ToTable("employees");
 
         builder.HasKey(e => e.Id);
+        builder.HasIndex(i => new { i.CompanyId, i.Email });
 
         builder.Property(e => e.Id)
             .HasColumnName("id")
@@ -55,5 +56,21 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
         builder.Property(e => e.EmailInvitationCode)
             .HasColumnName("email_invitation_code")
             .HasMaxLength(128);
+
+        builder.Property(e => e.Role)
+            .HasColumnName("role")
+            .IsRequired()
+            .HasConversion<string>()
+            .HasMaxLength(16);
+
+        builder.Property(e => e.CreatedAt)
+            .HasColumnName("created_at")
+            .IsRequired();
+        builder.Property(e => e.LastLoginAt)
+            .HasColumnName("last_login_at")
+            .IsRequired();
+
+        builder.Property(p => p.Salt).IsRequired();
+        builder.Property(p => p.Password).IsRequired();
     }
 }

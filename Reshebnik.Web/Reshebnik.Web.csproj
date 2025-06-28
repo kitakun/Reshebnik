@@ -11,21 +11,25 @@
     <ItemGroup>
       <Compile Remove="Reshebnik.EntityFramework\**" />
       <Compile Remove="Reshebnik.Domain\**" />
+      <Compile Remove="Reshebnik.Handlers\**" />
     </ItemGroup>
 
     <ItemGroup>
       <EmbeddedResource Remove="Reshebnik.EntityFramework\**" />
       <EmbeddedResource Remove="Reshebnik.Domain\**" />
+      <EmbeddedResource Remove="Reshebnik.Handlers\**" />
     </ItemGroup>
 
     <ItemGroup>
       <Content Remove="Reshebnik.EntityFramework\**" />
       <Content Remove="Reshebnik.Domain\**" />
+      <Content Remove="Reshebnik.Handlers\**" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove="Reshebnik.EntityFramework\**" />
       <None Remove="Reshebnik.Domain\**" />
+      <None Remove="Reshebnik.Handlers\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -35,6 +39,9 @@
       <_ContentIncludedByDefault Remove="Reshebnik.Domain\obj\project.assets.json" />
       <_ContentIncludedByDefault Remove="Reshebnik.Domain\obj\project.packagespec.json" />
       <_ContentIncludedByDefault Remove="Reshebnik.Domain\obj\Reshebnik.Domain.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.Handlers\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.Handlers\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.Handlers\obj\Reshebnik.Handlers.csproj.nuget.dgspec.json" />
     </ItemGroup>
 
     <ItemGroup>
@@ -49,6 +56,7 @@
 
     <ItemGroup>
       <ProjectReference Include="Reshebnik.EntityFramework\Reshebnik.EntityFramework.csproj" />
+      <ProjectReference Include="Reshebnik.Handlers\Reshebnik.Handlers.csproj" />
     </ItemGroup>
 
 </Project>

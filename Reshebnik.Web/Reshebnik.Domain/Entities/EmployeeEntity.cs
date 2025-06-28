@@ -1,4 +1,6 @@
-﻿namespace Reshebnik.Domain.Entities;
+﻿using Reshebnik.Domain.Enums;
+
+namespace Reshebnik.Domain.Entities;
 
 public class EmployeeEntity
 {
@@ -14,6 +16,14 @@ public class EmployeeEntity
     public string Comment { get; set; }
     public bool IsActive { get; set; }
     public string? EmailInvitationCode { get; set; }
+    
+    public string Password { get; set; }
+    public string Salt { get; set; }
+    
+    public RootRolesEnum Role { get; set; }
+    
+    public DateTime CreatedAt { get; set; }
+    public DateTime LastLoginAt { get; set; }
     
     public List<EmployeeDepartmentLinkEntity> DepartmentLinks { get; set; }
 }
