@@ -130,6 +130,8 @@ builder.Services.AddScoped<DepartmentTypeaheadHandler>();
 builder.Services.AddScoped<EmployeeUpdateHandler>();
 builder.Services.AddScoped<CreateEmployeeHandler>();
 builder.Services.AddScoped<CompanyUpdateHandler>();
+builder.Services.AddScoped<CompanyGetHandler>();
+builder.Services.AddScoped<CompanySettingsUpdateHandler>();
 
 // SU
 builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();
