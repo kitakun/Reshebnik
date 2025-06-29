@@ -17,7 +17,7 @@ public class SuTypeaheadCompaniesHandler(
     public async ValueTask<PaginationDto<CompanyEntity>?> HandlerAsync(TypeaheadRequest command, CancellationToken cancellationToken = default)
     {
         if (httpContextAccessor.HttpContext == null) return null;
-        var roleIdClaim = httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role);
+        var roleIdClaim = httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == "user-role");
         if (roleIdClaim == null) return null;
         if (roleIdClaim.Value != RootRolesEnum.SuperAdmin.ToString()) return null;
 

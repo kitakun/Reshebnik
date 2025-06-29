@@ -29,7 +29,7 @@ public class UserContextHandler(IHttpContextAccessor httpContextAccessor, Resheb
         get
         {
             if (httpContextAccessor.HttpContext == null) throw new NullReferenceException(nameof(httpContextAccessor));
-            var userRoleClaim = httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role);
+            var userRoleClaim = httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == "user-role");
             if (userRoleClaim == null) throw new NullReferenceException(nameof(userRoleClaim));
 
             var roleType = Enum.Parse<RootRolesEnum>(userRoleClaim.Value);

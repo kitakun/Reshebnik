@@ -5,8 +5,13 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <InvariantGlobalization>true</InvariantGlobalization>
-        <PublishAot>false</PublishAot>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <PublishAot>false</PublishAot>
+        <EnableNativeAOT>false</EnableNativeAOT>
+        <IsAotCompatible>false</IsAotCompatible>
+
+        <!-- For Blazor/Android/WASM setups -->
+        <RunAOTCompilation>false</RunAOTCompilation>
     </PropertyGroup>
 
     <ItemGroup>
@@ -48,11 +53,11 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.6" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.6" />
-      <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.12.1" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.1" />
       <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="9.0.1" />
       <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.1" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
     </ItemGroup>
 
     <ItemGroup>

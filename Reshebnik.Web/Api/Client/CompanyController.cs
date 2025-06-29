@@ -6,7 +6,7 @@ using Reshebnik.Handlers.Company;
 
 namespace Reshebnik.Web.Api.Client;
 
-// [Authorize]
+[Authorize]
 [ApiController]
 [ApiExplorerSettings(GroupName = "Client")]
 [Route("api/admin/[controller]")]

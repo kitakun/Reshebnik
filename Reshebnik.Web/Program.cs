@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -30,17 +31,28 @@ builder.Services.AddDbContext<ReshebnikContext>(options =>
 
 // AuthTokens
 var secretKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKey123!";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ReshebnikApp";
 var key = Encoding.UTF8.GetBytes(secretKey);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new()
         {
-            ValidateIssuer = false,
+            ValidateIssuer = true,
             ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
             IssuerSigningKey = new SymmetricSecurityKey(key)
+        };
+        IdentityModelEventSource.ShowPII = true;
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"Authentication failed: {context.Exception}");
+                return Task.CompletedTask;
+            }
         };
     });
 

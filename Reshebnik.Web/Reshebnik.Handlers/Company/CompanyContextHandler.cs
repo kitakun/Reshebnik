@@ -42,7 +42,7 @@ public class CompanyContextHandler
 
         var existingUser = await _userContext.GetCurrentEmployeeAsync();
 
-        var userRoleClaim = _httpContent.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role);
+        var userRoleClaim = _httpContent.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == "user-role");
         if (userRoleClaim == null) return 0;
         var userRole = Enum.Parse<RootRolesEnum>(userRoleClaim.Value);
 

@@ -18,23 +18,30 @@ public class CreateJwtHandler(IConfiguration configuration)
     {
         user.EnsurePropertyExists(p => p.Company);
 
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var secretKey = configuration["Jwt:Key"] ?? "YourSuperSecretKey123!";
-        var key = Encoding.UTF8.GetBytes(secretKey);
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity([
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: configuration["Jwt:Issuer"],
+            audience: null,
+            claims:
+            [
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.FIO),
-                new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim("company", $"{currentCompanyId ?? user.CompanyId}"),
-            ]),
-            Expires = expires ?? DateTime.UtcNow.AddMonths(1),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
-        };
+                new Claim("user-role", user.Role.ToString()),
+                new Claim("company", $"{currentCompanyId ?? user.CompanyId}")
+            ],
+            expires: expires ?? DateTime.UtcNow.AddMonths(1),
+            signingCredentials: creds
+        );
 
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        var jwt = tokenHandler.WriteToken(token);
+        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+        
+        var handler = new JwtSecurityTokenHandler();
+        var token2 = handler.ReadJwtToken(jwt);
+        Console.WriteLine(token2.ValidTo);
+        
         user.Password = null!;
         user.Salt = null!;
         // TODO separate modal
