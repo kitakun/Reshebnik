@@ -1,0 +1,23 @@
+using Microsoft.EntityFrameworkCore;
+using Reshebnik.Domain.Models.Department;
+using Reshebnik.EntityFramework;
+using Reshebnik.Web.DTO.Department;
+
+namespace Reshebnik.Handlers.Department;
+
+public class DepartmentGetByIdHandler(ReshebnikContext db)
+{
+    public async ValueTask<DepartmentDto?> HandleAsync(int id, CancellationToken ct = default)
+    {
+        var entity = await db.Departments.AsNoTracking().FirstOrDefaultAsync(d => d.Id == id, ct);
+        if (entity == null) return null;
+        return new DepartmentDto
+        {
+            Id = entity.Id,
+            Name = entity.Name,
+            Comment = entity.Comment,
+            IsActive = entity.IsActive,
+            IsFundamental = entity.IsFundamental
+        };
+    }
+}

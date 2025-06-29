@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Handlers.Employee;
-using Reshebnik.Web.DTO.Employee;
+using Reshebnik.Handlers.Department;
+using Reshebnik.Web.DTO.Department;
 
 namespace Reshebnik.Web.Api.Client;
 
@@ -10,12 +10,12 @@ namespace Reshebnik.Web.Api.Client;
 [ApiController]
 [ApiExplorerSettings(GroupName = "Client")]
 [Route("api/admin/[controller]")]
-public class EmployeeController : ControllerBase
+public class DepartmentController : ControllerBase
 {
     [HttpGet("{id}")]
     public async Task<IActionResult> GetAsync(
         int id,
-        [FromServices] EmployeeGetByIdHandler handler,
+        [FromServices] DepartmentGetByIdHandler handler,
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(id, cancellationToken);
@@ -25,8 +25,8 @@ public class EmployeeController : ControllerBase
 
     [HttpPut]
     public async Task<IActionResult> PutAsync(
-        [FromBody] EmployeeFullDto request,
-        [FromServices] EmployeePutHandler handler,
+        [FromBody] DepartmentDto request,
+        [FromServices] DepartmentPutOneHandler handler,
         CancellationToken cancellationToken)
     {
         var id = await handler.HandleAsync(request, cancellationToken);
@@ -36,7 +36,7 @@ public class EmployeeController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAsync(
         int id,
-        [FromServices] EmployeeDeleteHandler handler,
+        [FromServices] DepartmentDeleteHandler handler,
         CancellationToken cancellationToken)
     {
         await handler.HandleAsync(id, cancellationToken);
@@ -46,7 +46,7 @@ public class EmployeeController : ControllerBase
     [HttpDelete]
     public async Task<IActionResult> DeleteManyAsync(
         [FromQuery] int[] ids,
-        [FromServices] EmployeeDeleteHandler handler,
+        [FromServices] DepartmentDeleteHandler handler,
         CancellationToken cancellationToken)
     {
         if (ids.Length == 0) return Ok();

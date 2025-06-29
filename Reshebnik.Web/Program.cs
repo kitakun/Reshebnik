@@ -124,11 +124,15 @@ builder.Services.AddScoped<AuthGetInviteHandler>();
 
 builder.Services.AddScoped<DepartmentGetHandler>();
 builder.Services.AddScoped<DepartmentPutHandler>();
+builder.Services.AddScoped<DepartmentGetByIdHandler>();
+builder.Services.AddScoped<DepartmentPutOneHandler>();
+builder.Services.AddScoped<DepartmentDeleteHandler>();
 builder.Services.AddScoped<EmployeesGetHandler>();
 builder.Services.AddScoped<EmployeesTypeaheadHandler>();
 builder.Services.AddScoped<DepartmentTypeaheadHandler>();
-builder.Services.AddScoped<EmployeeUpdateHandler>();
-builder.Services.AddScoped<CreateEmployeeHandler>();
+builder.Services.AddScoped<EmployeeGetByIdHandler>();
+builder.Services.AddScoped<EmployeePutHandler>();
+builder.Services.AddScoped<EmployeeDeleteHandler>();
 builder.Services.AddScoped<CompanyUpdateHandler>();
 builder.Services.AddScoped<CompanyGetHandler>();
 builder.Services.AddScoped<CompanySettingsUpdateHandler>();
