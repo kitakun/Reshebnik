@@ -31,11 +31,7 @@ builder.Services.AddDbContext<ReshebnikContext>(options =>
 // AuthTokens
 var secretKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKey123!";
 var key = Encoding.UTF8.GetBytes(secretKey);
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new()
@@ -43,7 +39,7 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = false,
+            ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(key)
         };
     });

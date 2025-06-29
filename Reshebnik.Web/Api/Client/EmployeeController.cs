@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using Reshebnik.Domain.Models.Employee;
 using Reshebnik.Handlers.Employee;
-using Reshebnik.Web.DTO.Employee;
 
 namespace Reshebnik.Web.Api.Client;
 

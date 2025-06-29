@@ -1,4 +1,4 @@
-namespace Reshebnik.Web.DTO.Employee;
+namespace Reshebnik.Domain.Models.Employee;
 
 public class EmployeeDto
 {

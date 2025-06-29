@@ -1,4 +1,4 @@
-namespace Reshebnik.Web.DTO.Department;
+namespace Reshebnik.Domain.Models.Department;
 
 public class DepartmentDto
 {

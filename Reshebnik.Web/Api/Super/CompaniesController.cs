@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Reshebnik.Domain.Models;
+using Reshebnik.Domain.Models.Company;
 using Reshebnik.Handlers.Company;
-using Reshebnik.Web.DTO.Company;
 
 namespace Reshebnik.Web.Api.Super;
 

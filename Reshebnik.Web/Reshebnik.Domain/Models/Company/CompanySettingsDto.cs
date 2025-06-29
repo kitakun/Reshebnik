@@ -1,4 +1,4 @@
-namespace Reshebnik.Web.DTO.Company;
+namespace Reshebnik.Domain.Models.Company;
 
 public class CompanySettingsDto
 {

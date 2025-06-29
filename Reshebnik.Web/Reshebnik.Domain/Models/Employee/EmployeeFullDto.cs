@@ -1,6 +1,6 @@
-namespace Reshebnik.Web.DTO.Employee;
-
 using Reshebnik.Domain.Enums;
+
+namespace Reshebnik.Domain.Models.Employee;
 
 public class EmployeeFullDto
 {

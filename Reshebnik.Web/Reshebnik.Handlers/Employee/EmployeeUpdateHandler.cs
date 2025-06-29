@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
+using Reshebnik.Domain.Models.Employee;
 using Reshebnik.EntityFramework;
-using Reshebnik.Web.DTO.Employee;
 
 namespace Reshebnik.Handlers.Employee;
 

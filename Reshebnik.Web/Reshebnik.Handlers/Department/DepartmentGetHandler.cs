@@ -4,7 +4,6 @@ using Reshebnik.Domain.Entities;
 using Reshebnik.Domain.Models.Department;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
-using Reshebnik.Web.DTO.Department;
 
 namespace Reshebnik.Handlers.Department;
 

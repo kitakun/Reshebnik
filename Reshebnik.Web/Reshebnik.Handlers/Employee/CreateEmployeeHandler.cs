@@ -2,7 +2,7 @@ using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Entities;
-using Reshebnik.Web.DTO.Employee;
+using Reshebnik.Domain.Models.Employee;
 
 namespace Reshebnik.Handlers.Employee;
 

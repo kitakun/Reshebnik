@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using Reshebnik.Domain.Models.Company;
 using Reshebnik.Handlers.Company;
-using Reshebnik.Web.DTO.Company;
 
 namespace Reshebnik.Web.Api.Client;
 
-[Authorize]
+// [Authorize]
 [ApiController]
 [ApiExplorerSettings(GroupName = "Client")]
 [Route("api/admin/[controller]")]
@@ -24,7 +24,7 @@ public class CompanyController : ControllerBase
 
     [HttpPut]
     public async Task<IActionResult> UpdateAsync(
-        [FromBody] CompanySettingsDto request,
+        [FromForm] CompanySettingsDto request,
         [FromServices] CompanySettingsUpdateHandler handler,
         CancellationToken cancellationToken)
     {

@@ -1,6 +1,6 @@
-namespace Reshebnik.Web.DTO.Company;
-
 using Reshebnik.Domain.Enums;
+
+namespace Reshebnik.Domain.Models.Company;
 
 public class CompanyDto
 {

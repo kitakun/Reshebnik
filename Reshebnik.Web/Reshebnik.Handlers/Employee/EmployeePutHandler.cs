@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Reshebnik.Domain.Entities;
+using Reshebnik.Domain.Models.Employee;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
-using Reshebnik.Web.DTO.Employee;
 
 namespace Reshebnik.Handlers.Employee;
 
