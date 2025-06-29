@@ -19,7 +19,7 @@ public class DepartmentGetHandler(
 
         var roots = await db.Departments
             .AsNoTracking()
-            .Where(w => w.IsFundamental && EF.Property<int?>(w, "CompanyEntityId") == companyId)
+            .Where(w => w.IsFundamental && w.CompanyId == companyId)
             .ToListAsync(cancellationToken);
 
         var result = new List<DepartmentTreeDto>();

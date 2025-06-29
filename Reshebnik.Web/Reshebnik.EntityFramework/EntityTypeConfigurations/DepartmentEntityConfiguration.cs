@@ -34,6 +34,10 @@ public class DepartmentEntityConfiguration : IEntityTypeConfiguration<Department
             .HasColumnName("is_fundamental")
             .IsRequired();
 
+        builder.HasOne(o => o.Company)
+            .WithMany(m => m.Departments)
+            .HasForeignKey(k => k.CompanyId);
+        
         builder.HasMany(d => d.LinkEntities)
             .WithOne(e => e.Department)
             .HasForeignKey(e => e.DepartmentId)

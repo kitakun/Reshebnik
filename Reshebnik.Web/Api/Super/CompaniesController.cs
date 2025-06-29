@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Reshebnik.Domain.Models;
 using Reshebnik.Handlers.Company;
+using Reshebnik.Web.DTO.Company;
 
 namespace Reshebnik.Web.Api.Super;
 
@@ -30,5 +31,15 @@ public class CompaniesController : ControllerBase
     {
         var result = await handler.HandleAsync(cancellationToken);
         return Ok(result);
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateAsync(
+        [FromBody] CompanyDto request,
+        [FromServices] CompanyUpdateHandler handler,
+        CancellationToken cancellationToken)
+    {
+        await handler.HandleAsync(request, cancellationToken);
+        return Ok();
     }
 }

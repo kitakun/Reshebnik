@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Reshebnik.Handlers.Department;
 using Reshebnik.Web.DTO.Department;
+using Reshebnik.Domain.Models;
 
 namespace Reshebnik.Web.Api.Client;
 
@@ -18,6 +19,16 @@ public class DepartmentsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("typeahead")]
+    public async Task<IActionResult> TypeaheadAsync(
+        [FromQuery] TypeaheadRequest request,
+        [FromServices] DepartmentTypeaheadHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(request, cancellationToken);
         return Ok(result);
     }
 

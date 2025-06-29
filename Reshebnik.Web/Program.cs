@@ -125,6 +125,11 @@ builder.Services.AddScoped<AuthGetInviteHandler>();
 builder.Services.AddScoped<DepartmentGetHandler>();
 builder.Services.AddScoped<DepartmentPutHandler>();
 builder.Services.AddScoped<EmployeesGetHandler>();
+builder.Services.AddScoped<EmployeesTypeaheadHandler>();
+builder.Services.AddScoped<DepartmentTypeaheadHandler>();
+builder.Services.AddScoped<EmployeeUpdateHandler>();
+builder.Services.AddScoped<CreateEmployeeHandler>();
+builder.Services.AddScoped<CompanyUpdateHandler>();
 
 // SU
 builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();

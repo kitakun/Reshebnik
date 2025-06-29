@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Reshebnik.Handlers.Employee;
+using Reshebnik.Domain.Models;
 
 namespace Reshebnik.Web.Api.Client;
 
@@ -17,6 +18,16 @@ public class EmployeesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("typeahead")]
+    public async Task<IActionResult> TypeaheadAsync(
+        [FromQuery] TypeaheadRequest request,
+        [FromServices] EmployeesTypeaheadHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(request, cancellationToken);
         return Ok(result);
     }
 }
