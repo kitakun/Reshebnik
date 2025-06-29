@@ -13,6 +13,17 @@ namespace Reshebnik.Web.Api.Client;
 [Route("api/admin/[controller]")]
 public class AuthController : ControllerBase
 {
+    [HttpGet("invite")]
+    public async Task<IActionResult> GetInviteAdminUserAsync(
+        [FromQuery] string code,
+        [FromServices] AuthGetInviteHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(code, cancellationToken);
+        if (result == null) return BadRequest();
+        return Ok(new { name = result.Value.Name, email = result.Value.Email });
+    }
+
     [HttpPost("invite")]
     public async Task<IActionResult> InviteAdminUserAsync(
         [FromQuery] string code,
@@ -27,17 +38,6 @@ public class AuthController : ControllerBase
         var result = await handler.HandleAsync(code, password, cancellationToken);
         if (result == null) return BadRequest();
         return Ok(new AdminLoginResponse(result.Value.User, result.Value.Jwt, result.Value.CurrentCompanyId));
-    }
-
-    [HttpGet("invite")]
-    public async Task<IActionResult> GetInviteAdminUserAsync(
-        [FromQuery] string code,
-        [FromServices] AuthGetInviteHandler handler,
-        CancellationToken cancellationToken)
-    {
-        var result = await handler.HandleAsync(code, cancellationToken);
-        if (result == null) return BadRequest();
-        return Ok(new { name = result.Value.Name, email = result.Value.Email });
     }
 
     [HttpPost("login")]

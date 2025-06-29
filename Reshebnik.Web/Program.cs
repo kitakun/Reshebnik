@@ -6,6 +6,8 @@ using Microsoft.OpenApi.Models;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Auth;
 using Reshebnik.Handlers.Company;
+using Reshebnik.Handlers.Department;
+using Reshebnik.Handlers.Employee;
 
 using System.Text;
 using System.Text.Json;
@@ -29,7 +31,11 @@ builder.Services.AddDbContext<ReshebnikContext>(options =>
 // AuthTokens
 var secretKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKey123!";
 var key = Encoding.UTF8.GetBytes(secretKey);
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new()
@@ -37,14 +43,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
+            ValidateIssuerSigningKey = false,
             IssuerSigningKey = new SymmetricSecurityKey(key)
         };
     });
 
 // HttpRequests
 builder.Services.AddResponseCaching();
-builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -107,6 +112,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // services
+builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<CreateJwtHandler>();
 builder.Services.AddSingleton<SecurityHandler>();
@@ -115,6 +121,10 @@ builder.Services.AddScoped<CompanyContextHandler>();
 builder.Services.AddScoped<AuthLoginHandler>();
 builder.Services.AddScoped<AuthInviteHandler>();
 builder.Services.AddScoped<AuthGetInviteHandler>();
+
+builder.Services.AddScoped<DepartmentGetHandler>();
+builder.Services.AddScoped<DepartmentPutHandler>();
+builder.Services.AddScoped<EmployeesGetHandler>();
 
 // SU
 builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();

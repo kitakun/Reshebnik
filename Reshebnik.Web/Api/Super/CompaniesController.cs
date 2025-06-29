@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Reshebnik.Domain.Models;
@@ -5,6 +6,7 @@ using Reshebnik.Handlers.Company;
 
 namespace Reshebnik.Web.Api.Super;
 
+[Authorize]
 [ApiController]
 [ApiExplorerSettings(GroupName = "Super")]
 [Route("api/super/[controller]")]

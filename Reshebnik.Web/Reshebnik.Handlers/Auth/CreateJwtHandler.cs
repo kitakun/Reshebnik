@@ -10,17 +10,17 @@ using System.Text;
 
 namespace Reshebnik.Handlers.Auth;
 
-public class CreateJwtHandler
+public class CreateJwtHandler(IConfiguration configuration)
 {
     public readonly record struct JwtResponseRecord(EmployeeEntity User, string Jwt, int CurrentCompanyId);
 
-    public JwtResponseRecord CreateToken(EmployeeEntity user, IConfiguration configuration, int? currentCompanyId, DateTime? expires = null)
+    public JwtResponseRecord CreateToken(EmployeeEntity user, int? currentCompanyId, DateTime? expires = null)
     {
         user.EnsurePropertyExists(p => p.Company);
 
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!);
-
+        var secretKey = configuration["Jwt:Key"] ?? "YourSuperSecretKey123!";
+        var key = Encoding.UTF8.GetBytes(secretKey);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity([
@@ -30,7 +30,7 @@ public class CreateJwtHandler
                 new Claim("company", $"{currentCompanyId ?? user.CompanyId}"),
             ]),
             Expires = expires ?? DateTime.UtcNow.AddMonths(1),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);

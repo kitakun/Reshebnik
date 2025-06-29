@@ -10,7 +10,6 @@ namespace Reshebnik.Handlers.Auth;
 public class AuthLoginHandler(
     ReshebnikContext context,
     CompanyContextHandler companyContext,
-    IConfiguration configuration,
     SecurityHandler securityHandler,
     CreateJwtHandler jwtHandler)
 {
@@ -28,6 +27,6 @@ public class AuthLoginHandler(
         existingUser.LastLoginAt = DateTime.UtcNow;
         await context.SaveChangesAsync(cancellationToken);
         var curCompany = await companyContext.CurrentCompanyAsync;
-        return jwtHandler.CreateToken(existingUser, configuration, curCompany?.Id ?? existingUser.CompanyId);
+        return jwtHandler.CreateToken(existingUser, curCompany?.Id ?? existingUser.CompanyId);
     }
 }

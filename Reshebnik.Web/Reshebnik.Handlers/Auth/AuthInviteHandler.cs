@@ -10,8 +10,7 @@ public class AuthInviteHandler(
     ReshebnikContext context,
     CompanyContextHandler companyContext,
     SecurityHandler securityHandler,
-    CreateJwtHandler jwtHandler,
-    IConfiguration configuration)
+    CreateJwtHandler jwtHandler)
 {
     public async ValueTask<CreateJwtHandler.JwtResponseRecord?> HandleAsync(string code, string password, CancellationToken cancellationToken = default)
     {
@@ -30,6 +29,6 @@ public class AuthInviteHandler(
         existingUser.LastLoginAt = DateTime.UtcNow;
         await context.SaveChangesAsync(cancellationToken);
         var curCompany = await companyContext.CurrentCompanyAsync;
-        return jwtHandler.CreateToken(existingUser, configuration, curCompany?.Id ?? existingUser.CompanyId);
+        return jwtHandler.CreateToken(existingUser, curCompany?.Id ?? existingUser.CompanyId);
     }
 }
