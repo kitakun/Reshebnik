@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Reshebnik.EntityFramework;
@@ -11,9 +12,11 @@ using Reshebnik.EntityFramework;
 namespace Reshebnik.EntityFramework.Migrations
 {
     [DbContext(typeof(ReshebnikContext))]
-    partial class ReshebnikContextModelSnapshot : ModelSnapshot
+    [Migration("20250630192518_LastLoginIsNullable")]
+    partial class LastLoginIsNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -229,11 +232,6 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
-
-                    b.Property<string>("DefaultRole")
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)")
-                        .HasColumnName("default_role");
 
                     b.Property<string>("Email")
                         .IsRequired()

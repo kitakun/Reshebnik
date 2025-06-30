@@ -21,9 +21,10 @@ public class EmployeeEntity
     public string Salt { get; set; } = null!;
     
     public RootRolesEnum Role { get; set; }
+    public EmployeeTypeEnum? DefaultRole { get; set; }
     
     public DateTime CreatedAt { get; set; }
-    public DateTime LastLoginAt { get; set; }
+    public DateTime? LastLoginAt { get; set; }
 
     public List<EmployeeDepartmentLinkEntity> DepartmentLinks { get; set; } = new();
     public List<UserNotification> UserNotification { get; set; } = new();

@@ -23,6 +23,17 @@ public class DepartmentController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{id}/preview")]
+    public async Task<IActionResult> PreviewAsync(
+        int id,
+        [FromServices] DepartmentPreviewHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(id, cancellationToken);
+        if (result == null) return NotFound();
+        return Ok(result);
+    }
+
     [HttpPut]
     public async Task<IActionResult> PutAsync(
         [FromBody] DepartmentDto request,

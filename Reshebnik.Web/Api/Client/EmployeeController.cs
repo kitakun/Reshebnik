@@ -25,7 +25,7 @@ public class EmployeeController : ControllerBase
 
     [HttpPut]
     public async Task<IActionResult> PutAsync(
-        [FromBody] EmployeeDto request,
+        [FromBody] EmployeePutDto request,
         [FromServices] EmployeePutHandler handler,
         CancellationToken cancellationToken)
     {

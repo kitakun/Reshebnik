@@ -60,13 +60,17 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
             .IsRequired()
             .HasConversion<string>()
             .HasMaxLength(16);
+        
+        builder.Property(e => e.DefaultRole)
+            .HasColumnName("default_role")
+            .HasConversion<string>()
+            .HasMaxLength(16);
 
         builder.Property(e => e.CreatedAt)
             .HasColumnName("created_at")
             .IsRequired();
         builder.Property(e => e.LastLoginAt)
-            .HasColumnName("last_login_at")
-            .IsRequired();
+            .HasColumnName("last_login_at");
 
         builder.Property(p => p.Salt).IsRequired();
         builder.Property(p => p.Password).IsRequired();

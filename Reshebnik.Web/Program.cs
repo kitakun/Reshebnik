@@ -131,6 +131,7 @@ builder.Services.AddScoped<AuthInviteHandler>();
 builder.Services.AddScoped<AuthGetInviteHandler>();
 
 builder.Services.AddScoped<DepartmentGetHandler>();
+builder.Services.AddScoped<DepartmentPreviewHandler>();
 builder.Services.AddScoped<DepartmentPutHandler>();
 builder.Services.AddScoped<DepartmentGetByIdHandler>();
 builder.Services.AddScoped<DepartmentPutOneHandler>();

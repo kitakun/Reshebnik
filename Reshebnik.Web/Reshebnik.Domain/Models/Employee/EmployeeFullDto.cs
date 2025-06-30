@@ -14,7 +14,7 @@ public class EmployeeFullDto
     public bool IsActive { get; set; }
     public RootRolesEnum Role { get; set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime LastLoginAt { get; set; }
+    public DateTime? LastLoginAt { get; set; }
 
     public CompanyDto Company { get; set; } = null!;
 }
