@@ -12,9 +12,9 @@ namespace Reshebnik.Web.Api.Client;
 [Route("api/admin/[controller]")]
 public class EmployeeController : ControllerBase
 {
-    [HttpGet("{id}")]
+    [HttpGet]
     public async Task<IActionResult> GetAsync(
-        int id,
+        [FromQuery] int id,
         [FromServices] EmployeeGetByIdHandler handler,
         CancellationToken cancellationToken)
     {
@@ -25,7 +25,7 @@ public class EmployeeController : ControllerBase
 
     [HttpPut]
     public async Task<IActionResult> PutAsync(
-        [FromBody] EmployeeFullDto request,
+        [FromBody] EmployeeDto request,
         [FromServices] EmployeePutHandler handler,
         CancellationToken cancellationToken)
     {

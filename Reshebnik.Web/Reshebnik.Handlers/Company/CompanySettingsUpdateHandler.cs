@@ -18,16 +18,26 @@ public class CompanySettingsUpdateHandler(
 
         entity.Name = dto.CompanyName;
         entity.Industry = string.IsNullOrEmpty(dto.Industry) ? null : dto.Industry;
+
         if (int.TryParse(dto.Size, out var size))
             entity.EmployeesCount = size;
-        if (Enum.TryParse<CompanyTypeEnum>(dto.LegalType, out var type))
-            entity.Type = type;
+
+        entity.Type = dto.LegalType;
+
         entity.Email = dto.CompanyEmail;
         entity.Phone = dto.CompanyPhone;
         entity.NotifyAboutLoweringMetrics = dto.NotifEmail;
-        if (Enum.TryParse<SystemNotificationTypeEnum>(dto.NotifFrequency, out var nt))
-            entity.NotificationType = nt;
+
+        entity.NotificationType = dto.NotifFrequency;
+
         entity.LanguageCode = dto.UiLanguage;
+
+        entity.Period = dto.Period;
+        entity.DefaultMetrics = dto.DefaultMetric;
+        entity.ShowNewMetrics = dto.ShowNewMetrics;
+        entity.AllowForEmployeesEditMetrics = dto.AllowForEmployeesEditMetrics;
+        entity.EnableNotificationsInApp = dto.NotifInApp;
+        entity.AutoUpdateByApi = dto.AutoUpdateFromAPI;
 
         await db.SaveChangesAsync(ct);
     }

@@ -18,7 +18,6 @@ public class CreateJwtHandler(IConfiguration configuration)
     {
         user.EnsurePropertyExists(p => p.Company);
 
-
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -37,10 +36,6 @@ public class CreateJwtHandler(IConfiguration configuration)
         );
 
         var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-        
-        var handler = new JwtSecurityTokenHandler();
-        var token2 = handler.ReadJwtToken(jwt);
-        Console.WriteLine(token2.ValidTo);
         
         user.Password = null!;
         user.Salt = null!;

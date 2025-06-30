@@ -24,12 +24,19 @@ public class CompanyGetHandler(
             CompanyName = entity.Name,
             Industry = entity.Industry ?? string.Empty,
             Size = entity.EmployeesCount.ToString(),
-            LegalType = entity.Type.ToString(),
+            LegalType = entity.Type,
             CompanyEmail = entity.Email,
             CompanyPhone = entity.Phone ?? string.Empty,
             NotifEmail = entity.NotifyAboutLoweringMetrics,
-            NotifFrequency = entity.NotificationType.ToString(),
-            UiLanguage = entity.LanguageCode
+            NotifFrequency = entity.NotificationType,
+            UiLanguage = entity.LanguageCode,
+            //
+            Period = entity.Period,
+            AutoUpdateFromAPI = entity.AutoUpdateByApi,
+            DefaultMetric = entity.DefaultMetrics,
+            AllowForEmployeesEditMetrics = entity.AllowForEmployeesEditMetrics,
+            NotifInApp = entity.EnableNotificationsInApp,
+            ShowNewMetrics = entity.ShowNewMetrics,
         };
     }
 }

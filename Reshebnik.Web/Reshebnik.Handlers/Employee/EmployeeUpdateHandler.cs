@@ -12,16 +12,13 @@ public class EmployeeUpdateHandler(ReshebnikContext db)
         var entity = await db.Employees.FirstOrDefaultAsync(e => e.Id == dto.Id, ct);
         if (entity == null) return;
 
-        entity.CompanyId = dto.CompanyId;
         entity.FIO = dto.Fio;
         entity.JobTitle = dto.JobTitle;
         entity.Email = dto.Email;
         entity.Phone = dto.Phone;
         entity.Comment = dto.Comment;
         entity.IsActive = dto.IsActive;
-        entity.EmailInvitationCode = dto.EmailInvitationCode;
-        entity.Password = dto.Password;
-        entity.Salt = dto.Salt;
+        // entity.EmailInvitationCode = dto.EmailInvitationCode;
         entity.Role = dto.Role;
         entity.CreatedAt = dto.CreatedAt;
         entity.LastLoginAt = dto.LastLoginAt;

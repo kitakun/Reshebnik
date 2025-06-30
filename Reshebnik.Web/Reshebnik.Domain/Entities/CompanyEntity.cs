@@ -18,6 +18,12 @@ public class CompanyEntity
     public bool NotifyAboutLoweringMetrics { get; set; }
     public SystemNotificationTypeEnum NotificationType { get; set; }
     public string LanguageCode { get; set; } = null!;
+    public PeriodTypeEnum Period { get; set; }
+    public string DefaultMetrics { get; set; } = null!;
+    public bool AutoUpdateByApi { get; set; }
+    public bool AllowForEmployeesEditMetrics { get; set; }
+    public bool EnableNotificationsInApp { get; set; }
+    public bool ShowNewMetrics { get; set; }
     
     // refs
     [JsonIgnore]

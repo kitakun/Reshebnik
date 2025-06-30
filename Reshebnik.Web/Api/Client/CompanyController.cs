@@ -22,7 +22,7 @@ public class CompanyController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPut]
+    [HttpPut("settings")]
     public async Task<IActionResult> UpdateAsync(
         [FromForm] CompanySettingsDto request,
         [FromServices] CompanySettingsUpdateHandler handler,
