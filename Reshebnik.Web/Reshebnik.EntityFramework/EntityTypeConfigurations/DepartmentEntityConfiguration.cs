@@ -34,6 +34,12 @@ public class DepartmentEntityConfiguration : IEntityTypeConfiguration<Department
             .HasColumnName("is_fundamental")
             .IsRequired();
 
+        builder.Property(d => d.IsDeleted)
+            .HasColumnName("is_deleted")
+            .IsRequired();
+
+        builder.HasQueryFilter(d => !d.IsDeleted);
+
         builder.HasOne(o => o.Company)
             .WithMany(m => m.Departments)
             .HasForeignKey(k => k.CompanyId);

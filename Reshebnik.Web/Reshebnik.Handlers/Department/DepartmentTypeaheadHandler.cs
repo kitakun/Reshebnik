@@ -17,13 +17,13 @@ public class DepartmentTypeaheadHandler(
         const int COUNT = 50;
 
         var rootIds = await db.Departments
-            .Where(w => w.IsFundamental && w.CompanyId == companyId)
+            .Where(w => w.IsFundamental && w.CompanyId == companyId && !w.IsDeleted)
             .Select(s => s.Id)
             .ToListAsync(ct);
 
         var query = db.Departments
             .AsNoTracking()
-            .Where(d => db.DepartmentSchemaEntities.Any(s => rootIds.Contains(s.FundamentalDepartmentId) && s.DepartmentId == d.Id))
+            .Where(d => !d.IsDeleted && db.DepartmentSchemaEntities.Any(s => rootIds.Contains(s.FundamentalDepartmentId) && s.DepartmentId == d.Id))
             .Take(COUNT);
 
         if (!string.IsNullOrEmpty(request.Query))

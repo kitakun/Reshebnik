@@ -16,6 +16,7 @@ public class DepartmentEntity
     public string Comment { get; set; } = null!;
     public bool IsActive { get; set; }
     public bool IsFundamental { get; set; }
+    public bool IsDeleted { get; set; }
 
     public List<EmployeeDepartmentLinkEntity> LinkEntities { get; set; } = new();
     public List<DepartmentSchemeEntity> OwnerSchemas { get; set; } = new();

@@ -14,7 +14,7 @@ public class DepartmentPreviewHandler(ReshebnikContext db)
     {
         var departments = await db.Departments
             .AsNoTracking()
-            .Where(d => d.Id == id || db.DepartmentSchemaEntities.Any(s => s.AncestorDepartmentId == id && s.Depth == 1 && s.DepartmentId == d.Id))
+            .Where(d => !d.IsDeleted && (d.Id == id || db.DepartmentSchemaEntities.Any(s => s.AncestorDepartmentId == id && s.Depth == 1 && s.DepartmentId == d.Id)))
             .ToListAsync(ct);
         if (departments.Count == 0) return null;
 

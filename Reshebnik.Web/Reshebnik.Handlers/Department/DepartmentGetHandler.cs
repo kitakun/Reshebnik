@@ -18,7 +18,7 @@ public class DepartmentGetHandler(
 
         var roots = await db.Departments
             .AsNoTracking()
-            .Where(w => w.IsFundamental && w.CompanyId == companyId)
+            .Where(w => w.IsFundamental && w.CompanyId == companyId && !w.IsDeleted)
             .ToListAsync(cancellationToken);
 
         var result = new List<DepartmentTreeDto>();
@@ -35,7 +35,7 @@ public class DepartmentGetHandler(
     {
         var departments = await db.Departments
             .AsNoTracking()
-            .Where(d => db.DepartmentSchemaEntities.Any(s => s.FundamentalDepartmentId == rootId && s.DepartmentId == d.Id))
+            .Where(d => !d.IsDeleted && db.DepartmentSchemaEntities.Any(s => s.FundamentalDepartmentId == rootId && s.DepartmentId == d.Id))
             .ToListAsync(ct);
 
         var links = await db.DepartmentSchemaEntities
