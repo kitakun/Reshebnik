@@ -9,6 +9,7 @@ using Reshebnik.Handlers.Auth;
 using Reshebnik.Handlers.Company;
 using Reshebnik.Handlers.Department;
 using Reshebnik.Handlers.Employee;
+using Reshebnik.Handlers.Structure;
 
 using System.Text;
 using System.Text.Json;
@@ -145,6 +146,8 @@ builder.Services.AddScoped<EmployeeDeleteHandler>();
 builder.Services.AddScoped<CompanyUpdateHandler>();
 builder.Services.AddScoped<CompanyGetHandler>();
 builder.Services.AddScoped<CompanySettingsUpdateHandler>();
+builder.Services.AddScoped<StructureGetHandler>();
+builder.Services.AddScoped<StructurePutHandler>();
 
 // SU
 builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();
