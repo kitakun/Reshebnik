@@ -17,13 +17,23 @@ public class DepartmentPutOneHandler(
         var isNew = dto.Id == 0;
         if (!isNew)
         {
-            entity = await db.Departments.FirstOrDefaultAsync(d => d.Id == dto.Id, ct) ?? new DepartmentEntity();
+            entity = await db.Departments.FirstOrDefaultAsync(d => d.Id == dto.Id, ct) ?? new DepartmentEntity
+            {
+                Comment = "",
+                Name = "",
+                CompanyId = companyId,
+            };
             if (entity.Id == 0) db.Departments.Add(entity);
             if (entity.Id == 0) isNew = true;
         }
         else
         {
-            entity = new DepartmentEntity();
+            entity = new DepartmentEntity
+            {
+                Comment = "",
+                Name = "",
+                CompanyId = companyId,
+            };
             db.Departments.Add(entity);
             isNew = true;
         }

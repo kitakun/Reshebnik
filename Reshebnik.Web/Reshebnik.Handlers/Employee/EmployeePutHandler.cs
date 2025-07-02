@@ -32,7 +32,7 @@ public class EmployeePutHandler(
                 departmentLink.DepartmentId = dto.DepartmentId!.Value;
                 departmentLink.Type = dto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee;
             }
-            else
+            else if(dto.DepartmentId.HasValue)
             {
                 db.EmployeeDepartmentLinkEntities.Add(new EmployeeDepartmentLinkEntity
                 {

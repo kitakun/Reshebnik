@@ -106,9 +106,9 @@ public class DepartmentsController : ControllerBase
     /// <summary>
     /// Get department form data by id
     /// </summary>
-    [HttpGet("form/{id}")]
+    [HttpGet("form")]
     public async Task<IActionResult> GetFormAsync(
-        int id,
+        [FromQuery] int id,
         [FromServices] DepartmentFormGetByIdHandler handler,
         CancellationToken cancellationToken)
     {
@@ -120,9 +120,9 @@ public class DepartmentsController : ControllerBase
     /// <summary>
     /// Update department by form
     /// </summary>
-    [HttpPut("form/{id}")]
+    [HttpPut("form")]
     public async Task<IActionResult> PutFormAsync(
-        int id,
+        [FromQuery] int? id,
         [FromBody] DepartmentFormDto request,
         [FromServices] DepartmentFormPutHandler handler,
         CancellationToken cancellationToken)

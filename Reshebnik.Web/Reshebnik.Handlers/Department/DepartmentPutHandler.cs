@@ -32,12 +32,22 @@ public class DepartmentPutHandler(
             entity = await db
                 .Departments
                 .Include(i => i.LinkEntities)
-                .FirstOrDefaultAsync(f => f.Id == dto.Id.Value, ct) ?? new DepartmentEntity();
+                .FirstOrDefaultAsync(f => f.Id == dto.Id.Value, ct) ?? new DepartmentEntity
+            {
+                Comment = "",
+                Name = "",
+                CompanyId = company.Id,
+            };
             if (entity.Id == 0) db.Departments.Add(entity);
         }
         else
         {
-            entity = new DepartmentEntity();
+            entity = new DepartmentEntity
+            {
+                Comment = "",
+                Name = "",
+                CompanyId = company.Id
+            };
             db.Departments.Add(entity);
             entity.CompanyId = company.Id;
         }
