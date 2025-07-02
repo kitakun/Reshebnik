@@ -24,11 +24,13 @@ public class EmployeesTypeaheadHandler(
         if (!string.IsNullOrEmpty(request.Query))
         {
             var q = request.Query.ToLower();
-            query = query.Where(e => e.FIO.ToLower().Contains(q));
+            query = query.Where(e => e.FIO.ToLower().Contains(q) || e.Email.ToLower().Contains(q));
         }
 
         var employees = await query
-            .Skip((request.Page ?? 0) * COUNT)
+            .Include(i => i.DepartmentLinks)
+            .ThenInclude(i => i.Department)
+            .Skip(((request.Page ?? 1) - 1) * COUNT)
             .ToListAsync(ct);
 
         var count = await query.CountAsync(ct);
@@ -41,7 +43,9 @@ public class EmployeesTypeaheadHandler(
             Email = e.Email,
             Phone = e.Phone,
             Comment = e.Comment,
-            IsActive = e.IsActive
+            IsActive = e.IsActive,
+            DepartmentId = e.DepartmentLinks.FirstOrDefault()?.DepartmentId,
+            DepartmentName = e.DepartmentLinks.FirstOrDefault()?.Department?.Name,
         }).ToList();
 
         return new PaginationDto<EmployeeDto>(items, count, (int)Math.Ceiling((float)count / COUNT));

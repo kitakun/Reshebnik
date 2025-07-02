@@ -1,3 +1,3 @@
 ﻿namespace Reshebnik.Domain.Models;
 
-public readonly record struct TypeaheadRequest(string? Query, int? Page);
+public record TypeaheadRequest(string? Query, int? Page);

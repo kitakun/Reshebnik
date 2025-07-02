@@ -39,6 +39,7 @@ public class DepartmentPutHandler(
         {
             entity = new DepartmentEntity();
             db.Departments.Add(entity);
+            entity.CompanyId = company.Id;
         }
 
         entity.Name = dto.Name;

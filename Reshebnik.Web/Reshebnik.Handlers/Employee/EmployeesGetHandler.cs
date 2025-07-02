@@ -13,12 +13,11 @@ public class EmployeesGetHandler(
     public async ValueTask<List<EmployeeDto>> HandleAsync(CancellationToken cancellationToken = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
-        var employees = await db.Employees
+        var employees = db.Employees
             .AsNoTracking()
-            .Where(e => e.CompanyId == companyId)
-            .ToListAsync(cancellationToken);
+            .Where(e => e.CompanyId == companyId);
 
-        return employees.Select(e => new EmployeeDto
+        return await employees.Select(e => new EmployeeDto
         {
             Id = e.Id,
             Fio = e.FIO,
@@ -26,7 +25,10 @@ public class EmployeesGetHandler(
             Email = e.Email,
             Phone = e.Phone,
             Comment = e.Comment,
-            IsActive = e.IsActive
-        }).ToList();
+            IsActive = e.IsActive,
+            DefaultRole = e.DefaultRole,
+            DepartmentName = e.DepartmentLinks.First().Department.Name,
+            DepartmentId = e.DepartmentLinks.First().DepartmentId
+        }).ToListAsync(cancellationToken);
     }
 }

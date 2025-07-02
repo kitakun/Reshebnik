@@ -60,6 +60,7 @@ public class EmployeePutHandler(
                 entity.DepartmentLinks.Add(new EmployeeDepartmentLinkEntity
                 {
                     Employee = entity,
+                    DepartmentId = dto.DepartmentId.Value,
                     Type = dto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee
                 });
             }

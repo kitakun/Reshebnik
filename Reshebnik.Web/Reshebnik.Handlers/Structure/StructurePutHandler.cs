@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+
 using System.Linq;
+
 using Reshebnik.Domain.Models.Structure;
 using Reshebnik.Domain.Models.Department;
 using Reshebnik.EntityFramework;
@@ -16,41 +18,51 @@ public class StructurePutHandler(
 {
     public async Task HandleAsync(OrgStructureDto dto, CancellationToken ct = default)
     {
-        var companyId = await companyContext.CurrentCompanyIdAsync;
-
-        var providedIds = new HashSet<int>();
-        foreach (var root in dto.Departments)
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
         {
-            CollectIds(root, providedIds);
+            var companyId = await companyContext.CurrentCompanyIdAsync;
+
+            var providedIds = new HashSet<int>();
+            foreach (var root in dto.Departments)
+            {
+                CollectIds(root, providedIds);
+            }
+
+            var existingIds = await db.Departments
+                .Where(d => d.CompanyId == companyId && !d.IsDeleted)
+                .Select(d => d.Id)
+                .ToListAsync(ct);
+
+            var toDelete = existingIds.Where(id => !providedIds.Contains(id)).ToList();
+            if (toDelete.Count > 0)
+            {
+                await deleteHandler.HandleManyAsync(toDelete, ct);
+            }
+
+            var companyDeptIds = await db.Departments
+                .Where(d => d.CompanyId == companyId)
+                .Select(d => d.Id)
+                .ToListAsync(ct);
+
+            var schemes = await db.DepartmentSchemaEntities
+                .Where(s => companyDeptIds.Contains(s.FundamentalDepartmentId))
+                .ToListAsync(ct);
+
+            db.DepartmentSchemaEntities.RemoveRange(schemes);
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+
+            foreach (var root in dto.Departments)
+            {
+                var mapped = MapUnit(root);
+                await departmentHandler.HandleAsync(mapped, ct);
+            }
         }
-
-        var existingIds = await db.Departments
-            .Where(d => d.CompanyId == companyId && !d.IsDeleted)
-            .Select(d => d.Id)
-            .ToListAsync(ct);
-
-        var toDelete = existingIds.Where(id => !providedIds.Contains(id)).ToList();
-        if (toDelete.Count > 0)
+        catch
         {
-            await deleteHandler.HandleManyAsync(toDelete, ct);
-        }
-
-        var companyDeptIds = await db.Departments
-            .Where(d => d.CompanyId == companyId)
-            .Select(d => d.Id)
-            .ToListAsync(ct);
-
-        var schemes = await db.DepartmentSchemaEntities
-            .Where(s => companyDeptIds.Contains(s.FundamentalDepartmentId))
-            .ToListAsync(ct);
-
-        db.DepartmentSchemaEntities.RemoveRange(schemes);
-        await db.SaveChangesAsync(ct);
-
-        foreach (var root in dto.Departments)
-        {
-            var mapped = MapUnit(root);
-            await departmentHandler.HandleAsync(mapped, ct);
+            await transaction.RollbackAsync(CancellationToken.None);
         }
     }
 

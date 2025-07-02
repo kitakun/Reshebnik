@@ -39,12 +39,9 @@ public class DepartmentsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Get department for preview (0 means root)
-    /// </summary>
     [HttpGet("{id}/preview")]
     public async Task<IActionResult> PreviewAsync(
-        int id,
+        [FromRoute] int id,
         [FromServices] DepartmentPreviewHandler handler,
         CancellationToken cancellationToken)
     {
