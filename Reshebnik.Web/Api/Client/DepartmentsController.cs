@@ -102,4 +102,32 @@ public class DepartmentsController : ControllerBase
         await handler.HandleManyAsync(ids, cancellationToken);
         return Ok();
     }
+
+    /// <summary>
+    /// Get department form data by id
+    /// </summary>
+    [HttpGet("form/{id}")]
+    public async Task<IActionResult> GetFormAsync(
+        int id,
+        [FromServices] DepartmentFormGetByIdHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(id, cancellationToken);
+        if (result == null) return NotFound();
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Update department by form
+    /// </summary>
+    [HttpPut("form/{id}")]
+    public async Task<IActionResult> PutFormAsync(
+        int id,
+        [FromBody] DepartmentFormDto request,
+        [FromServices] DepartmentFormPutHandler handler,
+        CancellationToken cancellationToken)
+    {
+        await handler.HandleAsync(id, request, cancellationToken);
+        return Ok();
+    }
 }

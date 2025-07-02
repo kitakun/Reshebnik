@@ -137,6 +137,8 @@ builder.Services.AddScoped<DepartmentPutHandler>();
 builder.Services.AddScoped<DepartmentGetByIdHandler>();
 builder.Services.AddScoped<DepartmentPutOneHandler>();
 builder.Services.AddScoped<DepartmentDeleteHandler>();
+builder.Services.AddScoped<DepartmentFormGetByIdHandler>();
+builder.Services.AddScoped<DepartmentFormPutHandler>();
 builder.Services.AddScoped<EmployeesGetHandler>();
 builder.Services.AddScoped<EmployeesTypeaheadHandler>();
 builder.Services.AddScoped<DepartmentTypeaheadHandler>();
