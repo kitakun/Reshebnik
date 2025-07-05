@@ -28,4 +28,6 @@ public class EmployeeEntity
 
     public List<EmployeeDepartmentLinkEntity> DepartmentLinks { get; set; } = new();
     public List<UserNotification> UserNotification { get; set; } = new();
+
+    public List<MetricEntity> Metrics { get; set; } = new();
 }
