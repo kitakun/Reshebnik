@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reshebnik.EntityFramework",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reshebnik.Handlers", "Reshebnik.Handlers\Reshebnik.Handlers.csproj", "{0DB8DDDC-91EF-4D74-BA3E-FE284586057C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reshebnik.Clickhouse", "Reshebnik.Clickhouse\Reshebnik.Clickhouse.csproj", "{90E05647-AEB8-447E-8E3E-C84495037F95}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{0DB8DDDC-91EF-4D74-BA3E-FE284586057C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DB8DDDC-91EF-4D74-BA3E-FE284586057C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0DB8DDDC-91EF-4D74-BA3E-FE284586057C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90E05647-AEB8-447E-8E3E-C84495037F95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90E05647-AEB8-447E-8E3E-C84495037F95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90E05647-AEB8-447E-8E3E-C84495037F95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90E05647-AEB8-447E-8E3E-C84495037F95}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
