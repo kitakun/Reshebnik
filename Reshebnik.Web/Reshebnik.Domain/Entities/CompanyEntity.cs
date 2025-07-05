@@ -30,4 +30,6 @@ public class CompanyEntity
     public List<EmployeeEntity> Employees { get; set; } = new();
     [JsonIgnore]
     public List<DepartmentEntity> Departments { get; set; } = new();
+    [JsonIgnore]
+    public List<MetricEntity> Metrics { get; set; } = new();
 }
