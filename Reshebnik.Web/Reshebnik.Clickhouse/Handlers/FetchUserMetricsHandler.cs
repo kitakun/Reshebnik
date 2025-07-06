@@ -2,6 +2,7 @@ using Octonica.ClickHouseClient;
 using Microsoft.Extensions.Options;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
+using System.Data;
 
 namespace Reshebnik.Clickhouse.Handlers;
 
@@ -25,28 +26,33 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         await using var connection = new ClickHouseConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        var cmd = connection.CreateCommand("""
-                                           SELECT 
-                                               upsert_date,
-                                               value
-                                           FROM user_metrics
-                                           WHERE
-                                                metric_key=@key
-                                                AND upsert_date BETWEEN @from AND @to
-                                                ORDER BY upsert_date
-                                           """);
+        var table = $"{_options.Prefix}_user_metrics";
+        var cmd = connection.CreateCommand($"""
+                                          SELECT
+                                              upsert_date,
+                                              value
+                                          FROM {table}
+                                          WHERE
+                                               metric_key=@key AND period_type=@ptype
+                                               AND upsert_date BETWEEN @from AND @to
+                                          ORDER BY upsert_date
+                                          """);
         cmd.Parameters.AddWithValue("key", key);
+        cmd.Parameters.AddWithValue("ptype", sourcePeriod.ToString());
         cmd.Parameters.AddWithValue("from", range.From.Date);
         cmd.Parameters.AddWithValue("to", range.To.Date);
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        var index = 0;
-        while (await reader.ReadAsync(cancellationToken) && index < 13)
+        while (await reader.ReadAsync(cancellationToken))
         {
+            var date = reader.GetDateTime(0);
             var value = reader.GetInt32(1);
-            fact[index] = value;
-            plan[index] = value;
-            index++;
+            var idx = GetIndex(date, range.From.Date, expectedValues);
+            if (idx is >= 0 and < 13)
+            {
+                fact[idx] += value;
+                plan[idx] += value;
+            }
         }
 
         return new MetricsDataResponse(plan, fact);
@@ -66,17 +72,14 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         await using var connection = new ClickHouseConnection(connectionString);
         await connection.OpenAsync(ct);
 
-        var delete = connection.CreateCommand($"ALTER TABLE user_metrics DELETE WHERE metric_key=@key AND employee_id=@eid AND company_id=@cid AND {(departmentId.HasValue ? "department_id=@did" : "department_id IS NULL")} AND period_type=@ptype AND upsert_date=@date");
+        var table = $"{_options.Prefix}_user_metrics";
+        var delete = connection.CreateCommand($"ALTER TABLE {table} DELETE WHERE metric_key=@key AND employee_id=@eid AND company_id=@cid");
         delete.Parameters.AddWithValue("key", key);
         delete.Parameters.AddWithValue("eid", employeeId);
         delete.Parameters.AddWithValue("cid", companyId);
-        if (departmentId.HasValue)
-            delete.Parameters.AddWithValue("did", departmentId.Value);
-        delete.Parameters.AddWithValue("ptype", periodType.ToString());
-        delete.Parameters.AddWithValue("date", upsertDate.Date);
         await delete.ExecuteNonQueryAsync(ct);
 
-        var insert = connection.CreateCommand("INSERT INTO user_metrics (employee_id, company_id, department_id, metric_key, period_type, upsert_date, value) VALUES (@eid,@cid,@did,@key,@ptype,@date,@val)");
+        var insert = connection.CreateCommand($"INSERT INTO {table} (employee_id, company_id, department_id, metric_key, period_type, upsert_date, value) VALUES (@eid,@cid,@did,@key,@ptype,@date,@val)");
         insert.Parameters.AddWithValue("eid", employeeId);
         insert.Parameters.AddWithValue("cid", companyId);
         insert.Parameters.AddWithValue("did", (object?)departmentId ?? DBNull.Value);
@@ -85,5 +88,18 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         insert.Parameters.AddWithValue("date", upsertDate.Date);
         insert.Parameters.AddWithValue("val", value);
         await insert.ExecuteNonQueryAsync(ct);
+    }
+
+    private static int GetIndex(DateTime date, DateTime start, PeriodTypeEnum expected)
+    {
+        return expected switch
+        {
+            PeriodTypeEnum.Day => (int)(date.Date - start.Date).TotalDays,
+            PeriodTypeEnum.Week => (int)((date.Date - start.Date).TotalDays / 7),
+            PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month,
+            PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3,
+            PeriodTypeEnum.Year => date.Year - start.Year,
+            _ => -1
+        };
     }
 }
