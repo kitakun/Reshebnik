@@ -354,6 +354,12 @@ namespace Reshebnik.EntityFramework.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("type");
 
+                    b.Property<string>("PeriodType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("period_type");
+
                     b.Property<string>("Unit")
                         .IsRequired()
                         .HasMaxLength(16)
@@ -373,6 +379,82 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.HasIndex("EmployeeId");
 
                     b.ToTable("metrics", (string)null);
+                });
+
+            modelBuilder.Entity("Reshebnik.Domain.Entities.MetricTemplateEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClickHouseKey")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("clickhouse_key");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("integer")
+                        .HasColumnName("company_id");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("description");
+
+                    b.Property<decimal?>("Max")
+                        .HasColumnType("numeric")
+                        .HasColumnName("max_value");
+
+                    b.Property<decimal?>("Min")
+                        .HasColumnType("numeric")
+                        .HasColumnName("min_value");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("PeriodType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("period_type");
+
+                    b.Property<decimal?>("Plan")
+                        .HasColumnType("numeric")
+                        .HasColumnName("plan_value");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("type");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("unit");
+
+                    b.Property<bool>("Visible")
+                        .HasColumnType("boolean")
+                        .HasColumnName("visible");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("metric_templates", (string)null);
                 });
 
             modelBuilder.Entity("Reshebnik.Domain.Entities.SystemNotificationEntity", b =>
@@ -485,6 +567,17 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.Navigation("Department");
 
                     b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("Reshebnik.Domain.Entities.MetricTemplateEntity", b =>
+                {
+                    b.HasOne("Reshebnik.Domain.Entities.CompanyEntity", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("Reshebnik.Domain.Entities.EmployeeEntity", b =>

@@ -9,6 +9,7 @@ public class MetricDto
     public string Description { get; set; } = string.Empty;
     public MetricUnitEnum Unit { get; set; }
     public MetricTypeEnum Type { get; set; }
+    public PeriodTypeEnum PeriodType { get; set; }
     public int? DepartmentId { get; set; }
     public int? EmployeeId { get; set; }
     public decimal? Plan { get; set; }

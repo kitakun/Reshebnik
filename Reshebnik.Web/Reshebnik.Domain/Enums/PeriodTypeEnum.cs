@@ -2,8 +2,9 @@
 
 public enum PeriodTypeEnum
 {
-    Week = 1,
-    Month = 2,
-    Quartal = 3,
-    Year = 4
+    Day = 1,
+    Week = 2,
+    Month = 3,
+    Quartal = 4,
+    Year = 5
 }
