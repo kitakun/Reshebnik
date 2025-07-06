@@ -1,8 +1,8 @@
 using Reshebnik.Domain.Enums;
 
-namespace Reshebnik.Domain.Models.Metric;
+namespace Reshebnik.Domain.Models.MetricTemplate;
 
-public class MetricPutDto
+public class MetricTemplatePutDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
@@ -10,8 +10,6 @@ public class MetricPutDto
     public MetricUnitEnum Unit { get; set; }
     public MetricTypeEnum Type { get; set; }
     public PeriodTypeEnum PeriodType { get; set; }
-    public int? DepartmentId { get; set; }
-    public int? EmployeeId { get; set; }
     public decimal? Plan { get; set; }
     public decimal? Min { get; set; }
     public decimal? Max { get; set; }

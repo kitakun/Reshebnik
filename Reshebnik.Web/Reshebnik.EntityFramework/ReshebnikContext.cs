@@ -19,6 +19,7 @@ public class ReshebnikContext(DbContextOptions<ReshebnikContext> options) : DbCo
     public DbSet<UserNotification> UserNotifications { get; set; }
     public DbSet<SystemNotificationEntity> SystemNotifications { get; set; }
     public DbSet<MetricEntity> Metrics { get; set; }
+    public DbSet<MetricTemplateEntity> MetricTemplates { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -25,6 +25,7 @@ public class MetricGetHandler(
             Description = m.Description,
             Unit = m.Unit,
             Type = m.Type,
+            PeriodType = m.PeriodType,
             DepartmentId = m.DepartmentId,
             EmployeeId = m.EmployeeId,
             Plan = m.Plan,

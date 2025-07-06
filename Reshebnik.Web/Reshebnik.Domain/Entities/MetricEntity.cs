@@ -21,6 +21,7 @@ public class MetricEntity
 
     public MetricUnitEnum Unit { get; set; }
     public MetricTypeEnum Type { get; set; }
+    public PeriodTypeEnum PeriodType { get; set; }
 
     public decimal? Plan { get; set; }
     public decimal? Min { get; set; }

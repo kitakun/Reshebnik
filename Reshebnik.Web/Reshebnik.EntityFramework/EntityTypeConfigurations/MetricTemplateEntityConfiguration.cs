@@ -1,18 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
 using Reshebnik.Domain.Entities;
 
 namespace Reshebnik.EntityFramework.EntityTypeConfigurations;
 
-public class MetricEntityConfiguration : IEntityTypeConfiguration<MetricEntity>
+public class MetricTemplateEntityConfiguration : IEntityTypeConfiguration<MetricTemplateEntity>
 {
-    public void Configure(EntityTypeBuilder<MetricEntity> builder)
+    public void Configure(EntityTypeBuilder<MetricTemplateEntity> builder)
     {
-        builder.ToTable("metrics");
+        builder.ToTable("metric_templates");
 
         builder.HasKey(m => m.Id);
-
         builder.Property(m => m.Id)
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
@@ -21,26 +19,10 @@ public class MetricEntityConfiguration : IEntityTypeConfiguration<MetricEntity>
             .HasColumnName("company_id")
             .IsRequired();
 
-        builder.Property(m => m.DepartmentId)
-            .HasColumnName("department_id");
-
-        builder.Property(m => m.EmployeeId)
-            .HasColumnName("employee_id");
-
         builder.HasOne(m => m.Company)
-            .WithMany(c => c.Metrics)
+            .WithMany()
             .HasForeignKey(m => m.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne(m => m.Department)
-            .WithMany(d => d.Metrics)
-            .HasForeignKey(m => m.DepartmentId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasOne(m => m.Employee)
-            .WithMany(e => e.Metrics)
-            .HasForeignKey(m => m.EmployeeId)
-            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Property(m => m.Name)
             .HasColumnName("name")
@@ -71,17 +53,10 @@ public class MetricEntityConfiguration : IEntityTypeConfiguration<MetricEntity>
             .HasMaxLength(16)
             .IsRequired();
 
-        builder.Property(m => m.Plan)
-            .HasColumnName("plan_value");
-
-        builder.Property(m => m.Min)
-            .HasColumnName("min_value");
-
-        builder.Property(m => m.Max)
-            .HasColumnName("max_value");
-
-        builder.Property(m => m.Visible)
-            .HasColumnName("visible")
-            .IsRequired();
+        builder.Property(m => m.Plan).HasColumnName("plan_value");
+        builder.Property(m => m.Min).HasColumnName("min_value");
+        builder.Property(m => m.Max).HasColumnName("max_value");
+        builder.Property(m => m.Visible).HasColumnName("visible");
+        builder.Property(m => m.CreatedAt).HasColumnName("created_at");
     }
 }
