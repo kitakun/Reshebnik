@@ -37,7 +37,7 @@ public class UserContextHandler(IHttpContextAccessor httpContextAccessor, Resheb
         }
     }
 
-    public async ValueTask<EmployeeEntity> GetCurrentEmployeeAsync(CancellationToken cancellationToken = default)
+    public async ValueTask<EmployeeEntity> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
         return await db
             .Employees

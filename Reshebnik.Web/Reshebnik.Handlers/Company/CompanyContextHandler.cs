@@ -40,7 +40,7 @@ public class CompanyContextHandler
         var userId = _httpContent.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier);
         if (userId == null) return 0;
 
-        var existingUser = await _userContext.GetCurrentEmployeeAsync();
+        var existingUser = await _userContext.GetCurrentUserAsync();
 
         var userRoleClaim = _httpContent.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == "user-role");
         if (userRoleClaim == null) return 0;

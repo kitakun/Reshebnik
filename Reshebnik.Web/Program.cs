@@ -147,7 +147,9 @@ builder.Services.AddScoped<EmployeePutHandler>();
 builder.Services.AddScoped<EmployeeDeleteHandler>();
 builder.Services.AddScoped<CompanyUpdateHandler>();
 builder.Services.AddScoped<CompanyGetHandler>();
+builder.Services.AddScoped<SuCompanyGetHandler>();
 builder.Services.AddScoped<CompanySettingsUpdateHandler>();
+builder.Services.AddScoped<SuCompanySettingsUpdateHandler>();
 builder.Services.AddScoped<StructureGetHandler>();
 builder.Services.AddScoped<StructurePutHandler>();
 
