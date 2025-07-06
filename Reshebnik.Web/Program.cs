@@ -10,6 +10,9 @@ using Reshebnik.Handlers.Company;
 using Reshebnik.Handlers.Department;
 using Reshebnik.Handlers.Employee;
 using Reshebnik.Handlers.Structure;
+using Reshebnik.Handlers.Metric;
+using Reshebnik.Clickhouse;
+using Reshebnik.Clickhouse.Handlers;
 
 using System.Text;
 using System.Text.Json;
@@ -152,6 +155,12 @@ builder.Services.AddScoped<CompanySettingsUpdateHandler>();
 builder.Services.AddScoped<SuCompanySettingsUpdateHandler>();
 builder.Services.AddScoped<StructureGetHandler>();
 builder.Services.AddScoped<StructurePutHandler>();
+builder.Services.AddScoped<MetricGetHandler>();
+builder.Services.AddScoped<MetricPutHandler>();
+builder.Services.Configure<ClickhouseOptions>(builder.Configuration.GetSection("Clickhouse"));
+builder.Services.AddScoped<FetchUserMetricsHandler>();
+builder.Services.AddScoped<UserPreviewMetricsHandler>();
+builder.Services.AddScoped<MigrateClickhouseDatabase>();
 
 // SU
 builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();
@@ -166,6 +175,15 @@ using (var scope = app.Services.CreateScope())
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<ReshebnikContext>>();
     logger.LogInformation("before database migration");
     await db.Database.MigrateAsync(); // ⬅️ Applies any pending migrations
+    logger.LogInformation("migrated");
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var clickhouse = scope.ServiceProvider.GetRequiredService<MigrateClickhouseDatabase>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<ReshebnikContext>>();
+    logger.LogInformation("before clickhouse migration");
+    await clickhouse.HandleAsync(); // ⬅️ Applies any pending migrations
     logger.LogInformation("migrated");
 }
 

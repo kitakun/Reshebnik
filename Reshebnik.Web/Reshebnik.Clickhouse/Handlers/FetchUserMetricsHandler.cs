@@ -1,8 +1,7 @@
-using Octonica.ClickHouseClient;
+using ClickHouse.Client.ADO;
 using Microsoft.Extensions.Options;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
-using System.Data;
 
 namespace Reshebnik.Clickhouse.Handlers;
 
@@ -22,27 +21,36 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         var fact = new int[13];
         var plan = new int[13];
 
-        var connectionString = $"Host={_options.Host};Port={_options.Port};Database={_options.DbName};User={_options.Username};Password={_options.Password}";
-        await using var connection = new ClickHouseConnection(connectionString);
+        var builder = new ClickHouseConnectionStringBuilder
+        {
+            Host = _options.Host,
+            Database = _options.DbName,
+            Username = _options.Username,
+            Password = _options.Password,
+            Protocol = "http",
+        };
+        var connStr = builder.ToString();
+        
+        await using var connection = new ClickHouseConnection(connStr);
         await connection.OpenAsync(cancellationToken);
 
         var table = $"{_options.Prefix}_user_metrics";
-        var cmd = connection.CreateCommand($"""
-                                          SELECT
-                                              upsert_date,
-                                              value
-                                          FROM {table}
-                                          WHERE
-                                               metric_key=@key AND period_type=@ptype
-                                               AND upsert_date BETWEEN @from AND @to
-                                          ORDER BY upsert_date
-                                          """);
-        cmd.Parameters.AddWithValue("key", key);
-        cmd.Parameters.AddWithValue("ptype", sourcePeriod.ToString());
-        cmd.Parameters.AddWithValue("from", range.From.Date);
-        cmd.Parameters.AddWithValue("to", range.To.Date);
+        var sql = $"""
+            SELECT
+                upsert_date,
+                value
+            FROM {table}
+            WHERE metric_key = '{key}'
+              AND period_type = '{sourcePeriod}'
+              AND upsert_date BETWEEN toDate('{range.From:yyyy-MM-dd}') AND toDate('{range.To:yyyy-MM-dd}')
+            ORDER BY upsert_date
+        """;
 
+        await using var cmd = connection.CreateCommand();
+        cmd.CommandText = sql;
+            
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
         while (await reader.ReadAsync(cancellationToken))
         {
             var date = reader.GetDateTime(0);
@@ -68,26 +76,34 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         int value,
         CancellationToken ct = default)
     {
-        var connectionString = $"Host={_options.Host};Port={_options.Port};Database={_options.DbName};User={_options.Username};Password={_options.Password}";
-        await using var connection = new ClickHouseConnection(connectionString);
+        var connStr =
+            $"Host={_options.Host};Port={_options.Port};Protocol=http;Database={_options.DbName};User={_options.Username};Password={_options.Password}";
+        await using var connection = new ClickHouseConnection(connStr);
         await connection.OpenAsync(ct);
 
         var table = $"{_options.Prefix}_user_metrics";
-        var delete = connection.CreateCommand($"ALTER TABLE {table} DELETE WHERE metric_key=@key AND employee_id=@eid AND company_id=@cid");
-        delete.Parameters.AddWithValue("key", key);
-        delete.Parameters.AddWithValue("eid", employeeId);
-        delete.Parameters.AddWithValue("cid", companyId);
-        await delete.ExecuteNonQueryAsync(ct);
 
-        var insert = connection.CreateCommand($"INSERT INTO {table} (employee_id, company_id, department_id, metric_key, period_type, upsert_date, value) VALUES (@eid,@cid,@did,@key,@ptype,@date,@val)");
-        insert.Parameters.AddWithValue("eid", employeeId);
-        insert.Parameters.AddWithValue("cid", companyId);
-        insert.Parameters.AddWithValue("did", (object?)departmentId ?? DBNull.Value);
-        insert.Parameters.AddWithValue("key", key);
-        insert.Parameters.AddWithValue("ptype", periodType.ToString());
-        insert.Parameters.AddWithValue("date", upsertDate.Date);
-        insert.Parameters.AddWithValue("val", value);
-        await insert.ExecuteNonQueryAsync(ct);
+        var deleteSql = $"""
+            ALTER TABLE {table}
+            DELETE WHERE metric_key = '{key}' AND employee_id = {employeeId} AND company_id = {companyId}
+        """;
+
+        await using (var deleteCmd = connection.CreateCommand())
+        {
+            deleteCmd.CommandText = deleteSql;
+            await deleteCmd.ExecuteNonQueryAsync(ct);
+        }
+
+        var insertSql = $"""
+            INSERT INTO {table} (employee_id, company_id, department_id, metric_key, period_type, upsert_date, value)
+            VALUES ({employeeId}, {companyId}, {departmentId?.ToString() ?? "NULL"}, '{key}', '{periodType}', toDate('{upsertDate:yyyy-MM-dd}'), {value})
+        """;
+
+        await using (var insertCmd = connection.CreateCommand())
+        {
+            insertCmd.CommandText = insertSql;
+            await insertCmd.ExecuteNonQueryAsync(ct);
+        }
     }
 
     private static int GetIndex(DateTime date, DateTime start, PeriodTypeEnum expected)

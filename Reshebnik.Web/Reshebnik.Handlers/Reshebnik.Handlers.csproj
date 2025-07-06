@@ -6,10 +6,11 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
+  <ItemGroup>
       <ProjectReference Include="..\Reshebnik.Domain\Reshebnik.Domain.csproj" />
       <ProjectReference Include="..\Reshebnik.EntityFramework\Reshebnik.EntityFramework.csproj" />
-    </ItemGroup>
+      <ProjectReference Include="..\Reshebnik.Clickhouse\Reshebnik.Clickhouse.csproj" />
+  </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.6" />

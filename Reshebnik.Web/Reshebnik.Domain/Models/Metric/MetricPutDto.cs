@@ -16,4 +16,5 @@ public class MetricPutDto
     public decimal? Min { get; set; }
     public decimal? Max { get; set; }
     public bool Visible { get; set; }
+    public bool IsSupervisor { get; set; }
 }

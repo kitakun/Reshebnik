@@ -10,6 +10,30 @@ public class MetricGetHandler(
     ReshebnikContext db,
     CompanyContextHandler companyContext)
 {
+    public async ValueTask<MetricDto> HandleAsync(int id, CancellationToken ct = default)
+    {
+        var companyId = await companyContext.CurrentCompanyIdAsync;
+        var metrics = await db.Metrics
+            .AsNoTracking()
+            .FirstAsync(m => m.CompanyId == companyId && m.Id == id, ct);
+
+        return new MetricDto
+        {
+            Id = metrics.Id,
+            Name = metrics.Name,
+            Description = metrics.Description,
+            Unit = metrics.Unit,
+            Type = metrics.Type,
+            PeriodType = metrics.PeriodType,
+            DepartmentId = metrics.DepartmentId,
+            EmployeeId = metrics.EmployeeId,
+            Plan = metrics.Plan,
+            Min = metrics.Min,
+            Max = metrics.Max,
+            Visible = metrics.Visible
+        };
+    }
+    
     public async ValueTask<List<MetricDto>> HandleAsync(CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
