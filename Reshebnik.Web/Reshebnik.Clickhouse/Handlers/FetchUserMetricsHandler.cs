@@ -11,7 +11,12 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
 
     private readonly ClickhouseOptions _options = optionsAccessor.Value;
 
-    public async Task<MetricsDataResponse> HandleAsync(DateRange range, string key, CancellationToken cancellationToken)
+    public async Task<MetricsDataResponse> HandleAsync(
+        DateRange range,
+        string key,
+        PeriodTypeEnum expectedValues,
+        PeriodTypeEnum sourcePeriod,
+        CancellationToken cancellationToken)
     {
         var fact = new int[13];
         var plan = new int[13];
@@ -20,7 +25,16 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         await using var connection = new ClickHouseConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        var cmd = connection.CreateCommand($"SELECT upsert_date, value FROM user_metrics WHERE metric_key=@key AND upsert_date BETWEEN @from AND @to ORDER BY upsert_date");
+        var cmd = connection.CreateCommand("""
+                                           SELECT 
+                                               upsert_date,
+                                               value
+                                           FROM user_metrics
+                                           WHERE
+                                                metric_key=@key
+                                                AND upsert_date BETWEEN @from AND @to
+                                                ORDER BY upsert_date
+                                           """);
         cmd.Parameters.AddWithValue("key", key);
         cmd.Parameters.AddWithValue("from", range.From.Date);
         cmd.Parameters.AddWithValue("to", range.To.Date);
@@ -38,7 +52,15 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         return new MetricsDataResponse(plan, fact);
     }
 
-    public async Task PutAsync(string key, int employeeId, int companyId, int? departmentId, PeriodTypeEnum periodType, DateTime upsertDate, int value, CancellationToken ct = default)
+    public async Task PutAsync(
+        string key,
+        int employeeId,
+        int companyId,
+        int? departmentId,
+        PeriodTypeEnum periodType,
+        DateTime upsertDate,
+        int value,
+        CancellationToken ct = default)
     {
         var connectionString = $"Host={_options.Host};Port={_options.Port};Database={_options.DbName};User={_options.Username};Password={_options.Password}";
         await using var connection = new ClickHouseConnection(connectionString);

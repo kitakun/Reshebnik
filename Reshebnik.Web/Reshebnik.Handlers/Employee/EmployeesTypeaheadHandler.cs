@@ -30,7 +30,7 @@ public class EmployeesTypeaheadHandler(
         var employees = await query
             .Include(i => i.DepartmentLinks)
             .ThenInclude(i => i.Department)
-            .Skip(((request.Page ?? 1) - 1) * COUNT)
+            .Skip((Math.Max(request.Page ?? 1, 1) - 1) * COUNT)
             .ToListAsync(ct);
 
         var count = await query.CountAsync(ct);
