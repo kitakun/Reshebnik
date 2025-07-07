@@ -160,6 +160,7 @@ builder.Services.AddScoped<MetricPutHandler>();
 builder.Services.Configure<ClickhouseOptions>(builder.Configuration.GetSection("Clickhouse"));
 builder.Services.AddScoped<FetchUserMetricsHandler>();
 builder.Services.AddScoped<UserPreviewMetricsHandler>();
+builder.Services.AddScoped<UserPreviewMetricsPutHandler>();
 builder.Services.AddScoped<MigrateClickhouseDatabase>();
 
 // SU

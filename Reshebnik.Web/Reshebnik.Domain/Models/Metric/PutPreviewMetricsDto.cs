@@ -4,8 +4,8 @@ namespace Reshebnik.Domain.Models.Metric;
 
 public class PutPreviewMetricsDto
 {
-    public UserPreviewMetricsDto Metrics { get; set; }
+    public List<UserPreviewMetricItemDto> Metrics { get; set; } = new();
     public DateTime From { get; set; }
     public DateTime To { get; set; }
-    public PeriodTypeEnum Period { get; set; }
+    public PeriodTypeEnum PeriodType { get; set; }
 }

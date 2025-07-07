@@ -76,8 +76,15 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         int value,
         CancellationToken ct = default)
     {
-        var connStr =
-            $"Host={_options.Host};Port={_options.Port};Protocol=http;Database={_options.DbName};User={_options.Username};Password={_options.Password}";
+        var builder = new ClickHouseConnectionStringBuilder
+        {
+            Host = _options.Host,
+            Database = _options.DbName,
+            Username = _options.Username,
+            Password = _options.Password,
+            Protocol = "http",
+        };
+        var connStr = builder.ToString();
         await using var connection = new ClickHouseConnection(connStr);
         await connection.OpenAsync(ct);
 

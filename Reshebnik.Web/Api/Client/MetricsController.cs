@@ -5,6 +5,7 @@ using Reshebnik.Domain.Models.Metric;
 using Reshebnik.Domain.Models;
 using Reshebnik.Handlers.Metric;
 
+
 namespace Reshebnik.Web.Api.Client;
 
 [Authorize]
@@ -61,8 +62,12 @@ public class MetricsController : ControllerBase
     public async Task<IActionResult> PutUserPreviewMetrics(
         [FromRoute] int id,
         [FromBody] PutPreviewMetricsDto request,
+        [FromServices] UserPreviewMetricsPutHandler handler,
         CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var ok = await handler.HandleAsync(id, request, cancellationToken);
+        if (!ok) return NotFound();
+        return Ok();
     }
 }
+
