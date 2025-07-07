@@ -18,8 +18,9 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         PeriodTypeEnum sourcePeriod,
         CancellationToken cancellationToken)
     {
-        var fact = new int[13];
-        var plan = new int[13];
+        var length = GetPeriodLength(range, expectedValues);
+        var fact = new int[length];
+        var plan = new int[length];
 
         var builder = new ClickHouseConnectionStringBuilder
         {
@@ -56,7 +57,7 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
             var date = reader.GetDateTime(0);
             var value = reader.GetInt32(1);
             var idx = GetIndex(date, range.From.Date, expectedValues);
-            if (idx is >= 0 and < 13)
+            if (idx is >= 0 and < length)
             {
                 fact[idx] += value;
                 plan[idx] += value;
@@ -124,5 +125,13 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
             PeriodTypeEnum.Year => date.Year - start.Year,
             _ => -1
         };
+    }
+
+    private static int GetPeriodLength(DateRange range, PeriodTypeEnum expected)
+    {
+        if (range.To < range.From) return 0;
+
+        var lastIndex = GetIndex(range.To.Date, range.From.Date, expected);
+        return Math.Max(0, lastIndex + 1);
     }
 }
