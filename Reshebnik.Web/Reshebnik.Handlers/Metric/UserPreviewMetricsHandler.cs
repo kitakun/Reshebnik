@@ -44,8 +44,18 @@ public class UserPreviewMetricsHandler(
                 metric.PeriodType,
                 metric.PeriodType,
                 ct);
-            var avg = data.FactData.Length > 0 ? data.FactData.Average() : 0;
-            sumAvg += avg;
+
+            var factAvg = data.FactData.Length > 0 ? data.FactData.Average() : 0;
+
+            double avgPercent = 0;
+            if (metric.Min.HasValue && metric.Max.HasValue && metric.Max != metric.Min)
+            {
+                var min = (double)metric.Min.Value;
+                var max = (double)metric.Max.Value;
+                avgPercent = (factAvg - min) / (max - min) * 100;
+            }
+
+            sumAvg += avgPercent;
             result.Metrics.Add(new UserPreviewMetricItemDto
             {
                 Id = metric.Id,
@@ -54,7 +64,7 @@ public class UserPreviewMetricsHandler(
                 FactData = data.FactData,
                 Period = metric.PeriodType,
                 Type = metric.Type,
-                Average = avg
+                Average = avgPercent
             });
         }
 
