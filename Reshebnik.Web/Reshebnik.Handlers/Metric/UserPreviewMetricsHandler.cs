@@ -40,7 +40,7 @@ public class UserPreviewMetricsHandler(
         {
             var data = await fetchHandler.HandleAsync(
                 range,
-                metric.ClickHouseKey,
+                metric.Id,
                 metric.PeriodType,
                 metric.PeriodType,
                 ct);
@@ -53,6 +53,7 @@ public class UserPreviewMetricsHandler(
                 PlanData = data.PlanData,
                 FactData = data.FactData,
                 Period = metric.PeriodType,
+                Type = metric.Type,
                 Average = avg
             });
         }

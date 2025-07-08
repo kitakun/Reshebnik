@@ -13,7 +13,7 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
 
     public async Task<MetricsDataResponse> HandleAsync(
         DateRange range,
-        string key,
+        int metricId,
         PeriodTypeEnum expectedValues,
         PeriodTypeEnum sourcePeriod,
         CancellationToken cancellationToken)
@@ -21,6 +21,8 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         var length = GetPeriodLength(range, expectedValues);
         var fact = new int[length];
         var plan = new int[length];
+
+        var key = $"user-metric-{metricId}";
 
         var builder = new ClickHouseConnectionStringBuilder
         {
@@ -39,12 +41,13 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         var sql = $"""
             SELECT
                 upsert_date,
-                value
+                value,
+                value_type
             FROM {table}
             WHERE metric_key = '{key}'
               AND period_type = '{sourcePeriod}'
               AND upsert_date BETWEEN toDate('{range.From:yyyy-MM-dd}') AND toDate('{range.To:yyyy-MM-dd}')
-            ORDER BY upsert_date
+            ORDER BY upsert_date, value_type
         """;
 
         await using var cmd = connection.CreateCommand();
@@ -56,11 +59,14 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         {
             var date = reader.GetDateTime(0);
             var value = reader.GetInt32(1);
+            var type = reader.GetString(2);
             var idx = GetIndex(date, range.From.Date, expectedValues);
-            if (idx is >= 0 && idx < length)
+            if (idx is >= 0 && idx < length && Enum.TryParse<MetricValueTypeEnum>(type, out var vt))
             {
-                fact[idx] += value;
-                plan[idx] += value;
+                if (vt == MetricValueTypeEnum.Fact)
+                    fact[idx] += value;
+                else if (vt == MetricValueTypeEnum.Plan)
+                    plan[idx] += value;
             }
         }
 
@@ -68,7 +74,8 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
     }
 
     public async Task PutAsync(
-        string key,
+        int metricId,
+        MetricValueTypeEnum valueType,
         int employeeId,
         int companyId,
         int? departmentId,
@@ -77,6 +84,8 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         int value,
         CancellationToken ct = default)
     {
+        var key = $"user-metric-{metricId}";
+
         var builder = new ClickHouseConnectionStringBuilder
         {
             Host = _options.Host,
@@ -93,7 +102,8 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
 
         var deleteSql = $"""
             ALTER TABLE {table}
-            DELETE WHERE metric_key = '{key}' AND employee_id = {employeeId} AND company_id = {companyId}
+            DELETE WHERE metric_key = '{key}' AND value_type = '{valueType}' AND employee_id = {employeeId} AND company_id = {companyId} AND upsert_date = toDate('{upsertDate:yyyy-MM-dd}')
+            AND value_type = '{valueType}' AND period_type = '{periodType}'
         """;
 
         await using (var deleteCmd = connection.CreateCommand())
@@ -103,8 +113,8 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         }
 
         var insertSql = $"""
-            INSERT INTO {table} (employee_id, company_id, department_id, metric_key, period_type, upsert_date, value)
-            VALUES ({employeeId}, {companyId}, {departmentId?.ToString() ?? "NULL"}, '{key}', '{periodType}', toDate('{upsertDate:yyyy-MM-dd}'), {value})
+            INSERT INTO {table} (employee_id, company_id, department_id, metric_key, value_type, period_type, upsert_date, value)
+            VALUES ({employeeId}, {companyId}, {departmentId?.ToString() ?? "NULL"}, '{key}', '{valueType}', '{periodType}', toDate('{upsertDate:yyyy-MM-dd}'), {value})
         """;
 
         await using (var insertCmd = connection.CreateCommand())

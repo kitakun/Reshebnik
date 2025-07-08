@@ -45,7 +45,8 @@ public class UserPreviewMetricsPutHandler(
                 {
                     case MetricTypeEnum.PlanFact:
                         bdataTasks.Add(putHandler.PutAsync(
-                            metric.ClickHouseKey,
+                            metric.Id,
+                            MetricValueTypeEnum.Fact,
                             userId,
                             companyId,
                             metric.DepartmentId,
@@ -53,8 +54,35 @@ public class UserPreviewMetricsPutHandler(
                             date,
                             item.FactData[i],
                             ct));
+                        break;
+                    case MetricTypeEnum.FactOnly:
                         bdataTasks.Add(putHandler.PutAsync(
-                            metric.ClickHouseKey,
+                            metric.Id,
+                            MetricValueTypeEnum.Fact,
+                            userId,
+                            companyId,
+                            metric.DepartmentId,
+                            request.PeriodType,
+                            date,
+                            item.FactData[i],
+                            ct));
+                        break;
+                    case MetricTypeEnum.Cumulative:
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+            for (var i = 0; i < item.PlanData.Length; i++)
+            {
+                var date = AddOffset(request.From.Date, request.PeriodType, i);
+                if (date > request.To.Date) break;
+
+                switch (metric.Type)
+                {
+                    case MetricTypeEnum.PlanFact:
+                        bdataTasks.Add(putHandler.PutAsync(
+                            metric.Id,
+                            MetricValueTypeEnum.Plan,
                             userId,
                             companyId,
                             metric.DepartmentId,
@@ -64,15 +92,6 @@ public class UserPreviewMetricsPutHandler(
                             ct));
                         break;
                     case MetricTypeEnum.FactOnly:
-                        bdataTasks.Add(putHandler.PutAsync(
-                            metric.ClickHouseKey,
-                            userId,
-                            companyId,
-                            metric.DepartmentId,
-                            request.PeriodType,
-                            date,
-                            item.FactData[i],
-                            ct));
                         break;
                     case MetricTypeEnum.Cumulative:
                     default:
