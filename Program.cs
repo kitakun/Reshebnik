@@ -74,7 +74,7 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
 #else
         policy
-            .WithOrigins("https://reshebnik.ru")
+            .WithOrigins("kitakun-reshebnikfront-5e31.twc1.net")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
