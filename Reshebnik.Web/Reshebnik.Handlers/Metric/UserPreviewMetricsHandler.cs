@@ -52,6 +52,7 @@ public class UserPreviewMetricsHandler(
                 Name = metric.Name,
                 PlanData = data.PlanData,
                 FactData = data.FactData,
+                Period = metric.PeriodType,
                 Average = avg
             });
         }

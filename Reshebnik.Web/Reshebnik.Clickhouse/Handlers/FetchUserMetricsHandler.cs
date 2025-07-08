@@ -57,7 +57,7 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
             var date = reader.GetDateTime(0);
             var value = reader.GetInt32(1);
             var idx = GetIndex(date, range.From.Date, expectedValues);
-            if (idx is >= 0 and < length)
+            if (idx is >= 0 && idx < length)
             {
                 fact[idx] += value;
                 plan[idx] += value;

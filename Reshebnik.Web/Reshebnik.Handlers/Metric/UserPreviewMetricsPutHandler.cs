@@ -41,15 +41,43 @@ public class UserPreviewMetricsPutHandler(
                 var date = AddOffset(request.From.Date, request.PeriodType, i);
                 if (date > request.To.Date) break;
 
-                bdataTasks.Add(putHandler.PutAsync(
-                    metric.ClickHouseKey,
-                    userId,
-                    companyId,
-                    metric.DepartmentId,
-                    request.PeriodType,
-                    date,
-                    item.FactData[i],
-                    ct));
+                switch (metric.Type)
+                {
+                    case MetricTypeEnum.PlanFact:
+                        bdataTasks.Add(putHandler.PutAsync(
+                            metric.ClickHouseKey,
+                            userId,
+                            companyId,
+                            metric.DepartmentId,
+                            request.PeriodType,
+                            date,
+                            item.FactData[i],
+                            ct));
+                        bdataTasks.Add(putHandler.PutAsync(
+                            metric.ClickHouseKey,
+                            userId,
+                            companyId,
+                            metric.DepartmentId,
+                            request.PeriodType,
+                            date,
+                            item.PlanData[i],
+                            ct));
+                        break;
+                    case MetricTypeEnum.FactOnly:
+                        bdataTasks.Add(putHandler.PutAsync(
+                            metric.ClickHouseKey,
+                            userId,
+                            companyId,
+                            metric.DepartmentId,
+                            request.PeriodType,
+                            date,
+                            item.FactData[i],
+                            ct));
+                        break;
+                    case MetricTypeEnum.Cumulative:
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
         }
 
