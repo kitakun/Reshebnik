@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 using Reshebnik.Domain.Models;
 using Reshebnik.Handlers.Auth;
@@ -8,11 +9,13 @@ using System.Text.Json;
 
 namespace Reshebnik.Web.Api.Client;
 
+[AllowAnonymous]
 [ApiController]
 [ApiExplorerSettings(GroupName = "Client")]
 [Route("api/admin/[controller]")]
 public class AuthController : ControllerBase
 {
+    [AllowAnonymous]
     [HttpGet("invite")]
     public async Task<IActionResult> GetInviteAdminUserAsync(
         [FromQuery] string code,
@@ -24,6 +27,7 @@ public class AuthController : ControllerBase
         return Ok(new { name = result.Value.Name, email = result.Value.Email });
     }
 
+    [AllowAnonymous]
     [HttpPost("invite")]
     public async Task<IActionResult> InviteAdminUserAsync(
         [FromQuery] string code,
@@ -40,6 +44,7 @@ public class AuthController : ControllerBase
         return Ok(new AdminLoginResponse(result.Value.User, result.Value.Jwt, result.Value.CurrentCompanyId));
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> LoginAsync(
         [FromBody] LoginRequest request,

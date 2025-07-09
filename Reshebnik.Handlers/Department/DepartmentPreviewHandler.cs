@@ -1,16 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 using Reshebnik.Domain.Entities;
 using Reshebnik.Domain.Enums;
+using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Department;
 using Reshebnik.EntityFramework;
+using Reshebnik.Clickhouse.Handlers;
 
 namespace Reshebnik.Handlers.Department;
 
-public class DepartmentPreviewHandler(ReshebnikContext db)
+public class DepartmentPreviewHandler(
+    ReshebnikContext db,
+    FetchDepartmentCompletionHandler fetchHandler)
 {
     private const int MAX_USERS = 5;
 
-    public async ValueTask<DepartmentPreviewDto?> HandleAsync(int id, CancellationToken ct = default)
+    public async ValueTask<DepartmentPreviewDto?> HandleAsync(int id, DateRange range, CancellationToken ct = default)
     {
         var departments = await db.Departments
             .AsNoTracking()
@@ -34,6 +38,39 @@ public class DepartmentPreviewHandler(ReshebnikContext db)
             Name = d.Name,
             CompletionPercent = 0
         });
+        
+        var metrics = await db.Metrics
+            .AsNoTracking()
+            .Where(m => m.DepartmentId != null && deptIds.Contains(m.DepartmentId.Value))
+            .ToListAsync(ct);
+
+        foreach (var d in departments)
+        {
+            var metricsForDept = metrics.Where(m => m.DepartmentId == d.Id).ToList();
+            double sumPercent = 0;
+            int count = 0;
+
+            foreach (var metric in metricsForDept)
+            {
+                var avg = await fetchHandler.HandleAsync(d.CompanyId, d.Id, metric.ClickHouseKey, range, ct);
+                if (double.IsNaN(avg) || double.IsInfinity(avg))
+                    avg = 0;
+
+                double percent = 0;
+                if (metric.Min.HasValue && metric.Max.HasValue && metric.Max != metric.Min)
+                {
+                    var min = (double)metric.Min.Value;
+                    var max = (double)metric.Max.Value;
+                    percent = (avg - min) / (max - min) * 100;
+                }
+
+                sumPercent += percent;
+                count++;
+            }
+
+            if (dict.TryGetValue(d.Id, out var dto))
+                dto.CompletionPercent = count > 0 ? sumPercent / count : 0;
+        }
 
         foreach (var link in links)
         {

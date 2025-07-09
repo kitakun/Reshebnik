@@ -42,10 +42,13 @@ public class DepartmentsController : ControllerBase
     [HttpGet("{id}/preview")]
     public async Task<IActionResult> PreviewAsync(
         [FromRoute] int id,
+        [FromQuery] DateTime from,
+        [FromQuery] DateTime to,
         [FromServices] DepartmentPreviewHandler handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(id, cancellationToken);
+        var range = new DateRange(from, to);
+        var result = await handler.HandleAsync(id, range, cancellationToken);
         if (result == null) return NotFound();
         return Ok(result);
     }
