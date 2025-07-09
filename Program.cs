@@ -11,6 +11,7 @@ using Reshebnik.Handlers.Department;
 using Reshebnik.Handlers.Employee;
 using Reshebnik.Handlers.Structure;
 using Reshebnik.Handlers.Metric;
+using Reshebnik.Handlers.Indicator;
 using Reshebnik.Clickhouse;
 using Reshebnik.Clickhouse.Handlers;
 
@@ -157,6 +158,9 @@ builder.Services.AddScoped<StructureGetHandler>();
 builder.Services.AddScoped<StructurePutHandler>();
 builder.Services.AddScoped<MetricGetHandler>();
 builder.Services.AddScoped<MetricPutHandler>();
+builder.Services.AddScoped<IndicatorGetHandler>();
+builder.Services.AddScoped<IndicatorPutHandler>();
+builder.Services.AddScoped<IndicatorTypeaheadHandler>();
 builder.Services.Configure<ClickhouseOptions>(builder.Configuration.GetSection("Clickhouse"));
 builder.Services.AddScoped<FetchUserMetricsHandler>();
 builder.Services.AddScoped<FetchDepartmentCompletionHandler>();
