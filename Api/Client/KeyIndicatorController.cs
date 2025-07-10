@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Reshebnik.Domain.Models.Indicator;
+using Reshebnik.Domain.Enums;
 using Reshebnik.Handlers.KeyIndicator;
 
 namespace Reshebnik.Web.Api.Client;
@@ -15,10 +16,13 @@ public class KeyIndicatorController : ControllerBase
     [HttpGet]
     [ProducesResponseType<List<KeyIndicatorCategoryDto>>(200)]
     public async Task<IActionResult> GetAsync(
+        [FromQuery] DateTime from,
+        [FromQuery] DateTime to,
+        [FromQuery] PeriodTypeEnum type,
         [FromServices] KeyIndicatorGetHandler handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(cancellationToken);
+        var result = await handler.HandleAsync(from, to, type, cancellationToken);
         return Ok(result);
     }
 }
