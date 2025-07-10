@@ -7,7 +7,6 @@ using Reshebnik.Clickhouse.Handlers;
 namespace Reshebnik.Handlers.Metric;
 
 public class CompanyPreviewMetricsPutHandler(
-    ReshebnikContext db,
     CompanyContextHandler companyContext,
     FetchCompanyMetricsHandler putHandler)
 {
@@ -18,34 +17,41 @@ public class CompanyPreviewMetricsPutHandler(
         var companyId = await companyContext.CurrentCompanyIdAsync;
 
         var item = request.Metrics;
+        var maxLength = Math.Max(item.FactData.Length, item.PlanData.Length);
         var tasks = new List<Task>();
 
-        for (var i = 0; i < item.FactData.Length; i++)
+        for (var i = 0; i < maxLength; i++)
         {
             var date = AddOffset(request.From.Date, request.PeriodType, i);
             if (date > request.To.Date) break;
-            tasks.Add(putHandler.PutAsync(
-                request.Metrics.Id,
-                MetricValueTypeEnum.Fact,
-                companyId,
-                request.PeriodType,
-                date,
-                item.FactData[i],
-                ct));
-        }
 
-        for (var i = 0; i < item.PlanData.Length; i++)
-        {
-            var date = AddOffset(request.From.Date, request.PeriodType, i);
-            if (date > request.To.Date) break;
-            tasks.Add(putHandler.PutAsync(
-                request.Metrics.Id,
-                MetricValueTypeEnum.Plan,
-                companyId,
-                request.PeriodType,
-                date,
-                item.PlanData[i],
-                ct));
+            var iCopy = i;
+            tasks.Add(Task.Run(async () =>
+            {
+                if (iCopy < item.PlanData.Length)
+                {
+                    await putHandler.PutAsync(
+                        request.Metrics.Id,
+                        MetricValueTypeEnum.Plan,
+                        companyId,
+                        request.PeriodType,
+                        date,
+                        item.PlanData[iCopy],
+                        ct);
+                }
+
+                if (iCopy < item.FactData.Length)
+                {
+                    await putHandler.PutAsync(
+                        request.Metrics.Id,
+                        MetricValueTypeEnum.Fact,
+                        companyId,
+                        request.PeriodType,
+                        date,
+                        item.FactData[iCopy],
+                        ct);
+                }
+            }, ct));
         }
 
         await Task.WhenAll(tasks);

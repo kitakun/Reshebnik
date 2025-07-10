@@ -41,45 +41,11 @@ public class CompanyPreviewMetricsHandler(
             Id = indicator.Id,
             Name = indicator.Name,
             PlanData = data.PlanData,
-            FactData = data.FactData
+            FactData = data.FactData,
+            TotalPlanData = data.TotalPlanData,
+            TotalFactData = data.TotalFactData
         };
 
-        /*
-        var groups = indicators.GroupBy(i => i.Category);
-        var result = new List<CompanyPreviewMetricsDto>();
-        foreach (var group in groups)
-        {
-            var dto = new CompanyPreviewMetricsDto
-            {
-                CategoryName = group.Key,
-                From = range.From,
-                To = range.To,
-                PeriodType = (FillmentPeriodWrapper) group.First().FillmentPeriod
-            };
-
-            foreach (var ind in group)
-            {
-                var data = await fetchHandler.HandleAsync(
-                    range,
-                    ind.Id,
-                    (FillmentPeriodWrapper) group.First().FillmentPeriod,
-                    (FillmentPeriodWrapper) group.First().FillmentPeriod,
-                    ct);
-
-                dto.Metrics.Add(new CompanyPreviewMetricItemDto
-                {
-                    Id = ind.Id,
-                    Name = ind.Name,
-                    Period = (FillmentPeriodWrapper) ind.FillmentPeriod,
-                    ValueType = ind.ValueType,
-                    Type = ind.UnitType,
-                    Data = data
-                });
-            }
-
-            result.Add(dto);
-        }
-        */
         return dto;
     }
 }
