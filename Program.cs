@@ -165,9 +165,12 @@ builder.Services.AddScoped<IndicatorTypeaheadHandler>();
 builder.Services.AddScoped<KeyIndicatorGetHandler>();
 builder.Services.Configure<ClickhouseOptions>(builder.Configuration.GetSection("Clickhouse"));
 builder.Services.AddScoped<FetchUserMetricsHandler>();
+builder.Services.AddScoped<FetchCompanyMetricsHandler>();
 builder.Services.AddScoped<FetchDepartmentCompletionHandler>();
 builder.Services.AddScoped<UserPreviewMetricsHandler>();
 builder.Services.AddScoped<UserPreviewMetricsPutHandler>();
+builder.Services.AddScoped<CompanyPreviewMetricsHandler>();
+builder.Services.AddScoped<CompanyPreviewMetricsPutHandler>();
 builder.Services.AddScoped<MigrateClickhouseDatabase>();
 
 // SU

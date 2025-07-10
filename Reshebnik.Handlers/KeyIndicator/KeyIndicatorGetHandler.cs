@@ -16,9 +16,6 @@ public class KeyIndicatorGetHandler(
         var indicators = await db.Indicators
             .AsNoTracking()
             .Where(i => i.CreatedBy == companyId && i.ShowOnKeyIndicators)
-            .ToListAsync(ct);
-
-        var result = indicators
             .GroupBy(i => i.Category)
             .Where(g => g.Any())
             .Select(g => new KeyIndicatorCategoryDto
@@ -38,8 +35,8 @@ public class KeyIndicatorGetHandler(
                         Period = ind.FillmentPeriod
                     }
                 }).ToList()
-            }).ToList();
+            }).ToListAsync(ct);
 
-        return result;
+        return indicators;
     }
 }

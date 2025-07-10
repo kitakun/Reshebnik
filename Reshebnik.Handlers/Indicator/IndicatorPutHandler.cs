@@ -3,27 +3,45 @@ using Microsoft.EntityFrameworkCore;
 using Reshebnik.Domain.Entities;
 using Reshebnik.Domain.Models.Indicator;
 using Reshebnik.EntityFramework;
+using Reshebnik.Handlers.Auth;
 using Reshebnik.Handlers.Company;
 
 namespace Reshebnik.Handlers.Indicator;
 
 public class IndicatorPutHandler(
     ReshebnikContext db,
+    UserContextHandler userContextHandler,
     CompanyContextHandler companyContext)
 {
     public async ValueTask<int> HandleAsync(IndicatorPutDto dto, CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
+        var userId = userContextHandler.CurrentUserId;
+        
         IndicatorEntity entity;
         if (dto.Id != 0)
         {
             entity = await db.Indicators
-                .FirstOrDefaultAsync(i => i.Id == dto.Id && i.CreatedBy == companyId, ct) ?? new IndicatorEntity { CreatedBy = companyId, CreatedAt = DateTime.UtcNow };
-            if (entity.Id == 0) db.Indicators.Add(entity);
+                         .FirstOrDefaultAsync(
+                             i => i.Id == dto.Id
+                                  && i.CreatedBy == companyId, ct)
+                     ?? new IndicatorEntity
+                     {
+                         CreatedBy = companyId,
+                         CreatedAt = DateTime.UtcNow
+                     };
+            if (entity.Id == 0)
+            {
+                db.Indicators.Add(entity);
+            }
         }
         else
         {
-            entity = new IndicatorEntity { CreatedBy = companyId, CreatedAt = DateTime.UtcNow };
+            entity = new IndicatorEntity
+            {
+                CreatedBy = companyId,
+                CreatedAt = DateTime.UtcNow
+            };
             db.Indicators.Add(entity);
         }
 

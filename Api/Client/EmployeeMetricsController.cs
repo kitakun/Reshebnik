@@ -11,8 +11,8 @@ namespace Reshebnik.Web.Api.Client;
 [Authorize]
 [ApiController]
 [ApiExplorerSettings(GroupName = "Client")]
-[Route("api/admin/[controller]")]
-public class MetricsController : ControllerBase
+[Route("api/admin/metrics")]
+public class EmployeeMetricsController : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAsync(
@@ -22,7 +22,7 @@ public class MetricsController : ControllerBase
         var result = await handler.HandleAsync(cancellationToken);
         return Ok(result);
     }
-    
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetAsync(
         [FromRoute] int id,
@@ -57,7 +57,7 @@ public class MetricsController : ControllerBase
         if (result == null) return NotFound();
         return Ok(result);
     }
-    
+
     [HttpPut("{id}/preview")]
     public async Task<IActionResult> PutUserPreviewMetrics(
         [FromRoute] int id,

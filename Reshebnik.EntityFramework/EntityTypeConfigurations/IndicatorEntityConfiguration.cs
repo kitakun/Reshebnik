@@ -73,5 +73,10 @@ public class IndicatorEntityConfiguration : IEntityTypeConfiguration<IndicatorEn
             .WithMany()
             .HasForeignKey(i => i.DepartmentId)
             .OnDelete(DeleteBehavior.SetNull);
+            
+        builder.HasOne(i => i.CreatedByCompany)
+            .WithMany()
+            .HasForeignKey(i => i.CreatedBy)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
