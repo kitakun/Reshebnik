@@ -9,7 +9,9 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
 {
     private readonly ClickhouseOptions _options = optionsAccessor.Value;
 
-    public async Task<int[]> HandleAsync(
+    public record MetricsDataResponse(int[] PlanData, int[] FactData);
+
+    public async Task<MetricsDataResponse> HandleAsync(
         DateRange range,
         int metricId,
         PeriodTypeEnum expectedValues,
@@ -17,7 +19,8 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         CancellationToken cancellationToken)
     {
         var length = GetPeriodLength(range, expectedValues);
-        var data = new int[length];
+        var plan = new int[length];
+        var fact = new int[length];
 
         var key = $"company-metric-{metricId}";
         var builder = new ClickHouseConnectionStringBuilder
@@ -37,12 +40,13 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         var sql = $"""
             SELECT
                 upsert_date,
-                value
+                value,
+                value_type
             FROM {table}
             WHERE metric_key = '{key}'
               AND period_type = '{sourcePeriod}'
               AND upsert_date BETWEEN toDate('{range.From:yyyy-MM-dd}') AND toDate('{range.To:yyyy-MM-dd}')
-            ORDER BY upsert_date
+            ORDER BY upsert_date, value_type
         """;
 
         await using var cmd = connection.CreateCommand();
@@ -53,16 +57,23 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         {
             var date = reader.GetDateTime(0);
             var value = reader.GetInt32(1);
+            var type = reader.GetString(2);
             var idx = GetIndex(date, range.From.Date, expectedValues);
-            if (idx >= 0 && idx < length)
-                data[idx] += value;
+            if (idx is >= 0 && idx < length && Enum.TryParse<MetricValueTypeEnum>(type, out var vt))
+            {
+                if (vt == MetricValueTypeEnum.Fact)
+                    fact[idx] += value;
+                else if (vt == MetricValueTypeEnum.Plan)
+                    plan[idx] += value;
+            }
         }
 
-        return data;
+        return new MetricsDataResponse(plan, fact);
     }
 
     public async Task PutAsync(
         int metricId,
+        MetricValueTypeEnum valueType,
         int companyId,
         PeriodTypeEnum periodType,
         DateTime upsertDate,
@@ -86,7 +97,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         var table = $"{_options.Prefix}_company_metrics";
         var deleteSql = $"""
             ALTER TABLE {table}
-            DELETE WHERE metric_key = '{key}' AND company_id = {companyId} AND upsert_date = toDate('{upsertDate:yyyy-MM-dd}') AND period_type = '{periodType}'
+            DELETE WHERE metric_key = '{key}' AND value_type = '{valueType}' AND company_id = {companyId} AND upsert_date = toDate('{upsertDate:yyyy-MM-dd}') AND period_type = '{periodType}'
         """;
         await using (var deleteCmd = connection.CreateCommand())
         {
@@ -95,8 +106,8 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         }
 
         var insertSql = $"""
-            INSERT INTO {table} (company_id, metric_key, period_type, upsert_date, value)
-            VALUES ({companyId}, '{key}', '{periodType}', toDate('{upsertDate:yyyy-MM-dd}'), {value})
+            INSERT INTO {table} (company_id, metric_key, value_type, period_type, upsert_date, value)
+            VALUES ({companyId}, '{key}', '{valueType}', '{periodType}', toDate('{upsertDate:yyyy-MM-dd}'), {value})
         """;
         await using (var insertCmd = connection.CreateCommand())
         {

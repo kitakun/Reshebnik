@@ -19,12 +19,28 @@ public class CompanyPreviewMetricsPutHandler(
 
         var item = request.Metrics;
         var tasks = new List<Task>();
+
+        for (var i = 0; i < item.FactData.Length; i++)
+        {
+            var date = AddOffset(request.From.Date, request.PeriodType, i);
+            if (date > request.To.Date) break;
+            tasks.Add(putHandler.PutAsync(
+                request.Metrics.Id,
+                MetricValueTypeEnum.Fact,
+                companyId,
+                request.PeriodType,
+                date,
+                item.FactData[i],
+                ct));
+        }
+
         for (var i = 0; i < item.PlanData.Length; i++)
         {
             var date = AddOffset(request.From.Date, request.PeriodType, i);
             if (date > request.To.Date) break;
             tasks.Add(putHandler.PutAsync(
                 request.Metrics.Id,
+                MetricValueTypeEnum.Plan,
                 companyId,
                 request.PeriodType,
                 date,

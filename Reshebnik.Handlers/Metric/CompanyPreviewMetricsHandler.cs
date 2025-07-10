@@ -40,7 +40,8 @@ public class CompanyPreviewMetricsHandler(
         {
             Id = indicator.Id,
             Name = indicator.Name,
-            PlanData = data
+            PlanData = data.PlanData,
+            FactData = data.FactData
         };
 
         /*
