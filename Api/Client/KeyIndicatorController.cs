@@ -18,11 +18,11 @@ public class KeyIndicatorController : ControllerBase
     public async Task<IActionResult> GetAsync(
         [FromQuery] DateTime from,
         [FromQuery] DateTime to,
-        [FromQuery] PeriodTypeEnum type,
+        [FromQuery] PeriodTypeEnum periodType,
         [FromServices] KeyIndicatorGetHandler handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(from, to, type, cancellationToken);
+        var result = await handler.HandleAsync(from, to, periodType, cancellationToken);
         return Ok(result);
     }
 }
