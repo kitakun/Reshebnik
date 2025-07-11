@@ -6,12 +6,15 @@ using Reshebnik.Domain.Models.Employee;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Auth;
 using Reshebnik.Handlers.Company;
+using Reshebnik.Handlers.Email;
 
 namespace Reshebnik.Handlers.Employee;
 
 public class EmployeePutHandler(
     ReshebnikContext db,
     SecurityHandler securityHandler,
+    IEmailQueue emailQueue,
+    UserContextHandler userContextHandler,
     CompanyContextHandler companyContext)
 {
     public async ValueTask<int> HandleAsync(EmployeePutDto dto, CancellationToken ct = default)
@@ -76,6 +79,23 @@ public class EmployeePutHandler(
         if (dto.SendEmail)
         {
             entity.EmailInvitationCode = Guid.NewGuid().ToString("N");
+
+            await emailQueue.EnqueueAsync(new EmailMessageEntity
+            {
+                To = dto.Email,
+                Subject = "Регистрация tabligo.ru",
+                SentByCompanyId = entity.CompanyId,
+                SentByUserId = userContextHandler.CurrentUserId,
+                IsHtml = true,
+                Body = $"""
+                       <h2>Добрый день!</h2>
+                       <p>Вас зарегистрировали на портале tabligo.ru.</p>
+                       
+                       <p>Для продолжения регистрации перейдите по <a href="https://tabligo.ru/invite?code={entity.EmailInvitationCode}">ссылке</a> и введите ваш пароль для входа</p>
+                       
+                       tabligo {DateTime.Now.Year} 
+                       """
+            });
         }
 
         await db.SaveChangesAsync(ct);

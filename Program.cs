@@ -13,8 +13,10 @@ using Reshebnik.Handlers.Structure;
 using Reshebnik.Handlers.Metric;
 using Reshebnik.Handlers.Indicator;
 using Reshebnik.Handlers.KeyIndicator;
+using Reshebnik.Handlers.Dashboard;
 using Reshebnik.Clickhouse;
 using Reshebnik.Clickhouse.Handlers;
+using Reshebnik.Handlers.Email;
 
 using System.Text;
 using System.Text.Json;
@@ -172,10 +174,16 @@ builder.Services.AddScoped<UserPreviewMetricsPutHandler>();
 builder.Services.AddScoped<CompanyPreviewMetricsHandler>();
 builder.Services.AddScoped<CompanyPreviewMetricsPutHandler>();
 builder.Services.AddScoped<MigrateClickhouseDatabase>();
+builder.Services.AddScoped<DashboardGetHandler>();
 
 // SU
 builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();
 builder.Services.AddScoped<SuAllCompanyIdsHandler>();
+
+// Email
+builder.Services.AddScoped<IEmailQueue, EfEmailQueue>();
+builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+builder.Services.AddHostedService<EmailSenderService>();
 
 var app = builder.Build();
 app.UseCors("DevCors");

@@ -21,6 +21,8 @@ public class ReshebnikContext(DbContextOptions<ReshebnikContext> options) : DbCo
     public DbSet<MetricEntity> Metrics { get; set; }
     public DbSet<MetricTemplateEntity> MetricTemplates { get; set; }
     public DbSet<IndicatorEntity> Indicators { get; set; }
+    
+    public DbSet<EmailMessageEntity> EmailQueue { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

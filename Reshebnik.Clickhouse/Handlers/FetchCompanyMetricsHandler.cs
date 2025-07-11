@@ -174,10 +174,10 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         return expected switch
         {
             PeriodTypeEnum.Day => (int)(date.Date - start.Date).TotalDays,
-            PeriodTypeEnum.Week => (int)((date.Date - start.Date).TotalDays / 7),
-            PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month,
-            PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3,
-            PeriodTypeEnum.Year => date.Year - start.Year,
+            PeriodTypeEnum.Week => (int)((date.Date - start.Date).TotalDays / 7) - 1,
+            PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month -1,
+            PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3 - 1,
+            PeriodTypeEnum.Year => date.Year - start.Year - 1,
             _ => -1
         };
     }
