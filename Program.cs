@@ -78,7 +78,7 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
 #else
         policy
-            .WithOrigins("kitakun-reshebnikfront-5e31.twc1.net")
+            .WithOrigins("https://tabligo.ru")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();

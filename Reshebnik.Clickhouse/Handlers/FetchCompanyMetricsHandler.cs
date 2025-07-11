@@ -18,11 +18,13 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         PeriodTypeEnum sourcePeriod,
         CancellationToken cancellationToken)
     {
-        var length = GetPeriodLength(range, expectedValues);
+        var length = GetPeriodLength(expectedValues);
         var plan = new int[length];
         var fact = new int[length];
-        var totalPlan = new int[length];
-        var totalFact = new int[length];
+        var totalPlan = new int[12];
+        var totalFact = new int[12];
+
+        var totalRange = new DateRange(range.From.AddYears(-1), range.To);
 
         var key = $"company-metric-{metricId}";
         var builder = new ClickHouseConnectionStringBuilder
@@ -47,7 +49,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             FROM {table}
             WHERE metric_key = '{key}'
               AND period_type = '{sourcePeriod}'
-              AND upsert_date BETWEEN toDate('{range.From:yyyy-MM-dd}') AND toDate('{range.To:yyyy-MM-dd}')
+              AND upsert_date BETWEEN toDate('{totalRange.From:yyyy-MM-dd}') AND toDate('{totalRange.To:yyyy-MM-dd}')
             ORDER BY upsert_date
         """;
 
@@ -55,46 +57,29 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         cmd.CommandText = sql;
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+        var monthsCount = GetMonthDiff(totalRange.From.Date, totalRange.To.Date);
+        var step = (int)Math.Ceiling(monthsCount / 12.0);
         while (await reader.ReadAsync(cancellationToken))
         {
             var date = reader.GetDateTime(0);
             var planVal = reader.GetInt32(1);
             var factVal = reader.GetInt32(2);
+
             var idx = GetIndex(date, range.From.Date, expectedValues);
             if (idx is >= 0 && idx < length)
             {
                 fact[idx] += factVal;
                 plan[idx] += planVal;
             }
-            if (idx is >= 0 && idx < length)
+
+            var totalIdxRaw = GetIndex(date, totalRange.From.Date, PeriodTypeEnum.Month);
+            var totalIdx = totalIdxRaw >= 0 ? Math.Min(11, totalIdxRaw / step) : -1;
+            if (totalIdx is >= 0 && totalIdx < 12)
             {
-                totalPlan[idx] += planVal;
-                totalFact[idx] += factVal;
+                totalPlan[totalIdx] += planVal;
+                totalFact[totalIdx] += factVal;
             }
         }
-
-        const int groups = 12;
-        if (length > groups)
-        {
-            var step = (int)Math.Ceiling(length / (double)groups);
-            var groupedPlan = new int[groups];
-            var groupedFact = new int[groups];
-            var groupedTotalPlan = new int[groups];
-            var groupedTotalFact = new int[groups];
-            for (var i = 0; i < length; i++)
-            {
-                var idx = Math.Min(groups - 1, i / step);
-                groupedPlan[idx] += plan[i];
-                groupedFact[idx] += fact[i];
-                groupedTotalPlan[idx] += totalPlan[i];
-                groupedTotalFact[idx] += totalFact[i];
-            }
-            plan = groupedPlan;
-            fact = groupedFact;
-            totalPlan = groupedTotalPlan;
-            totalFact = groupedTotalFact;
-        }
-
         return new MetricsDataResponse(plan, fact, totalPlan, totalFact);
     }
 
@@ -171,21 +156,50 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
 
     private static int GetIndex(DateTime date, DateTime start, PeriodTypeEnum expected)
     {
+        start = NormalizeStart(start, expected);
         return expected switch
         {
-            PeriodTypeEnum.Day => (int)(date.Date - start.Date).TotalDays,
-            PeriodTypeEnum.Week => (int)((date.Date - start.Date).TotalDays / 7) - 1,
-            PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month -1,
-            PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3 - 1,
-            PeriodTypeEnum.Year => date.Year - start.Year - 1,
+            PeriodTypeEnum.Day => (int)(date.Date - start).TotalDays,
+            PeriodTypeEnum.Week => (int)(date.Date - start).TotalDays,
+            PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month,
+            PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3,
+            PeriodTypeEnum.Year => date.Year - start.Year,
             _ => -1
         };
     }
 
-    private static int GetPeriodLength(DateRange range, PeriodTypeEnum expected)
+    private static DateTime NormalizeStart(DateTime start, PeriodTypeEnum expected)
     {
-        if (range.To < range.From) return 0;
-        var lastIndex = GetIndex(range.To.Date, range.From.Date, expected);
-        return Math.Max(0, lastIndex + 1);
+        return expected switch
+        {
+            PeriodTypeEnum.Week => StartOfWeek(start, DayOfWeek.Monday),
+            PeriodTypeEnum.Month => new DateTime(start.Year, start.Month, 1),
+            PeriodTypeEnum.Quartal => new DateTime(start.Year, ((start.Month - 1) / 3) * 3 + 1, 1),
+            PeriodTypeEnum.Year => new DateTime(start.Year, 1, 1),
+            _ => start.Date
+        };
+    }
+
+    private static int GetPeriodLength(PeriodTypeEnum expected)
+    {
+        return expected switch
+        {
+            PeriodTypeEnum.Week => 7,
+            PeriodTypeEnum.Month => 12,
+            PeriodTypeEnum.Quartal => 12,
+            PeriodTypeEnum.Year => 12,
+            _ => 1
+        };
+    }
+
+    private static int GetMonthDiff(DateTime from, DateTime to)
+    {
+        return (to.Year - from.Year) * 12 + to.Month - from.Month + 1;
+    }
+
+    private static DateTime StartOfWeek(DateTime date, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+        return date.Date.AddDays(-1 * diff);
     }
 }

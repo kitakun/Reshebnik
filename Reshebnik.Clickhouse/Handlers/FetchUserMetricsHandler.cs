@@ -18,7 +18,7 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         PeriodTypeEnum sourcePeriod,
         CancellationToken cancellationToken)
     {
-        var length = GetPeriodLength(range, expectedValues);
+        var length = GetPeriodLength(expectedValues);
         var fact = new int[length];
         var plan = new int[length];
 
@@ -126,10 +126,11 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
 
     private static int GetIndex(DateTime date, DateTime start, PeriodTypeEnum expected)
     {
+        start = NormalizeStart(start, expected);
         return expected switch
         {
-            PeriodTypeEnum.Day => (int)(date.Date - start.Date).TotalDays,
-            PeriodTypeEnum.Week => (int)((date.Date - start.Date).TotalDays / 7),
+            PeriodTypeEnum.Day => (int)(date.Date - start).TotalDays,
+            PeriodTypeEnum.Week => (int)(date.Date - start).TotalDays,
             PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month,
             PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3,
             PeriodTypeEnum.Year => date.Year - start.Year,
@@ -137,11 +138,33 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         };
     }
 
-    private static int GetPeriodLength(DateRange range, PeriodTypeEnum expected)
+    private static DateTime NormalizeStart(DateTime start, PeriodTypeEnum expected)
     {
-        if (range.To < range.From) return 0;
+        return expected switch
+        {
+            PeriodTypeEnum.Week => StartOfWeek(start, DayOfWeek.Monday),
+            PeriodTypeEnum.Month => new DateTime(start.Year, start.Month, 1),
+            PeriodTypeEnum.Quartal => new DateTime(start.Year, ((start.Month - 1) / 3) * 3 + 1, 1),
+            PeriodTypeEnum.Year => new DateTime(start.Year, 1, 1),
+            _ => start.Date
+        };
+    }
 
-        var lastIndex = GetIndex(range.To.Date, range.From.Date, expected);
-        return Math.Max(0, lastIndex + 1);
+    private static int GetPeriodLength(PeriodTypeEnum expected)
+    {
+        return expected switch
+        {
+            PeriodTypeEnum.Week => 7,
+            PeriodTypeEnum.Month => 12,
+            PeriodTypeEnum.Quartal => 12,
+            PeriodTypeEnum.Year => 12,
+            _ => 1
+        };
+    }
+
+    private static DateTime StartOfWeek(DateTime date, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+        return date.Date.AddDays(-1 * diff);
     }
 }
