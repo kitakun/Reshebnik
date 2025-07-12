@@ -17,6 +17,7 @@ using Reshebnik.Handlers.Dashboard;
 using Reshebnik.Clickhouse;
 using Reshebnik.Clickhouse.Handlers;
 using Reshebnik.Handlers.Email;
+using Reshebnik.Handlers.SpecialInvitation;
 
 using System.Text;
 using System.Text.Json;
@@ -179,6 +180,9 @@ builder.Services.AddScoped<DashboardGetHandler>();
 // SU
 builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();
 builder.Services.AddScoped<SuAllCompanyIdsHandler>();
+builder.Services.AddScoped<SpecialInvitationCreateHandler>();
+builder.Services.AddScoped<SuSpecialInvitationTypeaheadHandler>();
+builder.Services.AddScoped<SuSpecialInvitationAcceptHandler>();
 
 // Email
 builder.Services.AddScoped<IEmailQueue, EfEmailQueue>();

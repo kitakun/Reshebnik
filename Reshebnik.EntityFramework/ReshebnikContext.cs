@@ -9,26 +9,28 @@ namespace Reshebnik.EntityFramework;
 public class ReshebnikContext(DbContextOptions<ReshebnikContext> options) : DbContext(options)
 {
     public DbSet<CompanyEntity> Companies { get; set; }
-    
+
     public DbSet<EmployeeEntity> Employees { get; set; }
-    
+
     public DbSet<DepartmentEntity> Departments { get; set; }
     public DbSet<DepartmentSchemeEntity> DepartmentSchemaEntities { get; set; }
     public DbSet<EmployeeDepartmentLinkEntity> EmployeeDepartmentLinkEntities { get; set; }
-    
+
     public DbSet<UserNotification> UserNotifications { get; set; }
     public DbSet<SystemNotificationEntity> SystemNotifications { get; set; }
     public DbSet<MetricEntity> Metrics { get; set; }
     public DbSet<MetricTemplateEntity> MetricTemplates { get; set; }
     public DbSet<IndicatorEntity> Indicators { get; set; }
-    
+
     public DbSet<EmailMessageEntity> EmailQueue { get; set; }
+
+    public DbSet<SpecialInvitationEntity> SpecialInvitations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasSequence<int>("employee_id_seq");
         modelBuilder.HasSequence<int>("companies_id_seq");
-        
+
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             foreach (var property in entityType.GetProperties())

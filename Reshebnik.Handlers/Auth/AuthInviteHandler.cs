@@ -18,6 +18,7 @@ public class AuthInviteHandler(
 
         var existingUser = await context
             .Employees
+            .Include(i => i.Company)
             .FirstOrDefaultAsync(f => f.EmailInvitationCode!.ToLower() == code.ToLower(), cancellationToken);
         if (existingUser is not { IsActive: true }) return null;
 
