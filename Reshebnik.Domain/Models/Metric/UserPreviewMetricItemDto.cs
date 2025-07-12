@@ -10,5 +10,7 @@ public class UserPreviewMetricItemDto
     public MetricTypeEnum Type { get; set; }
     public int[] PlanData { get; set; } = [];
     public int[] FactData { get; set; } = [];
+    public int[] TotalPlanData { get; set; } = [];
+    public int[] TotalFactData { get; set; } = [];
     public double Average { get; set; }
 }

@@ -5,6 +5,7 @@ using Reshebnik.Domain.Models.Metric;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
 using Reshebnik.Clickhouse.Handlers;
+using Reshebnik.Domain.Enums;
 
 namespace Reshebnik.Handlers.Metric;
 
@@ -16,6 +17,7 @@ public class UserPreviewMetricsHandler(
     public async ValueTask<UserPreviewMetricsDto?> HandleAsync(
         int userId,
         DateRange range,
+        PeriodTypeEnum periodType,
         CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
@@ -41,7 +43,7 @@ public class UserPreviewMetricsHandler(
             var data = await fetchHandler.HandleAsync(
                 range,
                 metric.Id,
-                metric.PeriodType,
+                periodType,
                 metric.PeriodType,
                 ct);
 
@@ -62,6 +64,8 @@ public class UserPreviewMetricsHandler(
                 Name = metric.Name,
                 PlanData = data.PlanData,
                 FactData = data.FactData,
+                TotalPlanData = data.TotalPlanData,
+                TotalFactData = data.TotalFactData,
                 Period = metric.PeriodType,
                 Type = metric.Type,
                 Average = avgPercent

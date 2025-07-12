@@ -53,7 +53,7 @@ public class DashboardGetHandler(
         var employeeAverages = new Dictionary<int, double>(employees.Count);
         foreach (var emp in employees)
         {
-            var preview = await userMetricsHandler.HandleAsync(emp.Id, range, ct);
+            var preview = await userMetricsHandler.HandleAsync(emp.Id, range, PeriodTypeEnum.Month, ct);
             employeeAverages[emp.Id] = preview?.Average ?? 0;
         }
 

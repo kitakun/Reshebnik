@@ -7,7 +7,7 @@ namespace Reshebnik.Clickhouse.Handlers;
 
 public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor)
 {
-    public record MetricsDataResponse(int[] PlanData, int[] FactData);
+    public record MetricsDataResponse(int[] PlanData, int[] FactData, int[] TotalPlanData, int[] TotalFactData);
 
     private readonly ClickhouseOptions _options = optionsAccessor.Value;
 
@@ -18,9 +18,15 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         PeriodTypeEnum sourcePeriod,
         CancellationToken cancellationToken)
     {
-        var length = GetPeriodLength(expectedValues);
+        var length = GetPeriodLength(expectedValues, range);
         var fact = new int[length];
         var plan = new int[length];
+        var totalPlan = new int[12];
+        var totalFact = new int[12];
+
+        var totalRange = new DateRange(range.From.AddYears(-1), range.To);
+        var monthsCount = GetMonthDiff(totalRange.From.Date, totalRange.To.Date);
+        var step = (int)Math.Ceiling(monthsCount / 12.0);
 
         var key = $"user-metric-{metricId}";
 
@@ -33,7 +39,7 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
             Protocol = "http",
         };
         var connStr = builder.ToString();
-        
+
         await using var connection = new ClickHouseConnection(connStr);
         await connection.OpenAsync(cancellationToken);
 
@@ -52,7 +58,7 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
 
         await using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
-            
+
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
 
         while (await reader.ReadAsync(cancellationToken))
@@ -68,9 +74,19 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
                 else if (vt == MetricValueTypeEnum.Plan)
                     plan[idx] += value;
             }
+
+            var totalIdxRaw = GetIndex(date, totalRange.From.Date, PeriodTypeEnum.Month);
+            var totalIdx = totalIdxRaw >= 0 ? Math.Min(11, totalIdxRaw / step) : -1;
+            if (totalIdx is >= 0 && totalIdx < 12 && Enum.TryParse<MetricValueTypeEnum>(type, out var vtTotal))
+            {
+                if (vtTotal == MetricValueTypeEnum.Fact)
+                    totalFact[totalIdx] += value;
+                else if (vtTotal == MetricValueTypeEnum.Plan)
+                    totalPlan[totalIdx] += value;
+            }
         }
 
-        return new MetricsDataResponse(plan, fact);
+        return new MetricsDataResponse(plan, fact, totalPlan, totalFact);
     }
 
     public async Task PutAsync(
@@ -130,7 +146,7 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         return expected switch
         {
             PeriodTypeEnum.Day => (int)(date.Date - start).TotalDays,
-            PeriodTypeEnum.Week => (int)(date.Date - start).TotalDays,
+            PeriodTypeEnum.Week => (int)(date.Date - start).TotalDays % 7,
             PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month,
             PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3,
             PeriodTypeEnum.Year => date.Year - start.Year,
@@ -150,16 +166,22 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         };
     }
 
-    private static int GetPeriodLength(PeriodTypeEnum expected)
+    private static int GetPeriodLength(PeriodTypeEnum expected, DateRange range)
     {
         return expected switch
         {
+            PeriodTypeEnum.Day => (int)(range.To.Date - range.From.Date).TotalDays + 1,
             PeriodTypeEnum.Week => 7,
             PeriodTypeEnum.Month => 12,
-            PeriodTypeEnum.Quartal => 12,
-            PeriodTypeEnum.Year => 12,
+            PeriodTypeEnum.Quartal => 1,
+            PeriodTypeEnum.Year => 1,
             _ => 1
         };
+    }
+
+    private static int GetMonthDiff(DateTime from, DateTime to)
+    {
+        return (to.Year - from.Year) * 12 + to.Month - from.Month + 1;
     }
 
     private static DateTime StartOfWeek(DateTime date, DayOfWeek startOfWeek)

@@ -18,7 +18,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         PeriodTypeEnum sourcePeriod,
         CancellationToken cancellationToken)
     {
-        var length = GetPeriodLength(expectedValues);
+        var length = GetPeriodLength(expectedValues, range);
         var plan = new int[length];
         var fact = new int[length];
         var totalPlan = new int[12];
@@ -160,7 +160,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         return expected switch
         {
             PeriodTypeEnum.Day => (int)(date.Date - start).TotalDays,
-            PeriodTypeEnum.Week => (int)(date.Date - start).TotalDays,
+            PeriodTypeEnum.Week => (int)(date.Date - start).TotalDays % 7,
             PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month,
             PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3,
             PeriodTypeEnum.Year => date.Year - start.Year,
@@ -180,14 +180,15 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         };
     }
 
-    private static int GetPeriodLength(PeriodTypeEnum expected)
+    private static int GetPeriodLength(PeriodTypeEnum expected, DateRange range)
     {
         return expected switch
         {
+            PeriodTypeEnum.Day => (int)(range.To.Date - range.From.Date).TotalDays + 1,
             PeriodTypeEnum.Week => 7,
             PeriodTypeEnum.Month => 12,
-            PeriodTypeEnum.Quartal => 12,
-            PeriodTypeEnum.Year => 12,
+            PeriodTypeEnum.Quartal => 1,
+            PeriodTypeEnum.Year => 1,
             _ => 1
         };
     }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Reshebnik.Domain.Models.Metric;
 using Reshebnik.Domain.Models;
+using Reshebnik.Domain.Enums;
 using Reshebnik.Handlers.Metric;
 
 
@@ -49,11 +50,12 @@ public class EmployeeMetricsController : ControllerBase
         [FromRoute] int id,
         [FromQuery] DateTime from,
         [FromQuery] DateTime to,
+        [FromQuery] PeriodTypeEnum periodType,
         [FromServices] UserPreviewMetricsHandler handler,
         CancellationToken cancellationToken)
     {
         var range = new DateRange(from, to);
-        var result = await handler.HandleAsync(id, range, cancellationToken);
+        var result = await handler.HandleAsync(id, range, periodType, cancellationToken);
         if (result == null) return NotFound();
         return Ok(result);
     }
