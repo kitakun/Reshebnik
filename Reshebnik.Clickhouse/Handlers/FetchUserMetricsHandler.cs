@@ -7,7 +7,13 @@ namespace Reshebnik.Clickhouse.Handlers;
 
 public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor)
 {
-    public record MetricsDataResponse(int[] PlanData, int[] FactData, int[] TotalPlanData, int[] TotalFactData);
+    public record MetricsDataResponse(
+        int[] PlanData,
+        int[] FactData,
+        int[] TotalPlanData,
+        int[] TotalFactData,
+        int[] Last12PointsPlan,
+        int[] Last12PointsFact);
 
     private readonly ClickhouseOptions _options = optionsAccessor.Value;
 
@@ -21,12 +27,16 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         var length = GetPeriodLength(expectedValues, range);
         var fact = new int[length];
         var plan = new int[length];
+        
         var totalPlan = new int[12];
         var totalFact = new int[12];
+        var lastPlan = new int[12];
+        var lastFact = new int[12];
 
-        var totalRange = new DateRange(range.From.AddYears(-1), range.To);
+        var unionFrom = range.From.AddYears(-1);
+        var totalRange = new DateRange(unionFrom, range.To);
         var monthsCount = GetMonthDiff(totalRange.From.Date, totalRange.To.Date);
-        var step = (int)Math.Ceiling(monthsCount / 12.0);
+        var step = (int)Math.Ceiling(monthsCount / (double)length);
 
         var key = $"user-metric-{metricId}";
 
@@ -52,7 +62,7 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
             FROM {table}
             WHERE metric_key = '{key}'
               AND period_type = '{sourcePeriod}'
-              AND upsert_date BETWEEN toDate('{range.From:yyyy-MM-dd}') AND toDate('{range.To:yyyy-MM-dd}')
+              AND upsert_date BETWEEN toDate('{unionFrom:yyyy-MM-dd}') AND toDate('{range.To:yyyy-MM-dd}')
             ORDER BY upsert_date, value_type
         """;
 
@@ -84,9 +94,22 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
                 else if (vtTotal == MetricValueTypeEnum.Plan)
                     totalPlan[totalIdx] += value;
             }
+
+            if (date <= range.From)
+            {
+                var lastIdxRaw = GetIndex(date, unionFrom.Date, PeriodTypeEnum.Month);
+                var lastIdx = lastIdxRaw >= 0 ? Math.Min(11, lastIdxRaw) : -1;
+                if (lastIdx is >= 0 && lastIdx < 12 && Enum.TryParse<MetricValueTypeEnum>(type, out var vtLast))
+                {
+                    if (vtLast == MetricValueTypeEnum.Fact)
+                        lastFact[lastIdx] += value;
+                    else if (vtLast == MetricValueTypeEnum.Plan)
+                        lastPlan[lastIdx] += value;
+                }
+            }
         }
 
-        return new MetricsDataResponse(plan, fact, totalPlan, totalFact);
+        return new MetricsDataResponse(plan, fact, totalPlan, totalFact, lastPlan, lastFact);
     }
 
     public async Task PutAsync(
@@ -146,10 +169,11 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         return expected switch
         {
             PeriodTypeEnum.Day => (int)(date.Date - start).TotalDays,
+            PeriodTypeEnum.Custom => (int)(date.Date - start).TotalDays,
             PeriodTypeEnum.Week => (int)(date.Date - start).TotalDays % 7,
             PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month,
             PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3,
-            PeriodTypeEnum.Year => date.Year - start.Year,
+            PeriodTypeEnum.Year => (date.Year - start.Year) * 12 + date.Month - start.Month,
             _ => -1
         };
     }
@@ -161,7 +185,7 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
             PeriodTypeEnum.Week => StartOfWeek(start, DayOfWeek.Monday),
             PeriodTypeEnum.Month => new DateTime(start.Year, start.Month, 1),
             PeriodTypeEnum.Quartal => new DateTime(start.Year, ((start.Month - 1) / 3) * 3 + 1, 1),
-            PeriodTypeEnum.Year => new DateTime(start.Year, 1, 1),
+            PeriodTypeEnum.Year => new DateTime(start.Year, start.Month, 1),
             _ => start.Date
         };
     }
@@ -171,10 +195,11 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         return expected switch
         {
             PeriodTypeEnum.Day => (int)(range.To.Date - range.From.Date).TotalDays + 1,
+            PeriodTypeEnum.Custom => (int)(range.To.Date - range.From.Date).TotalDays + 1,
             PeriodTypeEnum.Week => 7,
             PeriodTypeEnum.Month => 12,
             PeriodTypeEnum.Quartal => 1,
-            PeriodTypeEnum.Year => 1,
+            PeriodTypeEnum.Year => 13,
             _ => 1
         };
     }

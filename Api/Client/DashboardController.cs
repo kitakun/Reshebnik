@@ -21,7 +21,9 @@ public class DashboardController : ControllerBase
         [FromServices] DashboardGetHandler handler,
         CancellationToken cancellationToken)
     {
-        var range = new DateRange(from, to);
+        // Adjust range to ensure at most a 7-day period
+        var adjustedTo = from.AddDays(6) < to ? from.AddDays(6) : to;
+        var range = new DateRange(from, adjustedTo);
         var result = await handler.HandleAsync(range, cancellationToken);
         return Ok(result);
     }

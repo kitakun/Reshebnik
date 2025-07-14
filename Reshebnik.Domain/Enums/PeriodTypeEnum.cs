@@ -6,5 +6,6 @@ public enum PeriodTypeEnum
     Week = 2,
     Month = 3,
     Quartal = 4,
-    Year = 5
+    Year = 5,
+    Custom = 6
 }

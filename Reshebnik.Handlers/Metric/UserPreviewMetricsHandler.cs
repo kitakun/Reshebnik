@@ -40,14 +40,33 @@ public class UserPreviewMetricsHandler(
         double sumAvg = 0;
         foreach (var metric in metrics)
         {
-            var data = await fetchHandler.HandleAsync(
-                range,
+            var last12Range = periodType switch
+            {
+                PeriodTypeEnum.Day => new DateRange(range.To.AddDays(-11), range.To),
+                PeriodTypeEnum.Week => new DateRange(range.From.AddDays(-5), range.To),
+                PeriodTypeEnum.Quartal or PeriodTypeEnum.Year => new DateRange(new DateTime(range.To.Year, 1, 1), new DateTime(range.To.Year, 12, 31)),
+                _ => range
+            };
+
+            var last12Data = await fetchHandler.HandleAsync(
+                last12Range,
                 metric.Id,
-                periodType,
+                periodType == PeriodTypeEnum.Week ? PeriodTypeEnum.Day : periodType,
                 metric.PeriodType,
                 ct);
 
-            var factAvg = data.FactData.Length > 0 ? data.FactData.Average() : 0;
+            var yearRange = new DateRange(
+                new DateTime(range.To.Year, 1, 1),
+                new DateTime(range.To.Year, 12, 31));
+
+            var totalData = await fetchHandler.HandleAsync(
+                yearRange,
+                metric.Id,
+                PeriodTypeEnum.Month,
+                metric.PeriodType,
+                ct);
+
+            var factAvg = last12Data.FactData.Length > 0 ? last12Data.FactData.Average() : 0;
 
             double avgPercent = 0;
             if (metric.Min.HasValue && metric.Max.HasValue && metric.Max != metric.Min)
@@ -62,10 +81,9 @@ public class UserPreviewMetricsHandler(
             {
                 Id = metric.Id,
                 Name = metric.Name,
-                PlanData = data.PlanData,
-                FactData = data.FactData,
-                TotalPlanData = data.TotalPlanData,
-                TotalFactData = data.TotalFactData,
+                Last12FactData = last12Data.FactData,
+                TotalPlanData = totalData.PlanData,
+                TotalFactData = totalData.FactData,
                 Period = metric.PeriodType,
                 Type = metric.Type,
                 Average = avgPercent

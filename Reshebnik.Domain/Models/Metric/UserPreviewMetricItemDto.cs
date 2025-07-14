@@ -8,9 +8,10 @@ public class UserPreviewMetricItemDto
     public string Name { get; set; } = null!;
     public PeriodTypeEnum Period { get; set; }
     public MetricTypeEnum Type { get; set; }
-    public int[] PlanData { get; set; } = [];
-    public int[] FactData { get; set; } = [];
+    public int[] Last12FactData { get; set; } = [];
     public int[] TotalPlanData { get; set; } = [];
     public int[] TotalFactData { get; set; } = [];
+    public int[] Last12PointsPlan { get; set; } = [];
+    public int[] Last12PointsFact { get; set; } = [];
     public double Average { get; set; }
 }

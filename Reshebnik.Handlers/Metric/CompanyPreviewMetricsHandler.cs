@@ -26,14 +26,14 @@ public class CompanyPreviewMetricsHandler(
             CategoryName = indicator.Category,
             From = range.From,
             To = range.To,
-            PeriodType = (FillmentPeriodWrapper) indicator.FillmentPeriod
+            PeriodType = (FillmentPeriodWrapper)indicator.FillmentPeriod
         };
 
         var data = await fetchHandler.HandleAsync(
             range,
             indicator.Id,
-            (FillmentPeriodWrapper) indicator.FillmentPeriod,
-            (FillmentPeriodWrapper) indicator.FillmentPeriod,
+            (FillmentPeriodWrapper)indicator.FillmentPeriod,
+            (FillmentPeriodWrapper)indicator.FillmentPeriod,
             ct);
 
         dto.Metrics = new CompanyPreviewMetricItemDto
@@ -43,7 +43,9 @@ public class CompanyPreviewMetricsHandler(
             PlanData = data.PlanData,
             FactData = data.FactData,
             TotalPlanData = data.TotalPlanData,
-            TotalFactData = data.TotalFactData
+            TotalFactData = data.TotalFactData,
+            Last12PointsPlan = data.Last12PointsPlan,
+            Last12PointsFact = data.Last12PointsFact
         };
 
         return dto;

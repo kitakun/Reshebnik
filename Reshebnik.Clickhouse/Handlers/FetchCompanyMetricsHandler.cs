@@ -9,7 +9,13 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
 {
     private readonly ClickhouseOptions _options = optionsAccessor.Value;
 
-    public record MetricsDataResponse(int[] PlanData, int[] FactData, int[] TotalPlanData, int[] TotalFactData);
+    public record MetricsDataResponse(
+        int[] PlanData,
+        int[] FactData,
+        int[] TotalPlanData,
+        int[] TotalFactData,
+        int[] Last12PointsPlan,
+        int[] Last12PointsFact);
 
     public async Task<MetricsDataResponse> HandleAsync(
         DateRange range,
@@ -23,8 +29,11 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         var fact = new int[length];
         var totalPlan = new int[12];
         var totalFact = new int[12];
+        var lastPlan = new int[12];
+        var lastFact = new int[12];
 
-        var totalRange = new DateRange(range.From.AddYears(-1), range.To);
+        var unionFrom = range.From.AddYears(-1);
+        var totalRange = new DateRange(unionFrom, range.To);
 
         var key = $"company-metric-{metricId}";
         var builder = new ClickHouseConnectionStringBuilder
@@ -49,7 +58,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             FROM {table}
             WHERE metric_key = '{key}'
               AND period_type = '{sourcePeriod}'
-              AND upsert_date BETWEEN toDate('{totalRange.From:yyyy-MM-dd}') AND toDate('{totalRange.To:yyyy-MM-dd}')
+              AND upsert_date BETWEEN toDate('{unionFrom:yyyy-MM-dd}') AND toDate('{totalRange.To:yyyy-MM-dd}')
             ORDER BY upsert_date
         """;
 
@@ -58,7 +67,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         var monthsCount = GetMonthDiff(totalRange.From.Date, totalRange.To.Date);
-        var step = (int)Math.Ceiling(monthsCount / 12.0);
+        var step = (int)Math.Ceiling(monthsCount / (double)length);
         while (await reader.ReadAsync(cancellationToken))
         {
             var date = reader.GetDateTime(0);
@@ -79,8 +88,19 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
                 totalPlan[totalIdx] += planVal;
                 totalFact[totalIdx] += factVal;
             }
+
+            if (date <= range.From)
+            {
+                var lastIdxRaw = GetIndex(date, unionFrom.Date, PeriodTypeEnum.Month);
+                var lastIdx = lastIdxRaw >= 0 ? Math.Min(11, lastIdxRaw) : -1;
+                if (lastIdx is >= 0 && lastIdx < 12)
+                {
+                    lastPlan[lastIdx] += planVal;
+                    lastFact[lastIdx] += factVal;
+                }
+            }
         }
-        return new MetricsDataResponse(plan, fact, totalPlan, totalFact);
+        return new MetricsDataResponse(plan, fact, totalPlan, totalFact, lastPlan, lastFact);
     }
 
     public async Task PutAsync(
@@ -160,10 +180,11 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         return expected switch
         {
             PeriodTypeEnum.Day => (int)(date.Date - start).TotalDays,
+            PeriodTypeEnum.Custom => (int)(date.Date - start).TotalDays,
             PeriodTypeEnum.Week => (int)(date.Date - start).TotalDays % 7,
             PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month,
             PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3,
-            PeriodTypeEnum.Year => date.Year - start.Year,
+            PeriodTypeEnum.Year => (date.Year - start.Year) * 12 + date.Month - start.Month,
             _ => -1
         };
     }
@@ -175,7 +196,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             PeriodTypeEnum.Week => StartOfWeek(start, DayOfWeek.Monday),
             PeriodTypeEnum.Month => new DateTime(start.Year, start.Month, 1),
             PeriodTypeEnum.Quartal => new DateTime(start.Year, ((start.Month - 1) / 3) * 3 + 1, 1),
-            PeriodTypeEnum.Year => new DateTime(start.Year, 1, 1),
+            PeriodTypeEnum.Year => new DateTime(start.Year, start.Month, 1),
             _ => start.Date
         };
     }
@@ -185,10 +206,11 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         return expected switch
         {
             PeriodTypeEnum.Day => (int)(range.To.Date - range.From.Date).TotalDays + 1,
+            PeriodTypeEnum.Custom => (int)(range.To.Date - range.From.Date).TotalDays + 1,
             PeriodTypeEnum.Week => 7,
             PeriodTypeEnum.Month => 12,
             PeriodTypeEnum.Quartal => 1,
-            PeriodTypeEnum.Year => 1,
+            PeriodTypeEnum.Year => 13,
             _ => 1
         };
     }

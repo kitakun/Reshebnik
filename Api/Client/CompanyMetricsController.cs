@@ -24,6 +24,14 @@ public class CompanyMetricsController : ControllerBase
     {
         var range = new DateRange(from, to);
         var result = await handler.HandleAsync(id, range, cancellationToken);
+
+        // Fetch totals for the last year relative to today
+        var now = DateTime.UtcNow.Date;
+        var totalsRange = new DateRange(now.AddYears(-1), now);
+        var totals = await handler.HandleAsync(id, totalsRange, cancellationToken);
+
+        result.Metrics.TotalPlanData = totals.Metrics.TotalPlanData;
+        result.Metrics.TotalFactData = totals.Metrics.TotalFactData;
         return Ok(result);
     }
 
