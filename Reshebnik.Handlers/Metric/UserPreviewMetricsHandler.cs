@@ -81,7 +81,8 @@ public class UserPreviewMetricsHandler(
             {
                 Id = metric.Id,
                 Name = metric.Name,
-                Last12FactData = last12Data.FactData,
+                Last12PointsFact = last12Data.FactData,
+                Last12PointsPlan = last12Data.PlanData,
                 TotalPlanData = totalData.PlanData,
                 TotalFactData = totalData.FactData,
                 Period = metric.PeriodType,

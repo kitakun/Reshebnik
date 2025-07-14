@@ -27,11 +27,12 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         var length = GetPeriodLength(expectedValues, range);
         var fact = new int[length];
         var plan = new int[length];
-        
+
         var totalPlan = new int[12];
         var totalFact = new int[12];
-        var lastPlan = new int[12];
-        var lastFact = new int[12];
+        var lastLength = expectedValues == PeriodTypeEnum.Custom ? length : 12;
+        var lastPlan = new int[lastLength];
+        var lastFact = new int[lastLength];
 
         var unionFrom = range.From.AddYears(-1);
         var totalRange = new DateRange(unionFrom, range.To);
@@ -87,7 +88,7 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
 
             var totalIdxRaw = GetIndex(date, totalRange.From.Date, PeriodTypeEnum.Month);
             var totalIdx = totalIdxRaw >= 0 ? Math.Min(11, totalIdxRaw / step) : -1;
-            if (totalIdx is >= 0 && totalIdx < 12 && Enum.TryParse<MetricValueTypeEnum>(type, out var vtTotal))
+            if (totalIdx is >= 0 && totalIdx < totalPlan.Length && Enum.TryParse<MetricValueTypeEnum>(type, out var vtTotal))
             {
                 if (vtTotal == MetricValueTypeEnum.Fact)
                     totalFact[totalIdx] += value;
@@ -98,8 +99,8 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
             if (date <= range.From)
             {
                 var lastIdxRaw = GetIndex(date, unionFrom.Date, PeriodTypeEnum.Month);
-                var lastIdx = lastIdxRaw >= 0 ? Math.Min(11, lastIdxRaw) : -1;
-                if (lastIdx is >= 0 && lastIdx < 12 && Enum.TryParse<MetricValueTypeEnum>(type, out var vtLast))
+                var lastIdx = lastIdxRaw >= 0 ? Math.Min(lastPlan.Length - 1, lastIdxRaw) : -1;
+                if (lastIdx is >= 0 && lastIdx < lastPlan.Length && Enum.TryParse<MetricValueTypeEnum>(type, out var vtLast))
                 {
                     if (vtLast == MetricValueTypeEnum.Fact)
                         lastFact[lastIdx] += value;
