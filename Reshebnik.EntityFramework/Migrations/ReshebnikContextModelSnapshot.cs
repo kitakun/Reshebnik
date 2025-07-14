@@ -639,6 +639,10 @@ namespace Reshebnik.EntityFramework.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("company_name");
 
+                    b.Property<int>("CompanySize")
+                        .HasColumnType("integer")
+                        .HasColumnName("company_size");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");

@@ -9,11 +9,8 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
 {
     public record MetricsDataResponse(
         int[] PlanData,
-        int[] FactData,
-        int[] TotalPlanData,
-        int[] TotalFactData,
-        int[] Last12PointsPlan,
-        int[] Last12PointsFact);
+        int[] FactData
+    );
 
     private readonly ClickhouseOptions _options = optionsAccessor.Value;
 
@@ -28,16 +25,7 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         var fact = new int[length];
         var plan = new int[length];
 
-        var totalPlan = new int[12];
-        var totalFact = new int[12];
-        var lastLength = expectedValues == PeriodTypeEnum.Custom ? length : 12;
-        var lastPlan = new int[lastLength];
-        var lastFact = new int[lastLength];
-
         var unionFrom = range.From.AddYears(-1);
-        var totalRange = new DateRange(unionFrom, range.To);
-        var monthsCount = GetMonthDiff(totalRange.From.Date, totalRange.To.Date);
-        var step = (int)Math.Ceiling(monthsCount / (double)length);
 
         var key = $"user-metric-{metricId}";
 
@@ -85,32 +73,9 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
                 else if (vt == MetricValueTypeEnum.Plan)
                     plan[idx] += value;
             }
-
-            var totalIdxRaw = GetIndex(date, totalRange.From.Date, PeriodTypeEnum.Month);
-            var totalIdx = totalIdxRaw >= 0 ? Math.Min(11, totalIdxRaw / step) : -1;
-            if (totalIdx is >= 0 && totalIdx < totalPlan.Length && Enum.TryParse<MetricValueTypeEnum>(type, out var vtTotal))
-            {
-                if (vtTotal == MetricValueTypeEnum.Fact)
-                    totalFact[totalIdx] += value;
-                else if (vtTotal == MetricValueTypeEnum.Plan)
-                    totalPlan[totalIdx] += value;
-            }
-
-            if (date <= range.From)
-            {
-                var lastIdxRaw = GetIndex(date, unionFrom.Date, PeriodTypeEnum.Month);
-                var lastIdx = lastIdxRaw >= 0 ? Math.Min(lastPlan.Length - 1, lastIdxRaw) : -1;
-                if (lastIdx is >= 0 && lastIdx < lastPlan.Length && Enum.TryParse<MetricValueTypeEnum>(type, out var vtLast))
-                {
-                    if (vtLast == MetricValueTypeEnum.Fact)
-                        lastFact[lastIdx] += value;
-                    else if (vtLast == MetricValueTypeEnum.Plan)
-                        lastPlan[lastIdx] += value;
-                }
-            }
         }
 
-        return new MetricsDataResponse(plan, fact, totalPlan, totalFact, lastPlan, lastFact);
+        return new MetricsDataResponse(plan, fact);
     }
 
     public async Task PutAsync(

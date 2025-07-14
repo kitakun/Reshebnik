@@ -14,6 +14,7 @@ public class SpecialInvitationCreateHandler(ReshebnikContext db)
             Email = dto.Email,
             CompanyName = dto.CompanyName,
             CompanyDescription = dto.CompanyDescription,
+            CompanySize = dto.CompanySize,
             CreatedAt = DateTime.UtcNow,
             Granted = false
         };

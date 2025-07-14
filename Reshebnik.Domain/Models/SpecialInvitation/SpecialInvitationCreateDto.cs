@@ -6,4 +6,5 @@ public class SpecialInvitationCreateDto
     public string Email { get; set; } = null!;
     public string CompanyName { get; set; } = null!;
     public string CompanyDescription { get; set; } = null!;
+    public int CompanySize { get; set; }
 }

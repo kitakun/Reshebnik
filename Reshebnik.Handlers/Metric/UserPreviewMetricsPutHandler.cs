@@ -30,11 +30,10 @@ public class UserPreviewMetricsPutHandler(
             .Where(m => m.CompanyId == companyId && m.EmployeeId == userId && metricIds.Contains(m.Id))
             .ToListAsync(ct);
 
-        var bdataTasks = new List<Task>();
-        foreach (var metric in metrics)
+        await Parallel.ForEachAsync(metrics, ct, async (metric, cts) =>
         {
             var item = request.Metrics.FirstOrDefault(m => m.Id == metric.Id);
-            if (item == null) continue;
+            if (item == null) return;
 
             for (var i = 0; i < item.FactData.Length; i++)
             {
@@ -44,7 +43,7 @@ public class UserPreviewMetricsPutHandler(
                 switch (metric.Type)
                 {
                     case MetricTypeEnum.PlanFact:
-                        bdataTasks.Add(putHandler.PutAsync(
+                        await putHandler.PutAsync(
                             metric.Id,
                             MetricValueTypeEnum.Fact,
                             userId,
@@ -53,10 +52,10 @@ public class UserPreviewMetricsPutHandler(
                             request.PeriodType,
                             date,
                             item.FactData[i],
-                            ct));
+                            cts);
                         break;
                     case MetricTypeEnum.FactOnly:
-                        bdataTasks.Add(putHandler.PutAsync(
+                        await putHandler.PutAsync(
                             metric.Id,
                             MetricValueTypeEnum.Fact,
                             userId,
@@ -65,13 +64,14 @@ public class UserPreviewMetricsPutHandler(
                             request.PeriodType,
                             date,
                             item.FactData[i],
-                            ct));
+                            cts);
                         break;
                     case MetricTypeEnum.Cumulative:
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
             }
+
             for (var i = 0; i < item.PlanData.Length; i++)
             {
                 var date = AddOffset(request.From.Date, request.PeriodType, i);
@@ -80,7 +80,7 @@ public class UserPreviewMetricsPutHandler(
                 switch (metric.Type)
                 {
                     case MetricTypeEnum.PlanFact:
-                        bdataTasks.Add(putHandler.PutAsync(
+                        await putHandler.PutAsync(
                             metric.Id,
                             MetricValueTypeEnum.Plan,
                             userId,
@@ -89,7 +89,7 @@ public class UserPreviewMetricsPutHandler(
                             request.PeriodType,
                             date,
                             item.PlanData[i],
-                            ct));
+                            cts);
                         break;
                     case MetricTypeEnum.FactOnly:
                         break;
@@ -98,9 +98,7 @@ public class UserPreviewMetricsPutHandler(
                         throw new ArgumentOutOfRangeException();
                 }
             }
-        }
-
-        await Task.WhenAll(bdataTasks);
+        });
 
         await db.SaveChangesAsync(ct);
         return true;

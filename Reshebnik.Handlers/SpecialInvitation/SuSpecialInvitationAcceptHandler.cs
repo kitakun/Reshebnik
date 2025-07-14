@@ -24,7 +24,7 @@ public class SuSpecialInvitationAcceptHandler(
         {
             Name = invitation.CompanyName,
             Industry = invitation.CompanyDescription,
-            EmployeesCount = 1,
+            EmployeesCount = invitation.CompanySize,
             Type = CompanyTypeEnum.Unset,
             Email = invitation.Email,
             NotifyAboutLoweringMetrics = false,
