@@ -29,10 +29,31 @@ public class CompanyPreviewMetricsHandler(
             PeriodType = (FillmentPeriodWrapper)indicator.FillmentPeriod
         };
 
-        var data = await fetchHandler.HandleAsync(
-            range,
+        var period = (PeriodTypeEnum)(FillmentPeriodWrapper)indicator.FillmentPeriod;
+
+        var last12Range = period switch
+        {
+            PeriodTypeEnum.Day => new DateRange(range.To.AddDays(-11), range.To),
+            PeriodTypeEnum.Week => new DateRange(range.From.AddDays(-5), range.To),
+            PeriodTypeEnum.Quartal or PeriodTypeEnum.Year => new DateRange(new DateTime(range.To.Year, 1, 1), new DateTime(range.To.Year, 12, 31)),
+            _ => range
+        };
+
+        var last12Data = await fetchHandler.HandleAsync(
+            last12Range,
             indicator.Id,
+            period == PeriodTypeEnum.Week ? PeriodTypeEnum.Day : period,
             (FillmentPeriodWrapper)indicator.FillmentPeriod,
+            ct);
+
+        var totalsRange = new DateRange(
+            new DateTime(range.From.Year, 1, 1),
+            new DateTime(range.To.Year, 12, 31));
+
+        var totalData = await fetchHandler.HandleAsync(
+            totalsRange,
+            indicator.Id,
+            PeriodTypeEnum.Month,
             (FillmentPeriodWrapper)indicator.FillmentPeriod,
             ct);
 
@@ -40,12 +61,10 @@ public class CompanyPreviewMetricsHandler(
         {
             Id = indicator.Id,
             Name = indicator.Name,
-            PlanData = data.PlanData,
-            FactData = data.FactData,
-            TotalPlanData = data.TotalPlanData,
-            TotalFactData = data.TotalFactData,
-            Last12PointsPlan = data.Last12PointsPlan,
-            Last12PointsFact = data.Last12PointsFact
+            Last12PointsPlan = last12Data.PlanData,
+            Last12PointsFact = last12Data.FactData,
+            TotalPlanData = totalData.PlanData,
+            TotalFactData = totalData.FactData
         };
 
         return dto;

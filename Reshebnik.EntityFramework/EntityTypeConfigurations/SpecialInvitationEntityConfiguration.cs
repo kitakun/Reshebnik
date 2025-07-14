@@ -12,6 +12,7 @@ public class SpecialInvitationEntityConfiguration : IEntityTypeConfiguration<Spe
         builder.ToTable("special_invitations");
 
         builder.HasKey(e => e.Id);
+        builder.HasIndex(e => e.Email).IsUnique();
 
         builder.Property(e => e.FIO).HasColumnName("fio").IsRequired().HasMaxLength(256);
         builder.Property(e => e.Email).HasColumnName("email").IsRequired().HasMaxLength(256);

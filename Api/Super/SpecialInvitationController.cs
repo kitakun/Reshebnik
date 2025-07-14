@@ -32,4 +32,14 @@ public class SpecialInvitationController : ControllerBase
         await handler.HandleAsync(id, cancellationToken);
         return Ok();
     }
+
+    [HttpPost("{id}/reject")]
+    public async Task<IActionResult> RejectAsync(
+        int id,
+        [FromServices] SuSpecialInvitationRejectHandler handler,
+        CancellationToken cancellationToken)
+    {
+        await handler.HandleAsync(id, cancellationToken);
+        return Ok();
+    }
 }

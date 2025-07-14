@@ -12,6 +12,7 @@ public class CompanyEntityConfiguration : IEntityTypeConfiguration<CompanyEntity
         builder.ToTable("companies");
 
         builder.HasKey(e => e.Id);
+        builder.HasIndex(e => e.Email).IsUnique();
 
         builder.Property(p => p.Id).HasDefaultValueSql("nextval('\"companies_id_seq\"')");
 

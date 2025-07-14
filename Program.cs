@@ -183,6 +183,7 @@ builder.Services.AddScoped<SuAllCompanyIdsHandler>();
 builder.Services.AddScoped<SpecialInvitationCreateHandler>();
 builder.Services.AddScoped<SuSpecialInvitationTypeaheadHandler>();
 builder.Services.AddScoped<SuSpecialInvitationAcceptHandler>();
+builder.Services.AddScoped<SuSpecialInvitationRejectHandler>();
 
 // Email
 builder.Services.AddScoped<IEmailQueue, EfEmailQueue>();

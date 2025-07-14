@@ -12,7 +12,7 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
         builder.ToTable("employees");
 
         builder.HasKey(e => e.Id);
-        builder.HasIndex(i => new { i.CompanyId, i.Email });
+        builder.HasIndex(e => e.Email).IsUnique();
 
         builder.Property(p => p.Id).HasDefaultValueSql("nextval('\"employee_id_seq\"')");
 
