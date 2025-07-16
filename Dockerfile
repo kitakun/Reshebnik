@@ -7,6 +7,7 @@ COPY Reshebnik.Web.csproj ./
 COPY Reshebnik.Handlers/Reshebnik.Handlers.csproj Reshebnik.Handlers/
 COPY Reshebnik.Domain/Reshebnik.Domain.csproj Reshebnik.Domain/
 COPY Reshebnik.EntityFramework/Reshebnik.EntityFramework.csproj Reshebnik.EntityFramework/
+COPY Reshebnik.Clickhouse/Reshebnik.Clickhouse.csproj Reshebnik.Clickhouse/
 RUN dotnet restore "Reshebnik.Web.csproj"
 
 COPY . .
