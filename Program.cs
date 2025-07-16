@@ -80,7 +80,7 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
 #else
         policy
-            .WithOrigins("https://tabligo.ru")
+            .WithOrigins("https://tabligo.ru/")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
