@@ -2,7 +2,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Restore only project files first to leverage docker layer caching
 COPY Reshebnik.Web.csproj ./
 COPY Reshebnik.Handlers/Reshebnik.Handlers.csproj Reshebnik.Handlers/
 COPY Reshebnik.Domain/Reshebnik.Domain.csproj Reshebnik.Domain/
