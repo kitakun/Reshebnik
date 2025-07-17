@@ -12,8 +12,8 @@ using Reshebnik.EntityFramework;
 namespace Reshebnik.EntityFramework.Migrations
 {
     [DbContext(typeof(ReshebnikContext))]
-    [Migration("20250706153532_Metrics2")]
-    partial class Metrics2
+    [Migration("20250717151143_SuUser")]
+    partial class SuUser
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -103,6 +103,9 @@ namespace Reshebnik.EntityFramework.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.ToTable("companies", (string)null);
                 });
 
@@ -183,6 +186,80 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.HasIndex("FundamentalDepartmentId", "DepartmentId", "AncestorDepartmentId");
 
                     b.ToTable("department_scheme", (string)null);
+                });
+
+            modelBuilder.Entity("Reshebnik.Domain.Entities.EmailMessageEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Bcc")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("body");
+
+                    b.Property<string>("Cc")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("EnqueuedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("enqueued_at");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text")
+                        .HasColumnName("error");
+
+                    b.Property<string>("From")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("no-reply@mydoc.com")
+                        .HasColumnName("from");
+
+                    b.Property<bool>("IsHtml")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_html");
+
+                    b.Property<bool>("IsSent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_sent");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.Property<int>("SentByCompanyId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SentByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("subject");
+
+                    b.Property<string>("To")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("to");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SentByCompanyId");
+
+                    b.HasIndex("SentByUserId");
+
+                    b.ToTable("email_messages", (string)null);
                 });
 
             modelBuilder.Entity("Reshebnik.Domain.Entities.EmployeeDepartmentLinkEntity", b =>
@@ -295,9 +372,100 @@ namespace Reshebnik.EntityFramework.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyId", "Email");
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.ToTable("employees", (string)null);
+                });
+
+            modelBuilder.Entity("Reshebnik.Domain.Entities.IndicatorEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("category");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer")
+                        .HasColumnName("created_by");
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("integer")
+                        .HasColumnName("department_id");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("description");
+
+                    b.Property<int?>("EmployeeId")
+                        .HasColumnType("integer")
+                        .HasColumnName("employee_id");
+
+                    b.Property<string>("FillmentPeriod")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("fillment_period");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<decimal>("RejectionTreshold")
+                        .HasColumnType("numeric")
+                        .HasColumnName("rejection_treshold");
+
+                    b.Property<bool>("ShowOnKeyIndicators")
+                        .HasColumnType("boolean")
+                        .HasColumnName("show_on_key_indicators");
+
+                    b.Property<bool>("ShowOnMainScreen")
+                        .HasColumnType("boolean")
+                        .HasColumnName("show_on_main_screen");
+
+                    b.Property<bool>("ShowToEmployees")
+                        .HasColumnType("boolean")
+                        .HasColumnName("show_to_employees");
+
+                    b.Property<string>("UnitType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("unit_type");
+
+                    b.Property<string>("ValueType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("value_type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("indicators", (string)null);
                 });
 
             modelBuilder.Entity("Reshebnik.Domain.Entities.MetricEntity", b =>
@@ -460,6 +628,60 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.ToTable("metric_templates", (string)null);
                 });
 
+            modelBuilder.Entity("Reshebnik.Domain.Entities.SpecialInvitationEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CompanyDescription")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("company_description");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("company_name");
+
+                    b.Property<int>("CompanySize")
+                        .HasColumnType("integer")
+                        .HasColumnName("company_size");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("FIO")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("fio");
+
+                    b.Property<bool>("Granted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("granted");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("special_invitations", (string)null);
+                });
+
             modelBuilder.Entity("Reshebnik.Domain.Entities.SystemNotificationEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -553,6 +775,56 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.Navigation("FundamentalDepartment");
                 });
 
+            modelBuilder.Entity("Reshebnik.Domain.Entities.EmailMessageEntity", b =>
+                {
+                    b.HasOne("Reshebnik.Domain.Entities.CompanyEntity", "SentByCompany")
+                        .WithMany()
+                        .HasForeignKey("SentByCompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Reshebnik.Domain.Entities.EmployeeEntity", "SentByUser")
+                        .WithMany()
+                        .HasForeignKey("SentByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsMany("Reshebnik.Domain.Entities.EmailAttachment", "Attachments", b1 =>
+                        {
+                            b1.Property<int>("EmailMessageId")
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("FileName")
+                                .HasColumnType("text");
+
+                            b1.Property<byte[]>("Content")
+                                .IsRequired()
+                                .HasColumnType("bytea");
+
+                            b1.Property<string>("ContentType")
+                                .IsRequired()
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("text")
+                                .HasDefaultValue("application/octet-stream");
+
+                            b1.Property<int>("Id")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("EmailMessageId", "FileName");
+
+                            b1.ToTable("EmailAttachments", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("EmailMessageId");
+                        });
+
+                    b.Navigation("Attachments");
+
+                    b.Navigation("SentByCompany");
+
+                    b.Navigation("SentByUser");
+                });
+
             modelBuilder.Entity("Reshebnik.Domain.Entities.EmployeeDepartmentLinkEntity", b =>
                 {
                     b.HasOne("Reshebnik.Domain.Entities.DepartmentEntity", "Department")
@@ -581,6 +853,31 @@ namespace Reshebnik.EntityFramework.Migrations
                         .IsRequired();
 
                     b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("Reshebnik.Domain.Entities.IndicatorEntity", b =>
+                {
+                    b.HasOne("Reshebnik.Domain.Entities.CompanyEntity", "CreatedByCompany")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
+
+                    b.HasOne("Reshebnik.Domain.Entities.DepartmentEntity", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Reshebnik.Domain.Entities.EmployeeEntity", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CreatedByCompany");
+
+                    b.Navigation("Department");
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("Reshebnik.Domain.Entities.MetricEntity", b =>

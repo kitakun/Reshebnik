@@ -12,8 +12,8 @@ using Reshebnik.EntityFramework;
 namespace Reshebnik.EntityFramework.Migrations
 {
     [DbContext(typeof(ReshebnikContext))]
-    [Migration("20250714183242_UniqEmail")]
-    partial class UniqEmail
+    [Migration("20250717150946_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
