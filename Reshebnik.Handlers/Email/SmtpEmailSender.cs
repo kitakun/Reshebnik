@@ -69,7 +69,7 @@ public class SmtpEmailSender(IConfiguration configuration, ILogger<SmtpEmailSend
         {
             await retryPolicy.ExecuteAsync(async () =>
                 {
-                    await client.ConnectAsync("smtp.timeweb.ru", 465, SecureSocketOptions.Auto, cancellationToken);
+                    await client.ConnectAsync("smtp.timeweb.ru", 25, SecureSocketOptions.Auto, cancellationToken);
                     await client.AuthenticateAsync(botLogin, botPass, cancellationToken);
 
                     await client.SendAsync(mail, cancellationToken);
