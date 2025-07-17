@@ -20,7 +20,13 @@ migrationBuilder.Sql("""
                                      "phone",
                                      "notify_about_lowering_metrics",
                                      "notification_type",
-                                     "language_code"
+                                     "language_code",
+                                     "Period",
+                                     "DefaultMetrics",
+                                     "AutoUpdateByApi",
+                                     "AllowForEmployeesEditMetrics",
+                                     "EnableNotificationsInApp",
+                                     "ShowNewMetrics"
                                  )
                                  SELECT
                                      'SuperCompany',
@@ -31,7 +37,13 @@ migrationBuilder.Sql("""
                                      '+1234567890',
                                      true,
                                      'Email',
-                                     'ru'
+                                     'ru',
+                                     1,
+                                     '',
+                                     false,
+                                     false,
+                                     false,
+                                     false
                                  WHERE NOT EXISTS (
                                      SELECT 1 FROM public."companies" WHERE "name" = 'SuperCompany'
                                  );
