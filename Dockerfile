@@ -7,6 +7,7 @@ COPY Reshebnik.Handlers/Reshebnik.Handlers.csproj Reshebnik.Handlers/
 COPY Reshebnik.Domain/Reshebnik.Domain.csproj Reshebnik.Domain/
 COPY Reshebnik.EntityFramework/Reshebnik.EntityFramework.csproj Reshebnik.EntityFramework/
 COPY Reshebnik.Clickhouse/Reshebnik.Clickhouse.csproj Reshebnik.Clickhouse/
+COPY Reshebnik.Clickhouse/Migrations Reshebnik.Clickhouse/Migrations/
 RUN dotnet restore "Reshebnik.Web.csproj"
 
 COPY . .
@@ -16,6 +17,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 EXPOSE 8080
 COPY --from=build /app/publish .
+COPY Reshebnik.Clickhouse/Migrations Reshebnik.Clickhouse/Migrations
 COPY appsettings.Production.json ./appsettings.Production.json
 
 ENV ASPNETCORE_ENVIRONMENT=Production
