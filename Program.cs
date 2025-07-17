@@ -87,12 +87,15 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
+        policy
+            .WithOrigins("https://tabligo.ru")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
 #else
         policy
-            .WithOrigins("https://tabligo.ru/")
+            .WithOrigins("https://tabligo.ru")
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowAnyMethod();
 #endif
     });
 });
