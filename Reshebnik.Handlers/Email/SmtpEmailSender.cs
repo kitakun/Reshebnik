@@ -55,9 +55,7 @@ public class SmtpEmailSender(IConfiguration configuration, ILogger<SmtpEmailSend
             .Handle<Exception>()
             .WaitAndRetryAsync(
                 retryCount: 3,
-                sleepDurationProvider: retryAttempt =>
-                    // exponential backoff
-                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                sleepDurationProvider: _ => TimeSpan.FromMinutes(5),
                 onRetry: (outcome, timespan, retryAttempt, context) =>
                 {
                     var exceptionMessage = outcome.Message;
