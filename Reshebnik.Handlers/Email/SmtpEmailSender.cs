@@ -67,12 +67,23 @@ public class SmtpEmailSender(IConfiguration configuration, ILogger<SmtpEmailSend
 
         try
         {
+            int attemp = 0;
             await retryPolicy.ExecuteAsync(async () =>
                 {
-                    await client.ConnectAsync("smtp.timeweb.ru", 25, SecureSocketOptions.Auto, cancellationToken);
-                    await client.AuthenticateAsync(botLogin, botPass, cancellationToken);
+                    try
+                    {
+                        attemp++;
+                        logger.LogInformation($"Attempt #{attemp} to send Email on {mail.To[0].Name}");
+                        await client.ConnectAsync("smtp.timeweb.ru", 465, SecureSocketOptions.Auto, cancellationToken);
+                        await client.AuthenticateAsync(botLogin, botPass, cancellationToken);
 
-                    await client.SendAsync(mail, cancellationToken);
+                        await client.SendAsync(mail, cancellationToken);
+                        logger.LogInformation($"Attempt #{attemp} to send Email on {mail.To[0].Name} finished with SUCCESS");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, $"Email send exception: {ex.Message}, Stack: {WriteTrimmedLine(ex.StackTrace)}");
+                    }
                 }
             );
         }
@@ -84,6 +95,20 @@ public class SmtpEmailSender(IConfiguration configuration, ILogger<SmtpEmailSend
         finally
         {
             await client.DisconnectAsync(true, cancellationToken);
+        }
+    }
+
+    private static string WriteTrimmedLine(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return "";
+        const int maxLength = 3000;
+        if (text.Length > maxLength)
+        {
+            return text[..maxLength] + "...";
+        }
+        else
+        {
+            return text;
         }
     }
 }
