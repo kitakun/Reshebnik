@@ -19,6 +19,7 @@ using Reshebnik.Clickhouse;
 using Reshebnik.Clickhouse.Handlers;
 using Reshebnik.Handlers.Email;
 using Reshebnik.Handlers.SpecialInvitation;
+using Reshebnik.Web.Middleware;
 
 using System.Text;
 using System.Text.Json;
@@ -206,6 +207,7 @@ builder.Services.AddHostedService<EmailSenderService>();
 
 var app = builder.Build();
 app.UseCors("DevCors");
+app.UseExceptionLogging();
 
 using (var scope = app.Services.CreateScope())
 {
