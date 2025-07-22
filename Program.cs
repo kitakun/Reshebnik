@@ -168,6 +168,7 @@ builder.Services.AddScoped<DepartmentTypeaheadHandler>();
 builder.Services.AddScoped<EmployeeGetByIdHandler>();
 builder.Services.AddScoped<EmployeePutHandler>();
 builder.Services.AddScoped<EmployeeDeleteHandler>();
+builder.Services.AddScoped<EmployeeCommentUpdateHandler>();
 builder.Services.AddScoped<CompanyUpdateHandler>();
 builder.Services.AddScoped<CompanyGetHandler>();
 builder.Services.AddScoped<SuCompanyGetHandler>();

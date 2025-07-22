@@ -5,6 +5,8 @@ using Reshebnik.Domain.Models.Metric;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Handlers.Metric;
+using Reshebnik.Domain.Models.Employee;
+using Reshebnik.Handlers.Employee;
 
 
 namespace Reshebnik.Web.Api.Client;
@@ -68,6 +70,18 @@ public class EmployeeMetricsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var ok = await handler.HandleAsync(id, request, cancellationToken);
+        if (!ok) return NotFound();
+        return Ok();
+    }
+
+    [HttpPut("{id}/save-comment")]
+    public async Task<IActionResult> SaveCommentAsync(
+        [FromRoute] int id,
+        [FromBody] EmployeeCommentDto request,
+        [FromServices] EmployeeCommentUpdateHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var ok = await handler.HandleAsync(id, request.Comment, cancellationToken);
         if (!ok) return NotFound();
         return Ok();
     }
