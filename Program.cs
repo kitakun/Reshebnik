@@ -19,6 +19,7 @@ using Reshebnik.Clickhouse;
 using Reshebnik.Clickhouse.Handlers;
 using Reshebnik.Handlers.Email;
 using Reshebnik.Handlers.SpecialInvitation;
+using Reshebnik.Handlers.BugHunt;
 using Reshebnik.Web.Middleware;
 
 using System.Text;
@@ -191,6 +192,7 @@ builder.Services.AddScoped<CompanyPreviewMetricsHandler>();
 builder.Services.AddScoped<CompanyPreviewMetricsPutHandler>();
 builder.Services.AddScoped<MigrateClickhouseDatabase>();
 builder.Services.AddScoped<DashboardGetHandler>();
+builder.Services.AddScoped<BugHuntCreateHandler>();
 
 // SU
 builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();
@@ -199,6 +201,7 @@ builder.Services.AddScoped<SpecialInvitationCreateHandler>();
 builder.Services.AddScoped<SuSpecialInvitationTypeaheadHandler>();
 builder.Services.AddScoped<SuSpecialInvitationAcceptHandler>();
 builder.Services.AddScoped<SuSpecialInvitationRejectHandler>();
+builder.Services.AddScoped<SuBugHuntTypeaheadHandler>();
 
 // Email
 builder.Services.AddScoped<IEmailQueue, EfEmailQueue>();

@@ -28,6 +28,8 @@ public class ReshebnikContext(DbContextOptions<ReshebnikContext> options) : DbCo
 
     public DbSet<LogExceptionEntity> ExceptionLogs { get; set; }
 
+    public DbSet<BugHuntEntity> BugHunts { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasSequence<int>("employee_id_seq");
