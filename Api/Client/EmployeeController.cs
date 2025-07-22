@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using Reshebnik.Domain.Models.Employee;
 using Reshebnik.Handlers.Employee;
+using Reshebnik.Domain.Exceptions;
 
 namespace Reshebnik.Web.Api.Client;
 
@@ -29,8 +30,15 @@ public class EmployeeController : ControllerBase
         [FromServices] EmployeePutHandler handler,
         CancellationToken cancellationToken)
     {
-        var id = await handler.HandleAsync(request, cancellationToken);
-        return Ok(new { id });
+        try
+        {
+            var id = await handler.HandleAsync(request, cancellationToken);
+            return Ok(new { id });
+        }
+        catch (EmailAlreadyExistsException)
+        {
+            return BadRequest(new { error = "E-Mail уже занят" });
+        }
     }
 
     [HttpDelete("{id}")]

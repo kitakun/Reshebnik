@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Reshebnik.Domain.Entities;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models.Employee;
+using Reshebnik.Domain.Exceptions;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Auth;
 using Reshebnik.Handlers.Company;
@@ -21,6 +22,13 @@ public class EmployeePutHandler(
     {
         if (string.IsNullOrEmpty(dto.Fio)) throw new ArgumentNullException(nameof(dto.Fio));
 
+        var normalizedEmail = dto.Email.ToLower();
+        var emailExists = await db.Employees
+            .AsNoTracking()
+            .AnyAsync(e => e.Email.ToLower() == normalizedEmail && e.Id != dto.Id, ct);
+        if (emailExists)
+            throw new EmailAlreadyExistsException();
+
         EmployeeEntity entity;
         if (dto.Id != 0)
         {
@@ -35,7 +43,7 @@ public class EmployeePutHandler(
                 departmentLink.DepartmentId = dto.DepartmentId!.Value;
                 departmentLink.Type = dto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee;
             }
-            else if(dto.DepartmentId.HasValue)
+            else if (dto.DepartmentId.HasValue)
             {
                 db.EmployeeDepartmentLinkEntities.Add(new EmployeeDepartmentLinkEntity
                 {
