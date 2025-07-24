@@ -21,5 +21,5 @@ public class DepartmentEntity
     public List<EmployeeDepartmentLinkEntity> LinkEntities { get; set; } = new();
     public List<DepartmentSchemeEntity> OwnerSchemas { get; set; } = new();
     public List<DepartmentSchemeEntity> PartInSchemas { get; set; } = new();
-    public List<MetricEntity> Metrics { get; set; } = new();
+    public List<MetricDepartmentLinkEntity> MetricLinks { get; set; } = new();
 }

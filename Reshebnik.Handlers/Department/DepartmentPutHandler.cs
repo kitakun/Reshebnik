@@ -67,9 +67,9 @@ public class DepartmentPutHandler(
 
         if (isRoot)
         {
-            if (!await db.DepartmentSchemaEntities.AnyAsync(s => s.DepartmentId == entity.Id && s.AncestorDepartmentId == entity.Id, ct))
+            if (!await db.DepartmentSchemas.AnyAsync(s => s.DepartmentId == entity.Id && s.AncestorDepartmentId == entity.Id, ct))
             {
-                db.DepartmentSchemaEntities.Add(new DepartmentSchemeEntity
+                db.DepartmentSchemas.Add(new DepartmentSchemeEntity
                 {
                     FundamentalDepartmentId = entity.Id,
                     AncestorDepartmentId = entity.Id,
@@ -94,7 +94,7 @@ public class DepartmentPutHandler(
 
     private async Task UpsertUsersAsync(DepartmentEntity department, List<DepartmentUserDto> users, int companyId, CancellationToken ct)
     {
-        var existingLinks = await db.EmployeeDepartmentLinkEntities
+        var existingLinks = await db.EmployeeDepartmentLinks
             .Include(l => l.Employee)
             .Where(l => l.DepartmentId == department.Id)
             .ToListAsync(ct);
@@ -143,7 +143,7 @@ public class DepartmentPutHandler(
                     EmployeeId = employee.Id,
                     DepartmentId = department.Id
                 };
-                db.EmployeeDepartmentLinkEntities.Add(link);
+                db.EmployeeDepartmentLinks.Add(link);
             }
             link.Type = userDto.Type;
             await db.SaveChangesAsync(ct);
@@ -153,9 +153,9 @@ public class DepartmentPutHandler(
         {
             if (!processedIds.Contains(link.EmployeeId))
             {
-                db.EmployeeDepartmentLinkEntities.Remove(link);
+                db.EmployeeDepartmentLinks.Remove(link);
                 var hasOtherLinks = await db
-                    .EmployeeDepartmentLinkEntities
+                    .EmployeeDepartmentLinks
                     .AnyAsync(l => l.EmployeeId == link.EmployeeId && l.Id != link.Id, ct);
                 if (!hasOtherLinks)
                 {
@@ -169,13 +169,13 @@ public class DepartmentPutHandler(
 
     private async Task AddSchemeAsync(int deptId, int parentId, CompanyEntity company, CancellationToken ct)
     {
-        var parentSchemes = await db.DepartmentSchemaEntities
+        var parentSchemes = await db.DepartmentSchemas
             .Where(s => s.DepartmentId == parentId)
             .ToListAsync(ct);
 
         foreach (var sch in parentSchemes)
         {
-            db.DepartmentSchemaEntities.Add(new DepartmentSchemeEntity
+            db.DepartmentSchemas.Add(new DepartmentSchemeEntity
             {
                 FundamentalDepartmentId = sch.FundamentalDepartmentId,
                 AncestorDepartmentId = sch.AncestorDepartmentId,
@@ -184,7 +184,7 @@ public class DepartmentPutHandler(
             });
         }
 
-        db.DepartmentSchemaEntities.Add(new DepartmentSchemeEntity
+        db.DepartmentSchemas.Add(new DepartmentSchemeEntity
         {
             FundamentalDepartmentId = parentSchemes.First().FundamentalDepartmentId,
             AncestorDepartmentId = deptId,

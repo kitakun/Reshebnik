@@ -31,12 +31,30 @@ public class MetricPutHandler(
         entity.Unit = dto.Unit;
         entity.Type = dto.Type;
         entity.PeriodType = dto.PeriodType;
-        entity.DepartmentId = dto.DepartmentId;
-        entity.EmployeeId = dto.EmployeeId;
         entity.Plan = dto.Plan;
         entity.Min = dto.Min;
         entity.Max = dto.Max;
         entity.Visible = dto.Visible;
+
+        var existingDeptLinks = await db.MetricDepartmentLinks
+            .Where(l => l.MetricId == entity.Id)
+            .ToListAsync(ct);
+        db.MetricDepartmentLinks.RemoveRange(existingDeptLinks.Where(l => !dto.DepartmentIds.Contains(l.DepartmentId)));
+        foreach (var depId in dto.DepartmentIds)
+        {
+            if (existingDeptLinks.All(l => l.DepartmentId != depId))
+                db.MetricDepartmentLinks.Add(new MetricDepartmentLinkEntity { MetricId = entity.Id, DepartmentId = depId });
+        }
+
+        var existingEmpLinks = await db.MetricEmployeeLinks
+            .Where(l => l.MetricId == entity.Id)
+            .ToListAsync(ct);
+        db.MetricEmployeeLinks.RemoveRange(existingEmpLinks.Where(l => !dto.EmployeeIds.Contains(l.EmployeeId)));
+        foreach (var empId in dto.EmployeeIds)
+        {
+            if (existingEmpLinks.All(l => l.EmployeeId != empId))
+                db.MetricEmployeeLinks.Add(new MetricEmployeeLinkEntity { MetricId = entity.Id, EmployeeId = empId });
+        }
 
         await db.SaveChangesAsync(ct);
         return entity.Id;

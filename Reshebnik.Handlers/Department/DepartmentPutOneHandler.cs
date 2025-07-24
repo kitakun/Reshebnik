@@ -52,9 +52,9 @@ public class DepartmentPutOneHandler(
         {
             if (entity.IsFundamental)
             {
-                if (!await db.DepartmentSchemaEntities.AnyAsync(s => s.DepartmentId == entity.Id && s.AncestorDepartmentId == entity.Id, ct))
+                if (!await db.DepartmentSchemas.AnyAsync(s => s.DepartmentId == entity.Id && s.AncestorDepartmentId == entity.Id, ct))
                 {
-                    db.DepartmentSchemaEntities.Add(new DepartmentSchemeEntity
+                    db.DepartmentSchemas.Add(new DepartmentSchemeEntity
                     {
                         FundamentalDepartmentId = entity.Id,
                         AncestorDepartmentId = entity.Id,
@@ -75,13 +75,13 @@ public class DepartmentPutOneHandler(
 
     private async Task AddSchemeAsync(int deptId, int parentId, CancellationToken ct)
     {
-        var parentSchemes = await db.DepartmentSchemaEntities
+        var parentSchemes = await db.DepartmentSchemas
             .Where(s => s.DepartmentId == parentId)
             .ToListAsync(ct);
 
         foreach (var sch in parentSchemes)
         {
-            db.DepartmentSchemaEntities.Add(new DepartmentSchemeEntity
+            db.DepartmentSchemas.Add(new DepartmentSchemeEntity
             {
                 FundamentalDepartmentId = sch.FundamentalDepartmentId,
                 AncestorDepartmentId = sch.AncestorDepartmentId,
@@ -90,7 +90,7 @@ public class DepartmentPutOneHandler(
             });
         }
 
-        db.DepartmentSchemaEntities.Add(new DepartmentSchemeEntity
+        db.DepartmentSchemas.Add(new DepartmentSchemeEntity
         {
             FundamentalDepartmentId = parentSchemes.First().FundamentalDepartmentId,
             AncestorDepartmentId = deptId,

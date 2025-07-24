@@ -62,7 +62,7 @@ public class DashboardGetHandler(
             {
                 Id = e.Id,
                 Fio = e.FIO,
-                Average = employeeAverages.TryGetValue(e.Id, out var v) ? v : 0
+                Average = employeeAverages.GetValueOrDefault(e.Id, 0)
             })
             .OrderByDescending(e => e.Average)
             .Take(3)
@@ -73,7 +73,7 @@ public class DashboardGetHandler(
             {
                 Id = e.Id,
                 Fio = e.FIO,
-                Average = employeeAverages.TryGetValue(e.Id, out var v) ? v : 0
+                Average = employeeAverages.GetValueOrDefault(e.Id, 0)
             })
             .OrderBy(e => e.Average)
             .Take(3)
@@ -85,7 +85,7 @@ public class DashboardGetHandler(
             .Select(d => d.Id)
             .ToListAsync(ct);
 
-        var level1Ids = await db.DepartmentSchemaEntities
+        var level1Ids = await db.DepartmentSchemas
             .AsNoTracking()
             .Where(s => rootIds.Contains(s.AncestorDepartmentId) && s.Depth == 1 && s.DepartmentId != s.AncestorDepartmentId)
             .Select(s => s.DepartmentId)
@@ -98,7 +98,7 @@ public class DashboardGetHandler(
             .Select(d => new { d.Id, d.Name })
             .ToListAsync(ct);
 
-        var links = await db.EmployeeDepartmentLinkEntities
+        var links = await db.EmployeeDepartmentLinks
             .AsNoTracking()
             .Where(l => level1Ids.Contains(l.DepartmentId))
             .ToListAsync(ct);

@@ -5,6 +5,7 @@ using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Department;
 using Reshebnik.EntityFramework;
 using Reshebnik.Clickhouse.Handlers;
+using System.Linq;
 
 namespace Reshebnik.Handlers.Department;
 
@@ -18,7 +19,7 @@ public class DepartmentPreviewHandler(
     {
         var departments = await db.Departments
             .AsNoTracking()
-            .Where(d => !d.IsDeleted && (d.Id == id || db.DepartmentSchemaEntities.Any(s => s.AncestorDepartmentId == id && s.Depth == 1 && s.DepartmentId == d.Id)))
+            .Where(d => !d.IsDeleted && (d.Id == id || db.DepartmentSchemas.Any(s => s.AncestorDepartmentId == id && s.Depth == 1 && s.DepartmentId == d.Id)))
             .ToListAsync(ct);
         if (departments.Count == 0) return null;
 
@@ -26,7 +27,7 @@ public class DepartmentPreviewHandler(
 
         var deptIds = departments.Select(d => d.Id).ToList();
 
-        var links = await db.EmployeeDepartmentLinkEntities
+        var links = await db.EmployeeDepartmentLinks
             .AsNoTracking()
             .Include(l => l.Employee)
             .Where(l => deptIds.Contains(l.DepartmentId))
@@ -39,14 +40,18 @@ public class DepartmentPreviewHandler(
             CompletionPercent = 0
         });
         
-        var metrics = await db.Metrics
+        var metrics = await db.MetricDepartmentLinks
             .AsNoTracking()
-            .Where(m => m.DepartmentId != null && deptIds.Contains(m.DepartmentId.Value))
+            .Include(l => l.Metric)
+            .ThenInclude(m => m.DepartmentLinks)
+            .Where(l => deptIds.Contains(l.DepartmentId))
+            .Select(l => l.Metric)
+            .Distinct()
             .ToListAsync(ct);
 
         foreach (var d in departments)
         {
-            var metricsForDept = metrics.Where(m => m.DepartmentId == d.Id).ToList();
+            var metricsForDept = metrics.Where(m => m.DepartmentLinks.Any(l => l.DepartmentId == d.Id)).ToList();
             double sumPercent = 0;
             int count = 0;
 

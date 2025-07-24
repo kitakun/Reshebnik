@@ -546,6 +546,58 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.ToTable("log_exceptions", (string)null);
                 });
 
+            modelBuilder.Entity("Reshebnik.Domain.Entities.MetricDepartmentLinkEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DepartmentId")
+                        .HasColumnType("integer")
+                        .HasColumnName("department_id");
+
+                    b.Property<int>("MetricId")
+                        .HasColumnType("integer")
+                        .HasColumnName("metric_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("MetricId", "DepartmentId");
+
+                    b.ToTable("metric_department_links", (string)null);
+                });
+
+            modelBuilder.Entity("Reshebnik.Domain.Entities.MetricEmployeeLinkEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("integer")
+                        .HasColumnName("employee_id");
+
+                    b.Property<int>("MetricId")
+                        .HasColumnType("integer")
+                        .HasColumnName("metric_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("MetricId", "EmployeeId");
+
+                    b.ToTable("metric_employee_links", (string)null);
+                });
+
             modelBuilder.Entity("Reshebnik.Domain.Entities.MetricEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -565,19 +617,11 @@ namespace Reshebnik.EntityFramework.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("company_id");
 
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("integer")
-                        .HasColumnName("department_id");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)")
                         .HasColumnName("description");
-
-                    b.Property<int?>("EmployeeId")
-                        .HasColumnType("integer")
-                        .HasColumnName("employee_id");
 
                     b.Property<decimal?>("Max")
                         .HasColumnType("numeric")
@@ -622,10 +666,6 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
-
-                    b.HasIndex("DepartmentId");
-
-                    b.HasIndex("EmployeeId");
 
                     b.ToTable("metrics", (string)null);
                 });
@@ -968,6 +1008,44 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.Navigation("Company");
                 });
 
+            modelBuilder.Entity("Reshebnik.Domain.Entities.MetricDepartmentLinkEntity", b =>
+                {
+                    b.HasOne("Reshebnik.Domain.Entities.DepartmentEntity", "Department")
+                        .WithMany("MetricLinks")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Reshebnik.Domain.Entities.MetricEntity", "Metric")
+                        .WithMany("DepartmentLinks")
+                        .HasForeignKey("MetricId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+
+                    b.Navigation("Metric");
+                });
+
+            modelBuilder.Entity("Reshebnik.Domain.Entities.MetricEmployeeLinkEntity", b =>
+                {
+                    b.HasOne("Reshebnik.Domain.Entities.EmployeeEntity", "Employee")
+                        .WithMany("MetricLinks")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Reshebnik.Domain.Entities.MetricEntity", "Metric")
+                        .WithMany("EmployeeLinks")
+                        .HasForeignKey("MetricId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Metric");
+                });
+
             modelBuilder.Entity("Reshebnik.Domain.Entities.MetricEntity", b =>
                 {
                     b.HasOne("Reshebnik.Domain.Entities.CompanyEntity", "Company")
@@ -976,21 +1054,7 @@ namespace Reshebnik.EntityFramework.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Reshebnik.Domain.Entities.DepartmentEntity", "Department")
-                        .WithMany("Metrics")
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Reshebnik.Domain.Entities.EmployeeEntity", "Employee")
-                        .WithMany("Metrics")
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Company");
-
-                    b.Navigation("Department");
-
-                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("Reshebnik.Domain.Entities.MetricTemplateEntity", b =>
@@ -1046,7 +1110,7 @@ namespace Reshebnik.EntityFramework.Migrations
                 {
                     b.Navigation("LinkEntities");
 
-                    b.Navigation("Metrics");
+                    b.Navigation("MetricLinks");
 
                     b.Navigation("OwnerSchemas");
 
@@ -1057,9 +1121,16 @@ namespace Reshebnik.EntityFramework.Migrations
                 {
                     b.Navigation("DepartmentLinks");
 
-                    b.Navigation("Metrics");
+                    b.Navigation("MetricLinks");
 
                     b.Navigation("UserNotification");
+                });
+
+            modelBuilder.Entity("Reshebnik.Domain.Entities.MetricEntity", b =>
+                {
+                    b.Navigation("DepartmentLinks");
+
+                    b.Navigation("EmployeeLinks");
                 });
 #pragma warning restore 612, 618
         }

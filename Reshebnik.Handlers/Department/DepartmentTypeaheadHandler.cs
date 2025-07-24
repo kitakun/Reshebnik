@@ -23,7 +23,7 @@ public class DepartmentTypeaheadHandler(
 
         var query = db.Departments
             .AsNoTracking()
-            .Where(d => !d.IsDeleted && db.DepartmentSchemaEntities.Any(s => rootIds.Contains(s.FundamentalDepartmentId) && s.DepartmentId == d.Id))
+            .Where(d => !d.IsDeleted && db.DepartmentSchemas.Any(s => rootIds.Contains(s.FundamentalDepartmentId) && s.DepartmentId == d.Id))
             .Take(COUNT);
 
         if (!string.IsNullOrEmpty(request.Query))

@@ -45,7 +45,7 @@ public class EmployeePutHandler(
             }
             else if (dto.DepartmentId.HasValue)
             {
-                db.EmployeeDepartmentLinkEntities.Add(new EmployeeDepartmentLinkEntity
+                db.EmployeeDepartmentLinks.Add(new EmployeeDepartmentLinkEntity
                 {
                     EmployeeId = dto.Id,
                     DepartmentId = dto.DepartmentId!.Value,

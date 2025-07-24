@@ -5,6 +5,7 @@ using Reshebnik.Domain.Models.Metric;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
 using Reshebnik.Clickhouse.Handlers;
+using System.Linq;
 using Reshebnik.Domain.Enums;
 
 namespace Reshebnik.Handlers.Metric;
@@ -26,9 +27,11 @@ public class UserPreviewMetricsHandler(
             .FirstOrDefaultAsync(e => e.Id == userId && e.CompanyId == companyId, ct);
         if (employee == null) return null;
 
-        var metrics = await db.Metrics
+        var metrics = await db.MetricEmployeeLinks
             .AsNoTracking()
-            .Where(m => m.CompanyId == companyId && m.EmployeeId == userId)
+            .Where(l => l.EmployeeId == userId && l.Metric.CompanyId == companyId)
+            .Select(l => l.Metric)
+            .Include(m => m.DepartmentLinks)
             .ToListAsync(ct);
 
         var result = new UserPreviewMetricsDto

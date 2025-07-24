@@ -13,8 +13,11 @@ public class ReshebnikContext(DbContextOptions<ReshebnikContext> options) : DbCo
     public DbSet<EmployeeEntity> Employees { get; set; }
 
     public DbSet<DepartmentEntity> Departments { get; set; }
-    public DbSet<DepartmentSchemeEntity> DepartmentSchemaEntities { get; set; }
-    public DbSet<EmployeeDepartmentLinkEntity> EmployeeDepartmentLinkEntities { get; set; }
+    public DbSet<DepartmentSchemeEntity> DepartmentSchemas { get; set; }
+    public DbSet<EmployeeDepartmentLinkEntity> EmployeeDepartmentLinks { get; set; }
+
+    public DbSet<MetricEmployeeLinkEntity> MetricEmployeeLinks { get; set; }
+    public DbSet<MetricDepartmentLinkEntity> MetricDepartmentLinks { get; set; }
 
     public DbSet<UserNotification> UserNotifications { get; set; }
     public DbSet<SystemNotificationEntity> SystemNotifications { get; set; }

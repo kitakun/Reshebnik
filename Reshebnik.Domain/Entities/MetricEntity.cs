@@ -8,11 +8,8 @@ public class MetricEntity
     public int CompanyId { get; set; }
     public CompanyEntity Company { get; set; } = null!;
 
-    public int? DepartmentId { get; set; }
-    public DepartmentEntity? Department { get; set; }
-
-    public int? EmployeeId { get; set; }
-    public EmployeeEntity? Employee { get; set; }
+    public List<MetricDepartmentLinkEntity> DepartmentLinks { get; set; } = new();
+    public List<MetricEmployeeLinkEntity> EmployeeLinks { get; set; } = new();
 
     public string ClickHouseKey { get; set; } = string.Empty;
 

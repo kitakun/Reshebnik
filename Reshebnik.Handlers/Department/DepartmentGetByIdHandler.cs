@@ -11,7 +11,7 @@ public class DepartmentGetByIdHandler(ReshebnikContext db)
         var entity = await db.Departments.AsNoTracking().FirstOrDefaultAsync(d => d.Id == id && !d.IsDeleted, ct);
         if (entity == null) return null;
 
-        int? parentId = await db.DepartmentSchemaEntities
+        int? parentId = await db.DepartmentSchemas
             .Where(s => s.DepartmentId == entity.Id && s.Depth == 1)
             .Select(s => s.AncestorDepartmentId)
             .FirstOrDefaultAsync(ct);

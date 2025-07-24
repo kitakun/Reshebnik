@@ -35,18 +35,18 @@ public class DepartmentGetHandler(
     {
         var departments = await db.Departments
             .AsNoTracking()
-            .Where(d => !d.IsDeleted && db.DepartmentSchemaEntities.Any(s => s.FundamentalDepartmentId == rootId && s.DepartmentId == d.Id))
+            .Where(d => !d.IsDeleted && db.DepartmentSchemas.Any(s => s.FundamentalDepartmentId == rootId && s.DepartmentId == d.Id))
             .ToListAsync(ct);
 
-        var links = await db.DepartmentSchemaEntities
+        var links = await db.DepartmentSchemas
             .AsNoTracking()
             .Where(s => s.FundamentalDepartmentId == rootId && s.Depth == 1 && s.DepartmentId != s.AncestorDepartmentId)
             .ToListAsync(ct);
 
-        var usersLinks = await db.EmployeeDepartmentLinkEntities
+        var usersLinks = await db.EmployeeDepartmentLinks
             .AsNoTracking()
             .Include(i => i.Employee)
-            .Where(l => db.DepartmentSchemaEntities.Any(s => s.FundamentalDepartmentId == rootId && s.DepartmentId == l.DepartmentId))
+            .Where(l => db.DepartmentSchemas.Any(s => s.FundamentalDepartmentId == rootId && s.DepartmentId == l.DepartmentId))
             .ToListAsync(ct);
 
         var dict = departments.ToDictionary(d => d.Id, d => new DepartmentTreeDto

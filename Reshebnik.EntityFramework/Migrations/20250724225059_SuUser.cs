@@ -5,7 +5,7 @@
 namespace Reshebnik.EntityFramework.Migrations
 {
     /// <inheritdoc />
-    public partial class SuUser2 : Migration
+    public partial class SuUser : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -36,7 +36,7 @@ migrationBuilder.Sql("""
                                      'info@supercompany.com',
                                      '+1234567890',
                                      true,
-                                     'Email',
+                                     'unset',
                                      'ru',
                                      1,
                                      '',

@@ -16,15 +16,15 @@ public class DepartmentFormGetByIdHandler(ReshebnikContext db)
             .Select(d => new DepartmentFormDto
             {
                 Name = d.Name,
-                SupervisorId = db.EmployeeDepartmentLinkEntities
+                SupervisorId = db.EmployeeDepartmentLinks
                     .Where(l => l.DepartmentId == d.Id && l.Type == EmployeeTypeEnum.Supervisor)
                     .Select(l => (int?)l.EmployeeId)
                     .FirstOrDefault(),
-                ParentId = db.DepartmentSchemaEntities
+                ParentId = db.DepartmentSchemas
                     .Where(s => s.DepartmentId == d.Id && s.Depth == 1)
                     .Select(s => s.AncestorDepartmentId == 0 ? (int?)null : s.AncestorDepartmentId)
                     .FirstOrDefault(),
-                EmployeeIds = db.EmployeeDepartmentLinkEntities
+                EmployeeIds = db.EmployeeDepartmentLinks
                     .Where(l => l.DepartmentId == d.Id && l.Type == EmployeeTypeEnum.Employee)
                     .Select(l => l.EmployeeId)
                     .ToList(),

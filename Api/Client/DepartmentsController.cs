@@ -133,4 +133,17 @@ public class DepartmentsController : ControllerBase
         await handler.HandleAsync(id, request, cancellationToken);
         return Ok();
     }
+
+    /// <summary>
+    /// Add or update employees in department
+    /// </summary>
+    [HttpPut("upsert-employees-to-department")]
+    public async Task<IActionResult> UpsertEmployeesToDepartmentAsync(
+        [FromBody] DepartmentEmployeesUpsertDto request,
+        [FromServices] DepartmentEmployeesUpsertHandler handler,
+        CancellationToken cancellationToken)
+    {
+        await handler.HandleAsync(request, cancellationToken);
+        return Ok();
+    }
 }

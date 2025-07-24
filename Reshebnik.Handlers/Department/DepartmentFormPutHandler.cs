@@ -40,21 +40,21 @@ public class DepartmentFormPutHandler(ReshebnikContext db, CompanyContextHandler
             department.IsFundamental = dto.ParentId == null;
             await db.SaveChangesAsync(ct);
 
-            var existingSchemes = await db.DepartmentSchemaEntities
+            var existingSchemes = await db.DepartmentSchemas
                 .Where(s => s.DepartmentId == id)
                 .ToListAsync(ct);
-            db.DepartmentSchemaEntities.RemoveRange(existingSchemes);
+            db.DepartmentSchemas.RemoveRange(existingSchemes);
             await db.SaveChangesAsync(ct);
 
             if (dto.ParentId.HasValue)
             {
-                var parentSchemes = await db.DepartmentSchemaEntities
+                var parentSchemes = await db.DepartmentSchemas
                     .Where(s => s.DepartmentId == dto.ParentId.Value)
                     .ToListAsync(ct);
 
                 foreach (var sch in parentSchemes)
                 {
-                    db.DepartmentSchemaEntities.Add(new DepartmentSchemeEntity
+                    db.DepartmentSchemas.Add(new DepartmentSchemeEntity
                     {
                         FundamentalDepartmentId = sch.FundamentalDepartmentId,
                         AncestorDepartmentId = sch.AncestorDepartmentId,
@@ -63,7 +63,7 @@ public class DepartmentFormPutHandler(ReshebnikContext db, CompanyContextHandler
                     });
                 }
 
-                db.DepartmentSchemaEntities.Add(new DepartmentSchemeEntity
+                db.DepartmentSchemas.Add(new DepartmentSchemeEntity
                 {
                     FundamentalDepartmentId = parentSchemes.First().FundamentalDepartmentId,
                     AncestorDepartmentId = id!.Value,
@@ -73,7 +73,7 @@ public class DepartmentFormPutHandler(ReshebnikContext db, CompanyContextHandler
             }
             else
             {
-                db.DepartmentSchemaEntities.Add(new DepartmentSchemeEntity
+                db.DepartmentSchemas.Add(new DepartmentSchemeEntity
                 {
                     FundamentalDepartmentId = id!.Value,
                     AncestorDepartmentId = id!.Value,
@@ -84,15 +84,15 @@ public class DepartmentFormPutHandler(ReshebnikContext db, CompanyContextHandler
 
             await db.SaveChangesAsync(ct);
 
-            var existingLinks = await db.EmployeeDepartmentLinkEntities
+            var existingLinks = await db.EmployeeDepartmentLinks
                 .Where(l => l.DepartmentId == id)
                 .ToListAsync(ct);
-            db.EmployeeDepartmentLinkEntities.RemoveRange(existingLinks);
+            db.EmployeeDepartmentLinks.RemoveRange(existingLinks);
             await db.SaveChangesAsync(ct);
 
             if (dto.SupervisorId.HasValue)
             {
-                db.EmployeeDepartmentLinkEntities.Add(new EmployeeDepartmentLinkEntity
+                db.EmployeeDepartmentLinks.Add(new EmployeeDepartmentLinkEntity
                 {
                     EmployeeId = dto.SupervisorId.Value,
                     DepartmentId = id!.Value,
@@ -102,7 +102,7 @@ public class DepartmentFormPutHandler(ReshebnikContext db, CompanyContextHandler
 
             foreach (var empId in dto.EmployeeIds.Distinct())
             {
-                db.EmployeeDepartmentLinkEntities.Add(new EmployeeDepartmentLinkEntity
+                db.EmployeeDepartmentLinks.Add(new EmployeeDepartmentLinkEntity
                 {
                     EmployeeId = empId,
                     DepartmentId = id!.Value,

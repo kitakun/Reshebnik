@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Reshebnik.Domain.Models.Metric;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
+using System.Linq;
 
 namespace Reshebnik.Handlers.Metric;
 
@@ -15,6 +16,8 @@ public class MetricGetHandler(
         var companyId = await companyContext.CurrentCompanyIdAsync;
         var metrics = await db.Metrics
             .AsNoTracking()
+            .Include(m => m.DepartmentLinks)
+            .Include(m => m.EmployeeLinks)
             .FirstAsync(m => m.CompanyId == companyId && m.Id == id, ct);
 
         return new MetricDto
@@ -25,8 +28,8 @@ public class MetricGetHandler(
             Unit = metrics.Unit,
             Type = metrics.Type,
             PeriodType = metrics.PeriodType,
-            DepartmentId = metrics.DepartmentId,
-            EmployeeId = metrics.EmployeeId,
+            DepartmentIds = metrics.DepartmentLinks.Select(l => l.DepartmentId).ToArray(),
+            EmployeeIds = metrics.EmployeeLinks.Select(l => l.EmployeeId).ToArray(),
             Plan = metrics.Plan,
             Min = metrics.Min,
             Max = metrics.Max,
@@ -39,6 +42,8 @@ public class MetricGetHandler(
         var companyId = await companyContext.CurrentCompanyIdAsync;
         var metrics = await db.Metrics
             .AsNoTracking()
+            .Include(m => m.DepartmentLinks)
+            .Include(m => m.EmployeeLinks)
             .Where(m => m.CompanyId == companyId)
             .ToListAsync(ct);
 
@@ -50,8 +55,8 @@ public class MetricGetHandler(
             Unit = m.Unit,
             Type = m.Type,
             PeriodType = m.PeriodType,
-            DepartmentId = m.DepartmentId,
-            EmployeeId = m.EmployeeId,
+            DepartmentIds = m.DepartmentLinks.Select(l => l.DepartmentId).ToArray(),
+            EmployeeIds = m.EmployeeLinks.Select(l => l.EmployeeId).ToArray(),
             Plan = m.Plan,
             Min = m.Min,
             Max = m.Max,

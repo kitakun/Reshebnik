@@ -38,6 +38,7 @@ public class ExceptionLoggingMiddleware(RequestDelegate next, ILogger<ExceptionL
                 }
                 catch
                 {
+                    // ignore
                 }
             }
 

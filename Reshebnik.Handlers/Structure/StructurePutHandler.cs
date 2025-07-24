@@ -45,11 +45,11 @@ public class StructurePutHandler(
                 .Select(d => d.Id)
                 .ToListAsync(ct);
 
-            var schemes = await db.DepartmentSchemaEntities
+            var schemes = await db.DepartmentSchemas
                 .Where(s => companyDeptIds.Contains(s.FundamentalDepartmentId))
                 .ToListAsync(ct);
 
-            db.DepartmentSchemaEntities.RemoveRange(schemes);
+            db.DepartmentSchemas.RemoveRange(schemes);
             await db.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
 

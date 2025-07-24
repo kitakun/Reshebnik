@@ -21,26 +21,10 @@ public class MetricEntityConfiguration : IEntityTypeConfiguration<MetricEntity>
             .HasColumnName("company_id")
             .IsRequired();
 
-        builder.Property(m => m.DepartmentId)
-            .HasColumnName("department_id");
-
-        builder.Property(m => m.EmployeeId)
-            .HasColumnName("employee_id");
-
         builder.HasOne(m => m.Company)
             .WithMany(c => c.Metrics)
             .HasForeignKey(m => m.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne(m => m.Department)
-            .WithMany(d => d.Metrics)
-            .HasForeignKey(m => m.DepartmentId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasOne(m => m.Employee)
-            .WithMany(e => e.Metrics)
-            .HasForeignKey(m => m.EmployeeId)
-            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Property(m => m.Name)
             .HasColumnName("name")
@@ -83,5 +67,9 @@ public class MetricEntityConfiguration : IEntityTypeConfiguration<MetricEntity>
         builder.Property(m => m.Visible)
             .HasColumnName("visible")
             .IsRequired();
+
+        builder.HasMany(m => m.DepartmentLinks)
+            .WithOne(o => o.Metric)
+            .HasForeignKey(k => k.MetricId);
     }
 }

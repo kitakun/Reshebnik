@@ -7,7 +7,7 @@ public class DepartmentDeleteHandler(ReshebnikContext db)
 {
     private async Task<List<int>> CollectIdsAsync(int id, CancellationToken ct)
     {
-        var ids = await db.DepartmentSchemaEntities
+        var ids = await db.DepartmentSchemas
             .Where(s => s.AncestorDepartmentId == id)
             .Select(s => s.DepartmentId)
             .Distinct()

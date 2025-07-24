@@ -5,6 +5,7 @@ using Reshebnik.Domain.Models.Metric;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
 using Reshebnik.Clickhouse.Handlers;
+using System.Linq;
 
 namespace Reshebnik.Handlers.Metric;
 
@@ -26,8 +27,10 @@ public class UserPreviewMetricsPutHandler(
         if (employee == null) return false;
 
         var metricIds = request.Metrics.Select(m => m.Id).ToList();
-        var metrics = await db.Metrics
-            .Where(m => m.CompanyId == companyId && m.EmployeeId == userId && metricIds.Contains(m.Id))
+        var metrics = await db.MetricEmployeeLinks
+            .Where(l => l.EmployeeId == userId && metricIds.Contains(l.MetricId) && l.Metric.CompanyId == companyId)
+            .Select(l => l.Metric)
+            .Include(m => m.DepartmentLinks)
             .ToListAsync(ct);
 
         await Parallel.ForEachAsync(metrics, ct, async (metric, cts) =>
@@ -40,35 +43,39 @@ public class UserPreviewMetricsPutHandler(
                 var date = AddOffset(request.From.Date, request.PeriodType, i);
                 if (date > request.To.Date) break;
 
-                switch (metric.Type)
+                var deptIds = metric.DepartmentLinks.Select(l => (int?)l.DepartmentId).DefaultIfEmpty(null);
+                foreach (var deptId in deptIds)
                 {
-                    case MetricTypeEnum.PlanFact:
-                        await putHandler.PutAsync(
-                            metric.Id,
-                            MetricValueTypeEnum.Fact,
-                            userId,
-                            companyId,
-                            metric.DepartmentId,
-                            request.PeriodType,
-                            date,
-                            item.FactData[i],
-                            cts);
-                        break;
-                    case MetricTypeEnum.FactOnly:
-                        await putHandler.PutAsync(
-                            metric.Id,
-                            MetricValueTypeEnum.Fact,
-                            userId,
-                            companyId,
-                            metric.DepartmentId,
-                            request.PeriodType,
-                            date,
-                            item.FactData[i],
-                            cts);
-                        break;
-                    case MetricTypeEnum.Cumulative:
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                    switch (metric.Type)
+                    {
+                        case MetricTypeEnum.PlanFact:
+                            await putHandler.PutAsync(
+                                metric.Id,
+                                MetricValueTypeEnum.Fact,
+                                userId,
+                                companyId,
+                                deptId,
+                                request.PeriodType,
+                                date,
+                                item.FactData[i],
+                                cts);
+                            break;
+                        case MetricTypeEnum.FactOnly:
+                            await putHandler.PutAsync(
+                                metric.Id,
+                                MetricValueTypeEnum.Fact,
+                                userId,
+                                companyId,
+                                deptId,
+                                request.PeriodType,
+                                date,
+                                item.FactData[i],
+                                cts);
+                            break;
+                        case MetricTypeEnum.Cumulative:
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
                 }
             }
 
@@ -77,25 +84,29 @@ public class UserPreviewMetricsPutHandler(
                 var date = AddOffset(request.From.Date, request.PeriodType, i);
                 if (date > request.To.Date) break;
 
-                switch (metric.Type)
+                var deptIds = metric.DepartmentLinks.Select(l => (int?)l.DepartmentId).DefaultIfEmpty(null);
+                foreach (var deptId in deptIds)
                 {
-                    case MetricTypeEnum.PlanFact:
-                        await putHandler.PutAsync(
-                            metric.Id,
-                            MetricValueTypeEnum.Plan,
-                            userId,
-                            companyId,
-                            metric.DepartmentId,
-                            request.PeriodType,
-                            date,
-                            item.PlanData[i],
-                            cts);
-                        break;
-                    case MetricTypeEnum.FactOnly:
-                        break;
-                    case MetricTypeEnum.Cumulative:
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                    switch (metric.Type)
+                    {
+                        case MetricTypeEnum.PlanFact:
+                            await putHandler.PutAsync(
+                                metric.Id,
+                                MetricValueTypeEnum.Plan,
+                                userId,
+                                companyId,
+                                deptId,
+                                request.PeriodType,
+                                date,
+                                item.PlanData[i],
+                                cts);
+                            break;
+                        case MetricTypeEnum.FactOnly:
+                            break;
+                        case MetricTypeEnum.Cumulative:
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
                 }
             }
         });
