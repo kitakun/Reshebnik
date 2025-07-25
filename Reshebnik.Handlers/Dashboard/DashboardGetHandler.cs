@@ -34,8 +34,8 @@ public class DashboardGetHandler(
             var data = await companyMetricsHandler.HandleAsync(
                 range,
                 ind.Id,
-                (FillmentPeriodWrapper) ind.FillmentPeriod,
-                (FillmentPeriodWrapper) ind.FillmentPeriod,
+                (FillmentPeriodWrapper)ind.FillmentPeriod,
+                (FillmentPeriodWrapper)ind.FillmentPeriod,
                 ct);
 
             dto.Metrics.Add(new DashboardMetricDto
@@ -44,7 +44,7 @@ public class DashboardGetHandler(
                 Name = ind.Name,
                 Plan = data.PlanData,
                 Fact = data.FactData,
-                PeriodType = (FillmentPeriodWrapper) ind.FillmentPeriod
+                PeriodType = (FillmentPeriodWrapper)ind.FillmentPeriod
             });
         }
 
@@ -127,6 +127,10 @@ public class DashboardGetHandler(
                 Average = departmentAverages.GetValueOrDefault(dept.Id, 0)
             });
         }
+
+        dto.DepartmentsAverage = dto.Departments.Count > 0
+            ? dto.Departments.Average(d => d.Average)
+            : 0;
 
         return dto;
     }

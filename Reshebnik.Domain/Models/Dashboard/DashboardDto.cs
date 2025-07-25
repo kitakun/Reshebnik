@@ -6,4 +6,5 @@ public class DashboardDto
     public List<DashboardEmployeeDto> BestEmployees { get; set; } = new();
     public List<DashboardEmployeeDto> WorstEmployees { get; set; } = new();
     public List<DashboardDepartmentDto> Departments { get; set; } = new();
+    public double DepartmentsAverage { get; set; }
 }
