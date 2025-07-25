@@ -107,8 +107,8 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
 
         var deleteSql = $"""
             ALTER TABLE {table}
-            DELETE WHERE metric_key = '{key}' AND value_type = '{valueType}' AND employee_id = {employeeId} AND company_id = {companyId} AND upsert_date = toDate('{upsertDate:yyyy-MM-dd}')
-            AND value_type = '{valueType}' AND period_type = '{periodType}'
+            DELETE WHERE metric_key = '{key}' AND value_type = '{valueType}' AND has(employee_ids, {employeeId}) AND has(company_ids, {companyId}) AND upsert_date = toDate('{upsertDate:yyyy-MM-dd}')
+            AND period_type = '{periodType}'
         """;
 
         await using (var deleteCmd = connection.CreateCommand())
@@ -118,8 +118,8 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         }
 
         var insertSql = $"""
-            INSERT INTO {table} (employee_id, company_id, department_id, metric_key, value_type, period_type, upsert_date, value)
-            VALUES ({employeeId}, {companyId}, {departmentId?.ToString() ?? "NULL"}, '{key}', '{valueType}', '{periodType}', toDate('{upsertDate:yyyy-MM-dd}'), {value})
+            INSERT INTO {table} (employee_ids, company_ids, department_id, metric_key, value_type, period_type, upsert_date, value)
+            VALUES ([{employeeId}], [{companyId}], {departmentId?.ToString() ?? "NULL"}, '{key}', '{valueType}', '{periodType}', toDate('{upsertDate:yyyy-MM-dd}'), {value})
         """;
 
         await using (var insertCmd = connection.CreateCommand())

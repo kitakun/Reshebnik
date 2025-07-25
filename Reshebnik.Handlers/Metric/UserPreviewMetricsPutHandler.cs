@@ -29,8 +29,9 @@ public class UserPreviewMetricsPutHandler(
         var metricIds = request.Metrics.Select(m => m.Id).ToList();
         var metrics = await db.MetricEmployeeLinks
             .Where(l => l.EmployeeId == userId && metricIds.Contains(l.MetricId) && l.Metric.CompanyId == companyId)
+            .Include(l => l.Metric)
+                .ThenInclude(m => m.DepartmentLinks)
             .Select(l => l.Metric)
-            .Include(m => m.DepartmentLinks)
             .ToListAsync(ct);
 
         await Parallel.ForEachAsync(metrics, ct, async (metric, cts) =>

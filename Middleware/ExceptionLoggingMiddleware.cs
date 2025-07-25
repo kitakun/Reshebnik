@@ -1,24 +1,20 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-
 using Reshebnik.EntityFramework;
 using Reshebnik.Domain.Entities;
 using Reshebnik.Handlers.Auth;
 using Reshebnik.Handlers.Company;
 
+using System.Diagnostics;
+
 namespace Reshebnik.Web.Middleware;
 
 public class ExceptionLoggingMiddleware(RequestDelegate next, ILogger<ExceptionLoggingMiddleware> logger)
 {
-    private readonly RequestDelegate _next = next;
-    private readonly ILogger<ExceptionLoggingMiddleware> _logger = logger;
-
+    [DebuggerHidden]
     public async Task InvokeAsync(HttpContext context, ReshebnikContext db, UserContextHandler userContext, CompanyContextHandler companyContext)
     {
         try
         {
-            await _next(context);
+            await next(context);
         }
         catch (Exception ex)
         {
@@ -50,7 +46,7 @@ public class ExceptionLoggingMiddleware(RequestDelegate next, ILogger<ExceptionL
                 CompanyId = companyId
             });
             await db.SaveChangesAsync(context.RequestAborted);
-            _logger.LogError(ex, "Unhandled exception logged");
+            logger.LogError(ex, "Unhandled exception logged");
             throw;
         }
     }

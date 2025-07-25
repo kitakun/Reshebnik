@@ -26,6 +26,8 @@ public class EmployeeEntity
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
 
+    public bool? WelcomeWasSeen { get; set; }
+
     public List<EmployeeDepartmentLinkEntity> DepartmentLinks { get; set; } = new();
     public List<UserNotification> UserNotification { get; set; } = new();
 

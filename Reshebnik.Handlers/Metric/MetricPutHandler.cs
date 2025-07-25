@@ -43,7 +43,7 @@ public class MetricPutHandler(
         foreach (var depId in dto.DepartmentIds)
         {
             if (existingDeptLinks.All(l => l.DepartmentId != depId))
-                db.MetricDepartmentLinks.Add(new MetricDepartmentLinkEntity { MetricId = entity.Id, DepartmentId = depId });
+                db.MetricDepartmentLinks.Add(new MetricDepartmentLinkEntity { Metric = entity, DepartmentId = depId });
         }
 
         var existingEmpLinks = await db.MetricEmployeeLinks
@@ -53,7 +53,7 @@ public class MetricPutHandler(
         foreach (var empId in dto.EmployeeIds)
         {
             if (existingEmpLinks.All(l => l.EmployeeId != empId))
-                db.MetricEmployeeLinks.Add(new MetricEmployeeLinkEntity { MetricId = entity.Id, EmployeeId = empId });
+                db.MetricEmployeeLinks.Add(new MetricEmployeeLinkEntity { Metric = entity, EmployeeId = empId });
         }
 
         await db.SaveChangesAsync(ct);

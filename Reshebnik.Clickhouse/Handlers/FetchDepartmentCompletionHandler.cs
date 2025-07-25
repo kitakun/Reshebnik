@@ -30,7 +30,7 @@ public class FetchDepartmentCompletionHandler(IOptions<ClickhouseOptions> option
         var sql = $"""
             SELECT AVG(value)
             FROM {table}
-            WHERE company_id = {companyId}
+            WHERE has(company_ids, {companyId})
               AND department_id = {departmentId}
               AND metric_key = '{metricKey}'
               AND upsert_date BETWEEN toDate('{range.From:yyyy-MM-dd}') AND toDate('{range.To:yyyy-MM-dd}')

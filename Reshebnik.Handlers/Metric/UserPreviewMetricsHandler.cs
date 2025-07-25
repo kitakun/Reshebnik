@@ -30,8 +30,9 @@ public class UserPreviewMetricsHandler(
         var metrics = await db.MetricEmployeeLinks
             .AsNoTracking()
             .Where(l => l.EmployeeId == userId && l.Metric.CompanyId == companyId)
+            .Include(l => l.Metric)
+                .ThenInclude(m => m.DepartmentLinks)
             .Select(l => l.Metric)
-            .Include(m => m.DepartmentLinks)
             .ToListAsync(ct);
 
         var result = new UserPreviewMetricsDto

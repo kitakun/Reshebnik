@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS {prefix}_user_metrics (
-    employee_id Int32,
-    company_id Int32,
+    employee_ids Array(Int32),
+    company_ids Array(Int32),
     department_id Nullable(Int32),
     metric_key String,
     value_type String,
@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS {prefix}_user_metrics (
     upsert_date Date,
     value Int32
 ) ENGINE = ReplacingMergeTree()
-ORDER BY (employee_id, company_id, metric_key, value_type, period_type, upsert_date);
+ORDER BY (employee_ids, company_ids, metric_key, value_type, period_type, upsert_date);

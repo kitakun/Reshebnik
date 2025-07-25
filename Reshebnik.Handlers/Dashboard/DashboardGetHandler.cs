@@ -5,8 +5,11 @@ using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Dashboard;
 using Reshebnik.EntityFramework;
 using Reshebnik.Clickhouse.Handlers;
+using Reshebnik.Domain.Models.Metric;
 using Reshebnik.Handlers.Company;
 using Reshebnik.Handlers.Metric;
+
+using TaskExtensions = Reshebnik.Domain.Extensions.TaskExtensions;
 
 namespace Reshebnik.Handlers.Dashboard;
 
@@ -31,8 +34,8 @@ public class DashboardGetHandler(
             var data = await companyMetricsHandler.HandleAsync(
                 range,
                 ind.Id,
-                (FillmentPeriodWrapper)ind.FillmentPeriod,
-                (FillmentPeriodWrapper)ind.FillmentPeriod,
+                (FillmentPeriodWrapper) ind.FillmentPeriod,
+                (FillmentPeriodWrapper) ind.FillmentPeriod,
                 ct);
 
             dto.Metrics.Add(new DashboardMetricDto
@@ -41,7 +44,7 @@ public class DashboardGetHandler(
                 Name = ind.Name,
                 Plan = data.PlanData,
                 Fact = data.FactData,
-                PeriodType = (FillmentPeriodWrapper)ind.FillmentPeriod
+                PeriodType = (FillmentPeriodWrapper) ind.FillmentPeriod
             });
         }
 
@@ -50,12 +53,16 @@ public class DashboardGetHandler(
             .Where(e => e.CompanyId == companyId && e.IsActive)
             .ToListAsync(ct);
 
-        var employeeAverages = new Dictionary<int, double>(employees.Count);
-        foreach (var emp in employees)
+        var previews = new List<UserPreviewMetricsDto?>();
+        foreach (var employee in employees
+                     .Select(e => userMetricsHandler.HandleAsync(e.Id, range, PeriodTypeEnum.Month, ct)))
         {
-            var preview = await userMetricsHandler.HandleAsync(emp.Id, range, PeriodTypeEnum.Month, ct);
-            employeeAverages[emp.Id] = preview?.Average ?? 0;
+            previews.Add(await employee);
         }
+
+        var employeeAverages = employees
+            .Zip(previews)
+            .ToDictionary(z => z.First.Id, z => z.Second?.Average ?? 0);
 
         dto.BestEmployees = employees
             .Select(e => new DashboardEmployeeDto
@@ -103,31 +110,21 @@ public class DashboardGetHandler(
             .Where(l => level1Ids.Contains(l.DepartmentId))
             .ToListAsync(ct);
 
+        var departmentAverages = links
+            .GroupBy(l => l.DepartmentId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(l => employeeAverages.GetValueOrDefault(l.EmployeeId, 0d))
+                    .DefaultIfEmpty(0)
+                    .Average());
+
         foreach (var dept in departments)
         {
-            var empIds = links
-                .Where(l => l.DepartmentId == dept.Id)
-                .Select(l => l.EmployeeId)
-                .ToList();
-
-            double sum = 0;
-            int count = 0;
-            foreach (var id in empIds)
-            {
-                if (employeeAverages.TryGetValue(id, out var avg))
-                {
-                    sum += avg;
-                    count++;
-                }
-            }
-
-            var average = count > 0 ? sum / count : 0;
-
             dto.Departments.Add(new DashboardDepartmentDto
             {
                 Id = dept.Id,
                 Name = dept.Name,
-                Average = average
+                Average = departmentAverages.GetValueOrDefault(dept.Id, 0)
             });
         }
 

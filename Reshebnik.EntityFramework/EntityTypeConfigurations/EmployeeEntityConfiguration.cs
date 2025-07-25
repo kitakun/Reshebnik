@@ -71,6 +71,9 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
             .IsRequired();
         builder.Property(e => e.LastLoginAt)
             .HasColumnName("last_login_at");
+        
+        builder.Property(e => e.WelcomeWasSeen)
+            .HasColumnName("welcome_was_seen");
 
         builder.Property(p => p.Salt).IsRequired();
         builder.Property(p => p.Password).IsRequired();

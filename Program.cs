@@ -17,6 +17,7 @@ using Reshebnik.Handlers.IndicatorCategory;
 using Reshebnik.Handlers.Dashboard;
 using Reshebnik.Clickhouse;
 using Reshebnik.Clickhouse.Handlers;
+using Reshebnik.Handlers;
 using Reshebnik.Handlers.Email;
 using Reshebnik.Handlers.SpecialInvitation;
 using Reshebnik.Handlers.BugHunt;
@@ -194,6 +195,8 @@ builder.Services.AddScoped<CompanyPreviewMetricsPutHandler>();
 builder.Services.AddScoped<MigrateClickhouseDatabase>();
 builder.Services.AddScoped<DashboardGetHandler>();
 builder.Services.AddScoped<BugHuntCreateHandler>();
+builder.Services.AddScoped<DepartmentEmployeesUpsertHandler>();
+builder.Services.AddScoped<WelcomeHandler>();
 
 // SU
 builder.Services.AddScoped<SuTypeaheadCompaniesHandler>();
