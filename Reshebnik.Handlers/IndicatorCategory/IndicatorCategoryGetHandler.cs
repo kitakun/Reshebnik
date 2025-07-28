@@ -27,10 +27,14 @@ public class IndicatorCategoryGetHandler(
             .ToListAsync(ct);
         if (indicators.Count == 0) return null;
 
+        var catRecord = await db.CategoryRecords
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.CompanyId == companyId && c.Name == categoryName, ct);
+
         var dto = new IndicatorCategoryViewDto
         {
             CategoryName = categoryName,
-            Comment = string.Empty
+            Comment = catRecord?.Comment ?? string.Empty
         };
 
         foreach (var ind in indicators)

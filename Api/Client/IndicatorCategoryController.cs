@@ -29,4 +29,15 @@ public class IndicatorCategoryController : ControllerBase
         if (result == null) return NotFound();
         return Ok(result);
     }
+
+    [HttpPut("{categoryName}/save-comment")]
+    public async Task<IActionResult> SaveCommentAsync(
+        [FromRoute] string categoryName,
+        [FromBody] IndicatorCategoryCommentDto request,
+        [FromServices] IndicatorCategoryCommentUpdateHandler handler,
+        CancellationToken cancellationToken)
+    {
+        await handler.HandleAsync(categoryName, request.Comment, cancellationToken);
+        return Ok();
+    }
 }

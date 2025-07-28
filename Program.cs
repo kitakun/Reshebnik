@@ -184,6 +184,7 @@ builder.Services.AddScoped<IndicatorPutHandler>();
 builder.Services.AddScoped<IndicatorTypeaheadHandler>();
 builder.Services.AddScoped<KeyIndicatorGetHandler>();
 builder.Services.AddScoped<IndicatorCategoryGetHandler>();
+builder.Services.AddScoped<IndicatorCategoryCommentUpdateHandler>();
 builder.Services.Configure<ClickhouseOptions>(builder.Configuration.GetSection("Clickhouse"));
 builder.Services.AddScoped<FetchUserMetricsHandler>();
 builder.Services.AddScoped<FetchCompanyMetricsHandler>();
