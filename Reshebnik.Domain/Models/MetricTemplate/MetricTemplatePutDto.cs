@@ -10,6 +10,9 @@ public class MetricTemplatePutDto
     public MetricUnitEnum Unit { get; set; }
     public MetricTypeEnum Type { get; set; }
     public PeriodTypeEnum PeriodType { get; set; }
+    public WeekTypeEnum WeekType { get; set; }
+    public DateTime? WeekStartDate { get; set; }
+    public bool ShowGrowthPercent { get; set; }
     public decimal? Plan { get; set; }
     public decimal? Min { get; set; }
     public decimal? Max { get; set; }

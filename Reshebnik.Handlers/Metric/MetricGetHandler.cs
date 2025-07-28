@@ -33,10 +33,13 @@ public class MetricGetHandler(
             Plan = metrics.Plan,
             Min = metrics.Min,
             Max = metrics.Max,
-            Visible = metrics.Visible
+            Visible = metrics.Visible,
+            WeekType = metrics.WeekType,
+            WeekStartDate = metrics.WeekStartDate,
+            ShowGrowthPercent = metrics.ShowGrowthPercent
         };
     }
-    
+
     public async ValueTask<List<MetricDto>> HandleAsync(CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
@@ -60,7 +63,10 @@ public class MetricGetHandler(
             Plan = m.Plan,
             Min = m.Min,
             Max = m.Max,
-            Visible = m.Visible
+            Visible = m.Visible,
+            WeekType = m.WeekType,
+            WeekStartDate = m.WeekStartDate,
+            ShowGrowthPercent = m.ShowGrowthPercent
         }).ToList();
     }
 }

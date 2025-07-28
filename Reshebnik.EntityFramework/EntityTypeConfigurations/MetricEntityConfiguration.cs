@@ -50,6 +50,18 @@ public class MetricEntityConfiguration : IEntityTypeConfiguration<MetricEntity>
             .HasConversion<string>()
             .HasMaxLength(16);
 
+        builder.Property(m => m.WeekType)
+            .HasColumnName("week_type")
+            .HasConversion<string>()
+            .HasMaxLength(16);
+
+        builder.Property(m => m.WeekStartDate)
+            .HasColumnName("week_start_date");
+
+        builder.Property(m => m.ShowGrowthPercent)
+            .HasColumnName("show_growth_percent")
+            .IsRequired();
+
         builder.Property(m => m.ClickHouseKey)
             .HasColumnName("clickhouse_key")
             .HasMaxLength(16)

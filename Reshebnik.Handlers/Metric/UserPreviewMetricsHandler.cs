@@ -70,6 +70,18 @@ public class UserPreviewMetricsHandler(
                 metric.PeriodType,
                 ct);
 
+            double?[] growth = new double?[last12Data.FactData.Length];
+            if (metric.ShowGrowthPercent)
+            {
+                for (var i = 1; i < last12Data.FactData.Length; i++)
+                {
+                    var prev = last12Data.FactData[i - 1];
+                    growth[i] = prev != 0
+                        ? ((double)(last12Data.FactData[i] - prev) / prev) * 100
+                        : null;
+                }
+            }
+
             var factAvg = last12Data.FactData.Length > 0 ? last12Data.FactData.Average() : 0;
 
             double avgPercent = 0;
@@ -89,6 +101,7 @@ public class UserPreviewMetricsHandler(
                 Last12PointsPlan = last12Data.PlanData,
                 TotalPlanData = totalData.PlanData,
                 TotalFactData = totalData.FactData,
+                GrowthPercent = growth,
                 Period = metric.PeriodType,
                 Type = metric.Type,
                 Average = avgPercent
