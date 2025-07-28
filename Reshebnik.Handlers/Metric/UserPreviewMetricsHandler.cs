@@ -83,20 +83,20 @@ public class UserPreviewMetricsHandler(
             }
 
             var factAvg = last12Data.FactData.Length > 0 ? last12Data.FactData.Average() : 0;
+            var planAvg = last12Data.PlanData.Length > 0 ? last12Data.PlanData.Average() : 0;
 
             double avgPercent = 0;
-            if (metric.Min.HasValue && metric.Max.HasValue && metric.Max != metric.Min)
-            {
-                var min = (double)metric.Min.Value;
-                var max = (double)metric.Max.Value;
-                avgPercent = (factAvg - min) / (max - min) * 100;
-            }
+            if (planAvg != 0)
+                avgPercent = factAvg / planAvg * 100;
 
             sumAvg += avgPercent;
             result.Metrics.Add(new UserPreviewMetricItemDto
             {
                 Id = metric.Id,
                 Name = metric.Name,
+                Plan = metric.Plan,
+                Min = metric.Min,
+                Max = metric.Max,
                 Last12PointsFact = last12Data.FactData,
                 Last12PointsPlan = last12Data.PlanData,
                 TotalPlanData = totalData.PlanData,
