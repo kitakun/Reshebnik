@@ -42,7 +42,7 @@ public class IndicatorCategoryGetHandler(
             var last12Range = periodType switch
             {
                 PeriodTypeEnum.Day => new DateRange(range.To.AddDays(-11), range.To),
-                PeriodTypeEnum.Week => new DateRange(range.From.AddDays(-5), range.To),
+                PeriodTypeEnum.Week => new DateRange(StartOfWeek(range.To.AddDays(-7 * 11), DayOfWeek.Monday), StartOfWeek(range.To, DayOfWeek.Monday)),
                 PeriodTypeEnum.Quartal or PeriodTypeEnum.Year => new DateRange(new DateTime(range.To.Year, 1, 1), new DateTime(range.To.Year, 12, 31)),
                 _ => range
             };
@@ -50,7 +50,7 @@ public class IndicatorCategoryGetHandler(
             var data = await fetchHandler.HandleAsync(
                 last12Range,
                 ind.Id,
-                periodType == PeriodTypeEnum.Week ? PeriodTypeEnum.Day : periodType,
+                periodType == PeriodTypeEnum.Week ? PeriodTypeEnum.Week : periodType,
                 (FillmentPeriodWrapper)ind.FillmentPeriod,
                 ct);
 
@@ -76,5 +76,11 @@ public class IndicatorCategoryGetHandler(
         }
 
         return dto;
+    }
+
+    private static DateTime StartOfWeek(DateTime date, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+        return date.Date.AddDays(-1 * diff);
     }
 }

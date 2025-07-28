@@ -34,7 +34,7 @@ public class CompanyPreviewMetricsHandler(
         var last12Range = period switch
         {
             PeriodTypeEnum.Day => new DateRange(range.To.AddDays(-11), range.To),
-            PeriodTypeEnum.Week => new DateRange(range.From.AddDays(-5), range.To),
+            PeriodTypeEnum.Week => new DateRange(StartOfWeek(range.To.AddDays(-7 * 11), DayOfWeek.Monday), StartOfWeek(range.To, DayOfWeek.Monday)),
             PeriodTypeEnum.Quartal or PeriodTypeEnum.Year => new DateRange(new DateTime(range.To.Year, 1, 1), new DateTime(range.To.Year, 12, 31)),
             _ => range
         };
@@ -42,7 +42,7 @@ public class CompanyPreviewMetricsHandler(
         var last12Data = await fetchHandler.HandleAsync(
             last12Range,
             indicator.Id,
-            period == PeriodTypeEnum.Week ? PeriodTypeEnum.Day : period,
+            period == PeriodTypeEnum.Week ? PeriodTypeEnum.Week : period,
             (FillmentPeriodWrapper)indicator.FillmentPeriod,
             ct);
 
@@ -68,5 +68,11 @@ public class CompanyPreviewMetricsHandler(
         };
 
         return dto;
+    }
+
+    private static DateTime StartOfWeek(DateTime date, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+        return date.Date.AddDays(-1 * diff);
     }
 }
