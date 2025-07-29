@@ -85,6 +85,9 @@ public class UserPreviewMetricsHandler(
             var factAvg = last12Data.FactData.Length > 0 ? last12Data.FactData.Average() : 0;
             var planAvg = last12Data.PlanData.Length > 0 ? last12Data.PlanData.Average() : 0;
 
+            if (planAvg == 0 && metric.Plan.HasValue)
+                planAvg = (double)metric.Plan.Value;
+
             double avgPercent = 0;
             if (planAvg != 0)
                 avgPercent = factAvg / planAvg * 100;
