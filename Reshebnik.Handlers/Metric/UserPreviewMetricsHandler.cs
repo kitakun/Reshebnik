@@ -46,16 +46,24 @@ public class UserPreviewMetricsHandler(
         {
             var last12Range = periodType switch
             {
+                PeriodTypeEnum.Day when metric.PeriodType == PeriodTypeEnum.Week =>
+                    new DateRange(StartOfWeek(range.To.AddDays(-7 * 11), DayOfWeek.Monday), StartOfWeek(range.To, DayOfWeek.Monday)),
                 PeriodTypeEnum.Day => new DateRange(range.To.AddDays(-11), range.To),
                 PeriodTypeEnum.Week => new DateRange(StartOfWeek(range.To.AddDays(-7 * 11), DayOfWeek.Monday), StartOfWeek(range.To, DayOfWeek.Monday)),
-                PeriodTypeEnum.Quartal or PeriodTypeEnum.Year => new DateRange(new DateTime(range.To.Year, 1, 1), new DateTime(range.To.Year, 12, 31)),
+                PeriodTypeEnum.Month => new DateRange(new DateTime(range.To.AddMonths(-11).Year, range.To.AddMonths(-11).Month, 1), new DateTime(range.To.Year, range.To.Month, DateTime.DaysInMonth(range.To.Year, range.To.Month))),
+                PeriodTypeEnum.Quartal => new DateRange(new DateTime(range.To.AddMonths(-3 * 11).Year, ((range.To.AddMonths(-3 * 11).Month - 1) / 3) * 3 + 1, 1), new DateTime(range.To.Year, ((range.To.Month - 1) / 3) * 3 + 3, DateTime.DaysInMonth(range.To.Year, ((range.To.Month - 1) / 3) * 3 + 3))),
+                PeriodTypeEnum.Year => new DateRange(new DateTime(range.To.Year - 11, 1, 1), new DateTime(range.To.Year, 12, 31)),
                 _ => range
             };
+
+            var expected = periodType;
+            if (metric.PeriodType == PeriodTypeEnum.Week && periodType == PeriodTypeEnum.Day)
+                expected = PeriodTypeEnum.Week;
 
             var last12Data = await fetchHandler.HandleAsync(
                 last12Range,
                 metric.Id,
-                periodType == PeriodTypeEnum.Week ? PeriodTypeEnum.Week : periodType,
+                expected,
                 metric.PeriodType,
                 ct);
 
@@ -73,12 +81,20 @@ public class UserPreviewMetricsHandler(
             double?[] growth = new double?[last12Data.FactData.Length];
             if (metric.ShowGrowthPercent)
             {
-                for (var i = 1; i < last12Data.FactData.Length; i++)
+                if (metric.WeekType == WeekTypeEnum.Sliding)
                 {
-                    var prev = last12Data.FactData[i - 1];
-                    growth[i] = prev != 0
-                        ? (double)(last12Data.FactData[i] - prev) / prev * 100
-                        : null;
+                    for (var i = 7; i < last12Data.FactData.Length; i++)
+                    {
+                        growth[i] = last12Data.FactData[i - 7] - last12Data.FactData[i];
+                    }
+                }
+                else
+                {
+                    var offset = metric.WeekStartDate ?? 0;
+                    for (var i = offset; i < last12Data.FactData.Length; i++)
+                    {
+                        growth[i] = last12Data.FactData[i - offset] - last12Data.FactData[i];
+                    }
                 }
             }
 

@@ -18,7 +18,7 @@ public class MetricTemplateEntity
     public PeriodTypeEnum PeriodType { get; set; }
 
     public WeekTypeEnum WeekType { get; set; } = WeekTypeEnum.Calendar;
-    public DateTime? WeekStartDate { get; set; }
+    public int? WeekStartDate { get; set; }
     public bool ShowGrowthPercent { get; set; }
 
     public decimal? Plan { get; set; }

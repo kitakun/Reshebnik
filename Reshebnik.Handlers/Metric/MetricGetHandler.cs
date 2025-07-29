@@ -35,7 +35,9 @@ public class MetricGetHandler(
             Max = metrics.Max,
             Visible = metrics.Visible,
             WeekType = metrics.WeekType,
-            WeekStartDate = metrics.WeekStartDate,
+            WeekStartDate = metrics.WeekStartDate.HasValue
+                ? DateTime.UtcNow.Date.AddDays(-metrics.WeekStartDate.Value)
+                : null,
             ShowGrowthPercent = metrics.ShowGrowthPercent
         };
     }
@@ -65,7 +67,9 @@ public class MetricGetHandler(
             Max = m.Max,
             Visible = m.Visible,
             WeekType = m.WeekType,
-            WeekStartDate = m.WeekStartDate,
+            WeekStartDate = m.WeekStartDate.HasValue
+                ? DateTime.UtcNow.Date.AddDays(-m.WeekStartDate.Value)
+                : null,
             ShowGrowthPercent = m.ShowGrowthPercent
         }).ToList();
     }
