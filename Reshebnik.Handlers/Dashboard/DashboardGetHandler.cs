@@ -87,51 +87,53 @@ public class DashboardGetHandler(
             .Take(3)
             .ToList();
 
-        var rootIds = await db.Departments
+        var rootIds = await db.DepartmentSchemas
             .AsNoTracking()
-            .Where(d => d.CompanyId == companyId && d.IsFundamental && !d.IsDeleted)
-            .Select(d => d.Id)
-            .ToListAsync(ct);
-
-        var level1Ids = await db.DepartmentSchemas
-            .AsNoTracking()
-            .Where(s => rootIds.Contains(s.AncestorDepartmentId) && s.Depth == 1 && s.DepartmentId != s.AncestorDepartmentId)
+            .Where(s => s.FundamentalDepartmentId == s.DepartmentId && s.Depth == 0)
+            .Where(s => db.Departments.Any(d => d.CompanyId == companyId && d.Id == s.DepartmentId && !d.IsDeleted))
             .Select(s => s.DepartmentId)
             .Distinct()
             .ToListAsync(ct);
 
-        var departments = await db.Departments
+        var rootDepartments = await db.Departments
             .AsNoTracking()
-            .Where(d => level1Ids.Contains(d.Id) && !d.IsDeleted)
+            .Where(d => rootIds.Contains(d.Id))
             .Select(d => new { d.Id, d.Name })
             .ToListAsync(ct);
 
-        var links = await db.EmployeeDepartmentLinks
+        var schemas = await db.DepartmentSchemas
             .AsNoTracking()
-            .Where(l => level1Ids.Contains(l.DepartmentId))
+            .Where(s => rootIds.Contains(s.FundamentalDepartmentId))
+            .Select(s => new { s.FundamentalDepartmentId, s.DepartmentId })
             .ToListAsync(ct);
 
-        var departmentAverages = links
-            .GroupBy(l => l.DepartmentId)
-            .ToDictionary(
-                g => g.Key,
-                g =>
-                {
-                    var values = g
-                        .Select(l => employeeAverages.TryGetValue(l.EmployeeId, out var avg) ? (double?)avg : null)
-                        .Where(v => v.HasValue)
-                        .Select(v => v!.Value)
-                        .ToList();
-                    return values.Count > 0 ? values.Average() : 0d;
-                });
+        var allDeptIds = schemas.Select(s => s.DepartmentId).Distinct().ToList();
 
-        foreach (var dept in departments)
+        var links = await db.EmployeeDepartmentLinks
+            .AsNoTracking()
+            .Where(l => allDeptIds.Contains(l.DepartmentId))
+            .ToListAsync(ct);
+
+        foreach (var root in rootDepartments)
         {
+            var deptIds = schemas
+                .Where(s => s.FundamentalDepartmentId == root.Id)
+                .Select(s => s.DepartmentId)
+                .Distinct()
+                .ToList();
+
+            var values = links
+                .Where(l => deptIds.Contains(l.DepartmentId))
+                .Select(l => employeeAverages.TryGetValue(l.EmployeeId, out var avg) ? (double?)avg : null)
+                .Where(v => v.HasValue)
+                .Select(v => v!.Value)
+                .ToList();
+
             dto.Departments.Add(new DashboardDepartmentDto
             {
-                Id = dept.Id,
-                Name = dept.Name,
-                Average = departmentAverages.GetValueOrDefault(dept.Id, 0)
+                Id = root.Id,
+                Name = root.Name,
+                Average = values.Count > 0 ? values.Average() : 0d
             });
         }
 
