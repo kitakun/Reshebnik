@@ -77,7 +77,7 @@ public class UserPreviewMetricsHandler(
                 {
                     var prev = last12Data.FactData[i - 1];
                     growth[i] = prev != 0
-                        ? ((double)(last12Data.FactData[i] - prev) / prev) * 100
+                        ? (double)(last12Data.FactData[i] - prev) / prev * 100
                         : null;
                 }
             }

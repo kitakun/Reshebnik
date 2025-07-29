@@ -1,17 +1,16 @@
 using Microsoft.EntityFrameworkCore;
-using Reshebnik.Domain.Entities;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Department;
 using Reshebnik.EntityFramework;
-using Reshebnik.Clickhouse.Handlers;
+using Reshebnik.Handlers.Metric;
 using System.Linq;
 
 namespace Reshebnik.Handlers.Department;
 
 public class DepartmentPreviewHandler(
     ReshebnikContext db,
-    FetchDepartmentCompletionHandler fetchHandler)
+    UserPreviewMetricsHandler userMetricsHandler)
 {
     private const int MAX_USERS = 5;
 
@@ -39,43 +38,6 @@ public class DepartmentPreviewHandler(
             Name = d.Name,
             CompletionPercent = 0
         });
-        
-        var metrics = await db.MetricDepartmentLinks
-            .AsNoTracking()
-            .Include(l => l.Metric)
-            .ThenInclude(m => m.DepartmentLinks)
-            .Where(l => deptIds.Contains(l.DepartmentId))
-            .Select(l => l.Metric)
-            .Distinct()
-            .ToListAsync(ct);
-
-        foreach (var d in departments)
-        {
-            var metricsForDept = metrics.Where(m => m.DepartmentLinks.Any(l => l.DepartmentId == d.Id)).ToList();
-            double sumPercent = 0;
-            int count = 0;
-
-            foreach (var metric in metricsForDept)
-            {
-                var avg = await fetchHandler.HandleAsync(d.CompanyId, d.Id, metric.ClickHouseKey, range, ct);
-                if (double.IsNaN(avg) || double.IsInfinity(avg))
-                    avg = 0;
-
-                double percent = 0;
-                if (metric.Min.HasValue && metric.Max.HasValue && metric.Max != metric.Min)
-                {
-                    var min = (double)metric.Min.Value;
-                    var max = (double)metric.Max.Value;
-                    percent = (avg - min) / (max - min) * 100;
-                }
-
-                sumPercent += percent;
-                count++;
-            }
-
-            if (dict.TryGetValue(d.Id, out var dto))
-                dto.CompletionPercent = count > 0 ? sumPercent / count : 0;
-        }
 
         foreach (var link in links)
         {
@@ -92,17 +54,28 @@ public class DepartmentPreviewHandler(
                 dict[link.DepartmentId].Employees.Add(userDto);
         }
 
-        foreach (var d in dict.Values)
+        foreach (var dto in dict.Values)
         {
-            d.Supervisors = d.Supervisors
+            var allUsers = dto.Supervisors.Concat(dto.Employees).ToList();
+            foreach (var user in allUsers)
+            {
+                var metricsDto = await userMetricsHandler.HandleAsync(user.Id, range, PeriodTypeEnum.Month, ct);
+                if (metricsDto != null && metricsDto.Metrics.Count > 0)
+                    user.CompletionPercent = metricsDto.Average;
+            }
+
+            dto.CompletionPercent = allUsers.Count > 0 ? allUsers.Average(u => u.CompletionPercent) : 0;
+
+            dto.Supervisors = dto.Supervisors
                 .OrderByDescending(u => u.CompletionPercent)
                 .Take(MAX_USERS)
                 .ToList();
-            d.Employees = d.Employees
+            dto.Employees = dto.Employees
                 .OrderByDescending(u => u.CompletionPercent)
                 .Take(MAX_USERS)
                 .ToList();
         }
+
 
         var allEmployees = dict.Values.SelectMany(v => v.Employees).ToList();
         var best = allEmployees.OrderByDescending(e => e.CompletionPercent).Take(3).ToList();

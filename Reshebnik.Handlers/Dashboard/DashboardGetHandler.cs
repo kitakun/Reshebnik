@@ -62,7 +62,8 @@ public class DashboardGetHandler(
 
         var employeeAverages = employees
             .Zip(previews)
-            .ToDictionary(z => z.First.Id, z => z.Second?.Average ?? 0);
+            .Where(z => z.Second is { Metrics.Count: > 0 })
+            .ToDictionary(z => z.First.Id, z => z.Second!.Average);
 
         dto.BestEmployees = employees
             .Select(e => new DashboardEmployeeDto
@@ -114,9 +115,15 @@ public class DashboardGetHandler(
             .GroupBy(l => l.DepartmentId)
             .ToDictionary(
                 g => g.Key,
-                g => g.Select(l => employeeAverages.GetValueOrDefault(l.EmployeeId, 0d))
-                    .DefaultIfEmpty(0)
-                    .Average());
+                g =>
+                {
+                    var values = g
+                        .Select(l => employeeAverages.TryGetValue(l.EmployeeId, out var avg) ? (double?)avg : null)
+                        .Where(v => v.HasValue)
+                        .Select(v => v!.Value)
+                        .ToList();
+                    return values.Count > 0 ? values.Average() : 0d;
+                });
 
         foreach (var dept in departments)
         {
