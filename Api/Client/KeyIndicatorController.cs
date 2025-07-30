@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Reshebnik.Domain.Models.Indicator;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Handlers.KeyIndicator;
+using Reshebnik.Domain.Extensions;
 
 namespace Reshebnik.Web.Api.Client;
 
@@ -22,7 +23,7 @@ public class KeyIndicatorController : ControllerBase
         [FromServices] KeyIndicatorGetHandler handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(from, to, periodType, cancellationToken);
+        var result = await handler.HandleAsync(from.ToUtcFromClient(), to.ToUtcFromClient(), periodType, cancellationToken);
         return Ok(result);
     }
 }

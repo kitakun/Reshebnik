@@ -184,7 +184,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             PeriodTypeEnum.Week => (int)((date.Date - start).TotalDays / 7),
             PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month,
             PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3,
-            PeriodTypeEnum.Year => (date.Year - start.Year) * 12 + date.Month - start.Month,
+            PeriodTypeEnum.Year => date.Year - start.Year,
             _ => -1
         };
     }
@@ -196,7 +196,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             PeriodTypeEnum.Week => StartOfWeek(start, DayOfWeek.Monday),
             PeriodTypeEnum.Month => new DateTime(start.Year, start.Month, 1),
             PeriodTypeEnum.Quartal => new DateTime(start.Year, ((start.Month - 1) / 3) * 3 + 1, 1),
-            PeriodTypeEnum.Year => new DateTime(start.Year, start.Month, 1),
+            PeriodTypeEnum.Year => new DateTime(start.Year, 1, 1),
             _ => start.Date
         };
     }
@@ -210,9 +210,14 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             PeriodTypeEnum.Week => GetWeekDiff(range.From.Date, range.To.Date),
             PeriodTypeEnum.Month => 12,
             PeriodTypeEnum.Quartal => GetQuartalDiff(range.From.Date, range.To.Date),
-            PeriodTypeEnum.Year => 13,
+            PeriodTypeEnum.Year => GetYearDiff(range.From.Date, range.To.Date),
             _ => 1
         };
+    }
+
+    private static int GetYearDiff(DateTime from, DateTime to)
+    {
+        return to.Year - from.Year + 1;
     }
 
     private static int GetQuartalDiff(DateTime from, DateTime to)

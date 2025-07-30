@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Reshebnik.Handlers.Department;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Department;
+using Reshebnik.Domain.Extensions;
 
 namespace Reshebnik.Web.Api.Client;
 
@@ -47,7 +48,7 @@ public class DepartmentsController : ControllerBase
         [FromServices] DepartmentPreviewHandler handler,
         CancellationToken cancellationToken)
     {
-        var range = new DateRange(from, to);
+        var range = new DateRange(from.ToUtcFromClient(), to.ToUtcFromClient());
         var result = await handler.HandleAsync(id, range, cancellationToken);
         if (result == null) return NotFound();
         return Ok(result);

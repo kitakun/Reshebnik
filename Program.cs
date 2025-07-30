@@ -44,6 +44,8 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.Never;
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    options.JsonSerializerOptions.Converters.Add(new Reshebnik.Web.Converters.DateTimeUtcConverter());
+    options.JsonSerializerOptions.Converters.Add(new Reshebnik.Web.Converters.NullableDateTimeUtcConverter());
 });
 builder.Services.ConfigureHttpJsonOptions(_ => { });
 

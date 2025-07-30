@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Reshebnik.Domain.Models.Dashboard;
 using Reshebnik.Domain.Models;
 using Reshebnik.Handlers.Dashboard;
+using Reshebnik.Domain.Extensions;
 
 namespace Reshebnik.Web.Api.Client;
 
@@ -21,9 +22,11 @@ public class DashboardController : ControllerBase
         [FromServices] DashboardGetHandler handler,
         CancellationToken cancellationToken)
     {
+        var fromUtc = from.ToUtcFromClient();
+        var toUtc = to.ToUtcFromClient();
         // Adjust range to ensure at most a 7-day period
-        var adjustedTo = from.AddDays(6) < to ? from.AddDays(6) : to;
-        var range = new DateRange(from, adjustedTo);
+        var adjustedTo = fromUtc.AddDays(6) < toUtc ? fromUtc.AddDays(6) : toUtc;
+        var range = new DateRange(fromUtc, adjustedTo);
         var result = await handler.HandleAsync(range, cancellationToken);
         return Ok(result);
     }

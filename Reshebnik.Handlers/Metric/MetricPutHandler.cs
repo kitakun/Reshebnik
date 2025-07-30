@@ -4,6 +4,7 @@ using Reshebnik.Domain.Entities;
 using Reshebnik.Domain.Models.Metric;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
+using Reshebnik.Domain.Extensions;
 
 namespace Reshebnik.Handlers.Metric;
 
@@ -33,7 +34,7 @@ public class MetricPutHandler(
         entity.PeriodType = dto.PeriodType;
         entity.WeekType = dto.WeekType;
         entity.WeekStartDate = dto.WeekStartDate.HasValue
-            ? (int?)(DateTime.UtcNow.Date - dto.WeekStartDate.Value.Date).TotalDays
+            ? (int?)(DateTime.UtcNow.Date - dto.WeekStartDate.Value.ToUtcFromClient().Date).TotalDays
             : null;
         entity.ShowGrowthPercent = dto.ShowGrowthPercent;
         entity.Plan = dto.Plan;
