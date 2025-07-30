@@ -123,12 +123,12 @@ public class UserPreviewMetricsHandler(
                 GrowthPercent = growth,
                 Period = metric.PeriodType,
                 Type = metric.Type,
-                Average = avgPercent
+                Average = Math.Round(avgPercent, 0, MidpointRounding.ToZero)
             });
         }
 
         if (result.Metrics.Count > 0)
-            result.Average = sumAvg / result.Metrics.Count;
+            result.Average = Math.Round(sumAvg / result.Metrics.Count, 0, MidpointRounding.ToZero);
 
         return result;
     }

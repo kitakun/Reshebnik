@@ -61,10 +61,12 @@ public class DepartmentPreviewHandler(
             {
                 var metricsDto = await userMetricsHandler.HandleAsync(user.Id, range, PeriodTypeEnum.Month, ct);
                 if (metricsDto != null && metricsDto.Metrics.Count > 0)
-                    user.CompletionPercent = metricsDto.Average;
+                    user.CompletionPercent = Math.Round(metricsDto.Average, 0, MidpointRounding.ToZero);
             }
 
-            dto.CompletionPercent = allUsers.Count > 0 ? allUsers.Average(u => u.CompletionPercent) : 0;
+            dto.CompletionPercent = allUsers.Count > 0
+                ? Math.Round(allUsers.Average(u => u.CompletionPercent), 0, MidpointRounding.ToZero)
+                : 0;
 
             dto.Supervisors = dto.Supervisors
                 .OrderByDescending(u => u.CompletionPercent)

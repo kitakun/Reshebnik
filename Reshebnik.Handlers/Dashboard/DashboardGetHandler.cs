@@ -70,7 +70,7 @@ public class DashboardGetHandler(
             {
                 Id = e.Id,
                 Fio = e.FIO,
-                Average = employeeAverages.GetValueOrDefault(e.Id, 0)
+                Average = Math.Round(employeeAverages.GetValueOrDefault(e.Id, 0), 0, MidpointRounding.ToZero)
             })
             .OrderByDescending(e => e.Average)
             .Take(3)
@@ -81,7 +81,7 @@ public class DashboardGetHandler(
             {
                 Id = e.Id,
                 Fio = e.FIO,
-                Average = employeeAverages.GetValueOrDefault(e.Id, 0)
+                Average = Math.Round(employeeAverages.GetValueOrDefault(e.Id, 0), 0, MidpointRounding.ToZero)
             })
             .OrderBy(e => e.Average)
             .Take(3)
@@ -133,12 +133,12 @@ public class DashboardGetHandler(
             {
                 Id = root.Id,
                 Name = root.Name,
-                Average = values.Count > 0 ? values.Average() : 0d
+                Average = Math.Round(values.Count > 0 ? values.Average() : 0d, 0, MidpointRounding.ToZero)
             });
         }
 
         dto.DepartmentsAverage = dto.Departments.Count > 0
-            ? dto.Departments.Average(d => d.Average)
+            ? Math.Round(dto.Departments.Average(d => d.Average), 0, MidpointRounding.ToZero)
             : 0;
 
         return dto;

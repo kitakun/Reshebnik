@@ -71,7 +71,7 @@ public class IndicatorCategoryGetHandler(
                 {
                     Plan = data.PlanData,
                     Fact = data.FactData,
-                    Average = avg,
+                    Average = Math.Round(avg, 0, MidpointRounding.ToZero),
                     Period = ind.FillmentPeriod
                 }
             });
