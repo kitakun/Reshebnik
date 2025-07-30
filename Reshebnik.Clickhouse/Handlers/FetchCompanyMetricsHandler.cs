@@ -209,10 +209,15 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             PeriodTypeEnum.Custom => (int)(range.To.Date - range.From.Date).TotalDays + 1,
             PeriodTypeEnum.Week => GetWeekDiff(range.From.Date, range.To.Date),
             PeriodTypeEnum.Month => 12,
-            PeriodTypeEnum.Quartal => 1,
+            PeriodTypeEnum.Quartal => GetQuartalDiff(range.From.Date, range.To.Date),
             PeriodTypeEnum.Year => 13,
             _ => 1
         };
+    }
+
+    private static int GetQuartalDiff(DateTime from, DateTime to)
+    {
+        return ((to.Year - from.Year) * 12 + to.Month - from.Month) / 3 + 1;
     }
 
     private static int GetWeekDiff(DateTime from, DateTime to)

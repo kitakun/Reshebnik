@@ -11,45 +11,35 @@ namespace Reshebnik.EntityFramework.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<int>(
+            // For table "metrics"
+            migrationBuilder.DropColumn(
+                name: "week_start_date",
+                table: "metrics");
+
+            migrationBuilder.AddColumn<int>(
                 name: "week_start_date",
                 table: "metrics",
                 type: "integer",
                 nullable: true,
-                oldClrType: typeof(DateTime),
-                oldType: "timestamp with time zone",
-                oldNullable: true);
+                defaultValue: 0);
 
-            migrationBuilder.AlterColumn<int>(
+            // For table "metric_templates"
+            migrationBuilder.DropColumn(
+                name: "week_start_date",
+                table: "metric_templates");
+
+            migrationBuilder.AddColumn<int>(
                 name: "week_start_date",
                 table: "metric_templates",
                 type: "integer",
                 nullable: true,
-                oldClrType: typeof(DateTime),
-                oldType: "timestamp with time zone",
-                oldNullable: true);
+                defaultValue: 0);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<DateTime>(
-                name: "week_start_date",
-                table: "metrics",
-                type: "timestamp with time zone",
-                nullable: true,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldNullable: true);
-
-            migrationBuilder.AlterColumn<DateTime>(
-                name: "week_start_date",
-                table: "metric_templates",
-                type: "timestamp with time zone",
-                nullable: true,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldNullable: true);
+            throw new NotImplementedException();
         }
     }
 }
