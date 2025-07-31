@@ -38,7 +38,6 @@ public class DepartmentPreviewHandler(
             Name = d.Name,
             CompletionPercent = 0
         });
-        var employeesDict = departments.ToDictionary(d => d.Id, _ => new List<DepartmentPreviewUserDto>());
 
         foreach (var link in links)
         {
@@ -52,16 +51,15 @@ public class DepartmentPreviewHandler(
             if (link.Type == EmployeeTypeEnum.Supervisor)
                 dict[link.DepartmentId].Supervisors.Add(userDto);
             else
-                employeesDict[link.DepartmentId].Add(userDto);
+                dict[link.DepartmentId].Employees.Add(userDto);
         }
 
         foreach (var dto in dict.Values)
         {
-            var employees = employeesDict[dto.Id];
-            var allUsers = dto.Supervisors.Concat(employees).ToList();
+            var allUsers = dto.Supervisors.Concat(dto.Employees).ToList();
             foreach (var user in allUsers)
             {
-                var metricsDto = await userMetricsHandler.HandleAsync(user.Id, range, PeriodTypeEnum.Custom, ct);
+                var metricsDto = await userMetricsHandler.HandleAsync(user.Id, range, PeriodTypeEnum.Month, ct);
                 if (metricsDto != null && metricsDto.Metrics.Count > 0)
                     user.CompletionPercent = Math.Round(metricsDto.Average, 0, MidpointRounding.ToZero);
             }
@@ -74,13 +72,14 @@ public class DepartmentPreviewHandler(
                 .OrderByDescending(u => u.CompletionPercent)
                 .Take(MAX_USERS)
                 .ToList();
-            employeesDict[dto.Id] = employees
+            dto.Employees = dto.Employees
                 .OrderByDescending(u => u.CompletionPercent)
                 .Take(MAX_USERS)
                 .ToList();
         }
 
-        var allEmployees = employeesDict.Values.SelectMany(v => v).ToList();
+
+        var allEmployees = dict.Values.SelectMany(v => v.Employees).ToList();
         var best = allEmployees.OrderByDescending(e => e.CompletionPercent).Take(3).ToList();
         var worst = allEmployees.OrderBy(e => e.CompletionPercent).Take(3).ToList();
 
