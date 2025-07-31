@@ -22,6 +22,7 @@ using Reshebnik.Handlers.Email;
 using Reshebnik.Handlers.SpecialInvitation;
 using Reshebnik.Handlers.BugHunt;
 using Reshebnik.Web.Middleware;
+using Reshebnik.Web;
 
 using System.Text;
 using System.Text.Json;
@@ -216,6 +217,7 @@ builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 builder.Services.AddHostedService<EmailSenderService>();
 
 var app = builder.Build();
+TimeZoneHelper.HttpContextAccessor = app.Services.GetRequiredService<IHttpContextAccessor>();
 app.UseCors("DevCors");
 app.UseExceptionLogging();
 

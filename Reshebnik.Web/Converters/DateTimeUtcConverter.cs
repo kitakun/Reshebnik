@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Reshebnik.Web;
 
 namespace Reshebnik.Web.Converters;
 
@@ -9,14 +10,13 @@ public class DateTimeUtcConverter : JsonConverter<DateTime>
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var value = reader.GetDateTime();
-        if (value.Kind == DateTimeKind.Unspecified)
-            value = DateTime.SpecifyKind(value, DateTimeKind.Local);
-        return value.ToUniversalTime();
+        return TimeZoneHelper.ConvertToUtc(value);
     }
 
     public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(value.ToUniversalTime());
+        var local = TimeZoneHelper.ConvertToUserTime(value.ToUniversalTime());
+        writer.WriteStringValue(local);
     }
 }
 
@@ -26,16 +26,19 @@ public class NullableDateTimeUtcConverter : JsonConverter<DateTime?>
     {
         if (reader.TokenType == JsonTokenType.Null) return null;
         var value = reader.GetDateTime();
-        if (value.Kind == DateTimeKind.Unspecified)
-            value = DateTime.SpecifyKind(value, DateTimeKind.Local);
-        return value.ToUniversalTime();
+        return TimeZoneHelper.ConvertToUtc(value);
     }
 
     public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
     {
         if (value.HasValue)
-            writer.WriteStringValue(value.Value.ToUniversalTime());
+        {
+            var local = TimeZoneHelper.ConvertToUserTime(value.Value.ToUniversalTime());
+            writer.WriteStringValue(local);
+        }
         else
+        {
             writer.WriteNullValue();
+        }
     }
 }
