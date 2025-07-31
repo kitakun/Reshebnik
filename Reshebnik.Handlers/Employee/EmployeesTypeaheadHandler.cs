@@ -11,7 +11,7 @@ public class EmployeesTypeaheadHandler(
     ReshebnikContext db,
     CompanyContextHandler companyContext)
 {
-    public async ValueTask<PaginationDto<EmployeeDto>> HandleAsync(TypeaheadRequest request, CancellationToken ct = default)
+    public async ValueTask<PaginationDto<EmployeeDto>> HandleAsync(TypeaheadRequest request, int? departmentId = null, CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
         const int COUNT = 50;
@@ -20,6 +20,11 @@ public class EmployeesTypeaheadHandler(
             .AsNoTracking()
             .Where(e => e.CompanyId == companyId)
             .Take(COUNT);
+
+        if (departmentId.HasValue)
+        {
+            query = query.Where(e => e.DepartmentLinks.Any(l => l.DepartmentId == departmentId.Value));
+        }
 
         if (!string.IsNullOrEmpty(request.Query))
         {

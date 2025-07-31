@@ -7,7 +7,6 @@ public class DepartmentPreviewDto
     public double CompletionPercent { get; set; }
     public List<DepartmentPreviewDto> Children { get; set; } = new();
     public List<DepartmentPreviewUserDto> Supervisors { get; set; } = new();
-    public List<DepartmentPreviewUserDto> Employees { get; set; } = new();
     public List<DepartmentPreviewUserDto> BestEmployees { get; set; } = new();
     public List<DepartmentPreviewUserDto> WorstEmployees { get; set; } = new();
 }

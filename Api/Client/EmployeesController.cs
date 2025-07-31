@@ -24,10 +24,11 @@ public class EmployeesController : ControllerBase
     [HttpGet("typeahead")]
     public async Task<IActionResult> TypeaheadAsync(
         [FromQuery] TypeaheadRequest request,
+        [FromQuery] int? departmentId,
         [FromServices] EmployeesTypeaheadHandler handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(request, cancellationToken);
+        var result = await handler.HandleAsync(request, departmentId, cancellationToken);
         return Ok(result);
     }
 }
