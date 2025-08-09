@@ -106,6 +106,16 @@ builder.Services.AddCors(options =>
     });
 });
 
+#if RELEASE
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(443, listenOptions =>
+    {
+        listenOptions.UseHttps("certificate.pfx", "f5432yx5o");
+    });
+});
+#endif
+
 // swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -225,7 +235,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ReshebnikContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<ReshebnikContext>>();
-    logger.LogInformation("before database migration");
+    logger.LogInformation($"before database migration env={builder.Environment.EnvironmentName}");
     await db.Database.MigrateAsync(); // ⬅️ Applies any pending migrations
     logger.LogInformation("migrated");
 }

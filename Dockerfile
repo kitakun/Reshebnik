@@ -8,19 +8,21 @@ COPY Reshebnik.Domain/Reshebnik.Domain.csproj Reshebnik.Domain/
 COPY Reshebnik.EntityFramework/Reshebnik.EntityFramework.csproj Reshebnik.EntityFramework/
 COPY Reshebnik.Clickhouse/Reshebnik.Clickhouse.csproj Reshebnik.Clickhouse/
 COPY Reshebnik.Clickhouse/Migrations Reshebnik.Clickhouse/Migrations/
+COPY . .
+
 RUN dotnet restore "Reshebnik.Web.csproj"
 
-COPY . .
-RUN dotnet publish "Reshebnik.Web.csproj" -c Release -o /app/publish
+RUN dotnet publish "Reshebnik.Web.csproj" -c Release -o /app/publish && ls -la /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 443
 COPY --from=build /app/publish .
+COPY certificate.pfx .
 COPY Reshebnik.Clickhouse/Migrations Reshebnik.Clickhouse/Migrations
 COPY appsettings.Production.json ./appsettings.Production.json
 
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS="http://+:8080"
+ENV ASPNETCORE_URLS="https://+:443"
 
 ENTRYPOINT ["dotnet", "Reshebnik.Web.dll"]

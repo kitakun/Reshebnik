@@ -5,6 +5,7 @@ using Reshebnik.Handlers.Department;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Department;
 using Reshebnik.Domain.Extensions;
+using Reshebnik.Domain.Enums;
 
 namespace Reshebnik.Web.Api.Client;
 
@@ -45,11 +46,12 @@ public class DepartmentsController : ControllerBase
         [FromRoute] int id,
         [FromQuery] DateTime from,
         [FromQuery] DateTime to,
+        [FromQuery] PeriodTypeEnum periodType,
         [FromServices] DepartmentPreviewHandler handler,
         CancellationToken cancellationToken)
     {
         var range = new DateRange(from.ToUtcFromClient(), to.ToUtcFromClient());
-        var result = await handler.HandleAsync(id, range, cancellationToken);
+        var result = await handler.HandleAsync(id, range, periodType, cancellationToken);
         if (result == null) return NotFound();
         return Ok(result);
     }
