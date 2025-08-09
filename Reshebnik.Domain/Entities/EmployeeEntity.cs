@@ -11,18 +11,18 @@ public class EmployeeEntity
 
     public string FIO { get; set; } = null!;
     public string JobTitle { get; set; } = null!;
-    public string Email { get; set; } = null!;
+    public string? Email { get; set; }
     public string Phone { get; set; } = null!;
     public string Comment { get; set; } = null!;
     public bool IsActive { get; set; }
     public string? EmailInvitationCode { get; set; }
-    
+
     public string Password { get; set; } = null!;
     public string Salt { get; set; } = null!;
-    
+
     public RootRolesEnum Role { get; set; }
     public EmployeeTypeEnum? DefaultRole { get; set; }
-    
+
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
 

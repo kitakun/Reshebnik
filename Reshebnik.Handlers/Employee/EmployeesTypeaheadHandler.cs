@@ -25,7 +25,7 @@ public class EmployeesTypeaheadHandler(
         if (!string.IsNullOrEmpty(request.Query))
         {
             var q = request.Query.ToLower();
-            query = query.Where(e => e.FIO.ToLower().Contains(q) || e.Email.ToLower().Contains(q));
+            query = query.Where(e => e.FIO.ToLower().Contains(q) || (e.Email != null && e.Email.ToLower().Contains(q)));
         }
 
         var employees = await query

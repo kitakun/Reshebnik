@@ -37,7 +37,6 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
 
         builder.Property(e => e.Email)
             .HasColumnName("email")
-            .IsRequired()
             .HasMaxLength(256);
 
         builder.Property(e => e.Phone)
@@ -60,7 +59,7 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
             .IsRequired()
             .HasConversion<string>()
             .HasMaxLength(16);
-        
+
         builder.Property(e => e.DefaultRole)
             .HasColumnName("default_role")
             .HasConversion<string>()
@@ -71,7 +70,7 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
             .IsRequired();
         builder.Property(e => e.LastLoginAt)
             .HasColumnName("last_login_at");
-        
+
         builder.Property(e => e.WelcomeWasSeen)
             .HasColumnName("welcome_was_seen");
 

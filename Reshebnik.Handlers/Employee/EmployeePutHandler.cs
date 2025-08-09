@@ -22,12 +22,15 @@ public class EmployeePutHandler(
     {
         if (string.IsNullOrEmpty(dto.Fio)) throw new ArgumentNullException(nameof(dto.Fio));
 
-        var normalizedEmail = dto.Email.ToLower();
-        var emailExists = await db.Employees
-            .AsNoTracking()
-            .AnyAsync(e => e.Email.ToLower() == normalizedEmail && e.Id != dto.Id, ct);
-        if (emailExists)
-            throw new EmailAlreadyExistsException();
+        if (!string.IsNullOrWhiteSpace(dto.Email))
+        {
+            var normalizedEmail = dto.Email.ToLower();
+            var emailExists = await db.Employees
+                .AsNoTracking()
+                .AnyAsync(e => e.Email != null && e.Email.ToLower() == normalizedEmail && e.Id != dto.Id, ct);
+            if (emailExists)
+                throw new EmailAlreadyExistsException();
+        }
 
         EmployeeEntity entity;
         if (dto.Id != 0)
@@ -85,7 +88,7 @@ public class EmployeePutHandler(
         entity.IsActive = dto.IsActive;
         entity.DefaultRole = dto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee;
 
-        if (dto.SendEmail)
+        if (dto.SendEmail && !string.IsNullOrWhiteSpace(dto.Email))
         {
             entity.EmailInvitationCode = Guid.NewGuid().ToString("N");
 

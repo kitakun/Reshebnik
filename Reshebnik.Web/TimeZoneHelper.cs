@@ -17,7 +17,7 @@ public static class TimeZoneHelper
             var header = accessor.HttpContext.Request.Headers["tzone"].FirstOrDefault();
             if (header != null && TimeSpan.TryParse(header, out var offset))
             {
-                return offset;
+                // return offset;
             }
             return TimeSpan.Zero;
         }
