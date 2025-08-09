@@ -11,6 +11,7 @@ public class EmployeeCreateDto
     public string Phone { get; set; } = null!;
     public string Comment { get; set; } = string.Empty;
     public bool IsActive { get; set; }
+    public bool IsSupervisor { get; set; }
     public string? EmailInvitationCode { get; set; }
     public string Salt { get; set; } = string.Empty;
     public RootRolesEnum Role { get; set; }

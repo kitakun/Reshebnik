@@ -70,6 +70,8 @@ public class DashboardGetHandler(
             {
                 Id = e.Id,
                 Fio = e.FIO,
+                JobTitle = e.JobTitle,
+                IsSupervisor = e.DefaultRole == EmployeeTypeEnum.Supervisor,
                 Average = Math.Round(employeeAverages.GetValueOrDefault(e.Id, 0), 0, MidpointRounding.ToZero)
             })
             .OrderByDescending(e => e.Average)
@@ -81,6 +83,8 @@ public class DashboardGetHandler(
             {
                 Id = e.Id,
                 Fio = e.FIO,
+                JobTitle = e.JobTitle,
+                IsSupervisor = e.DefaultRole == EmployeeTypeEnum.Supervisor,
                 Average = Math.Round(employeeAverages.GetValueOrDefault(e.Id, 0), 0, MidpointRounding.ToZero)
             })
             .OrderBy(e => e.Average)

@@ -45,6 +45,8 @@ public class DepartmentPreviewHandler(
             {
                 Id = link.EmployeeId,
                 Fio = link.Employee.FIO,
+                JobTitle = link.Employee.JobTitle,
+                IsSupervisor = link.Type == EmployeeTypeEnum.Supervisor,
                 CompletionPercent = 0
             };
 

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using Reshebnik.Domain.Models.Company;
 using Reshebnik.Domain.Models.Employee;
+using Reshebnik.Domain.Enums;
 using Reshebnik.EntityFramework;
 
 namespace Reshebnik.Handlers.Employee;
@@ -25,6 +26,7 @@ public class EmployeeGetByIdHandler(ReshebnikContext db)
                 Phone = entity.Phone,
                 Comment = entity.Comment,
                 IsActive = entity.IsActive,
+                IsSupervisor = entity.DefaultRole == EmployeeTypeEnum.Supervisor,
                 Role = entity.Role,
                 CreatedAt = entity.CreatedAt,
                 LastLoginAt = entity.LastLoginAt,

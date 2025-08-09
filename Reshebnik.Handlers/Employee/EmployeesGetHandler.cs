@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using Reshebnik.Domain.Models.Employee;
+using Reshebnik.Domain.Enums;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
 
@@ -26,6 +27,7 @@ public class EmployeesGetHandler(
             Phone = e.Phone,
             Comment = e.Comment,
             IsActive = e.IsActive,
+            IsSupervisor = e.DefaultRole == EmployeeTypeEnum.Supervisor,
             DefaultRole = e.DefaultRole,
             DepartmentName = e.DepartmentLinks.First().Department.Name,
             DepartmentId = e.DepartmentLinks.First().DepartmentId

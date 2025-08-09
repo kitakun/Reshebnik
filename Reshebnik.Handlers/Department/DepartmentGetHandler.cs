@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using Reshebnik.Domain.Entities;
 using Reshebnik.Domain.Models.Department;
+using Reshebnik.Domain.Enums;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
 
@@ -70,6 +71,7 @@ public class DepartmentGetHandler(
                 Phone = user.Employee.Phone,
                 Comment = user.Employee.Comment,
                 IsActive = user.Employee.IsActive,
+                IsSupervisor = user.Type == EmployeeTypeEnum.Supervisor,
                 Type = user.Type
             });
         }

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Employee;
+using Reshebnik.Domain.Enums;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
 
@@ -44,6 +45,8 @@ public class EmployeesTypeaheadHandler(
             Phone = e.Phone,
             Comment = e.Comment,
             IsActive = e.IsActive,
+            IsSupervisor = e.DefaultRole == EmployeeTypeEnum.Supervisor,
+            DefaultRole = e.DefaultRole,
             DepartmentId = e.DepartmentLinks.FirstOrDefault()?.DepartmentId,
             DepartmentName = e.DepartmentLinks.FirstOrDefault()?.Department?.Name,
         }).ToList();

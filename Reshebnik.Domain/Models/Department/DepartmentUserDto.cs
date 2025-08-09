@@ -11,5 +11,6 @@ public class DepartmentUserDto
     public string Phone { get; set; } = null!;
     public string Comment { get; set; } = string.Empty;
     public bool IsActive { get; set; }
+    public bool IsSupervisor { get; set; }
     public EmployeeTypeEnum Type { get; set; } = EmployeeTypeEnum.Employee;
 }

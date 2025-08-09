@@ -83,6 +83,7 @@ public class EmployeePutHandler(
         entity.Phone = dto.Phone;
         entity.Comment = dto.Comment;
         entity.IsActive = dto.IsActive;
+        entity.DefaultRole = dto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee;
 
         if (dto.SendEmail)
         {

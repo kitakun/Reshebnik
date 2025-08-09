@@ -12,6 +12,7 @@ public class EmployeeFullDto
     public string Phone { get; set; } = null!;
     public string Comment { get; set; } = string.Empty;
     public bool IsActive { get; set; }
+    public bool IsSupervisor { get; set; }
     public RootRolesEnum Role { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }

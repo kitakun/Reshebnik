@@ -130,6 +130,7 @@ public class DepartmentPutHandler(
             employee.Phone = userDto.Phone;
             employee.Comment = userDto.Comment;
             employee.IsActive = userDto.IsActive;
+            employee.DefaultRole = userDto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee;
 
             await db.SaveChangesAsync(ct);
             userDto.Id = employee.Id;
@@ -145,7 +146,7 @@ public class DepartmentPutHandler(
                 };
                 db.EmployeeDepartmentLinks.Add(link);
             }
-            link.Type = userDto.Type;
+            link.Type = userDto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee;
             await db.SaveChangesAsync(ct);
         }
 

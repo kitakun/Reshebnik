@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Reshebnik.Domain.Models.Employee;
 using Reshebnik.EntityFramework;
 using Reshebnik.Domain.Extensions;
+using Reshebnik.Domain.Enums;
 
 namespace Reshebnik.Handlers.Employee;
 
@@ -19,6 +20,7 @@ public class EmployeeUpdateHandler(ReshebnikContext db)
         entity.Phone = dto.Phone;
         entity.Comment = dto.Comment;
         entity.IsActive = dto.IsActive;
+        entity.DefaultRole = dto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee;
         // entity.EmailInvitationCode = dto.EmailInvitationCode;
         entity.Role = dto.Role;
         entity.CreatedAt = dto.CreatedAt.ToUtcFromClient();
