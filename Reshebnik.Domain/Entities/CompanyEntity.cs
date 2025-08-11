@@ -32,4 +32,6 @@ public class CompanyEntity
     public List<DepartmentEntity> Departments { get; set; } = new();
     [JsonIgnore]
     public List<MetricEntity> Metrics { get; set; } = new();
+    [JsonIgnore]
+    public List<ArchivedMetricEntity> ArchivedMetrics { get; set; } = new();
 }

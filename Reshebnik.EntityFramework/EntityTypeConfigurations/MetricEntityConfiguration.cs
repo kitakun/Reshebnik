@@ -80,6 +80,16 @@ public class MetricEntityConfiguration : IEntityTypeConfiguration<MetricEntity>
             .HasColumnName("visible")
             .IsRequired();
 
+        builder.Property(m => m.IsArchived)
+            .HasColumnName("is_archived")
+            .IsRequired();
+
+        builder.HasOne(m => m.ArchivedMetric)
+            .WithOne(a => a.Metric)
+            .HasForeignKey<ArchivedMetricEntity>(a => a.MetricId);
+
+        builder.HasQueryFilter(m => !m.IsArchived);
+
         builder.HasMany(m => m.DepartmentLinks)
             .WithOne(o => o.Metric)
             .HasForeignKey(k => k.MetricId);
