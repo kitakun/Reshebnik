@@ -193,6 +193,7 @@ builder.Services.AddScoped<StructurePutHandler>();
 builder.Services.AddScoped<MetricGetHandler>();
 builder.Services.AddScoped<MetricPutHandler>();
 builder.Services.AddScoped<MetricArchiveHandler>();
+builder.Services.AddScoped<ArchivedMetricGetHandler>();
 builder.Services.AddScoped<ArchivedMetricTypeaheadHandler>();
 builder.Services.AddScoped<MetricUnarchiveHandler>();
 builder.Services.AddScoped<IndicatorGetHandler>();

@@ -24,6 +24,17 @@ public class ArchiveController : ControllerBase
         return Ok();
     }
 
+    [HttpGet("metrics/{id}")]
+    [ProducesResponseType(typeof(ArchivedMetricGetDto), 200)]
+    public async Task<IActionResult> GetAsync(
+        [FromRoute] int id,
+        [FromServices] ArchivedMetricGetHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
     [HttpGet("metrics/typeahead")]
     [ProducesResponseType(typeof(PaginationDto<ArchivedMetricDto>), 200)]
     public async Task<IActionResult> ArchiveTypeaheadAsync(
