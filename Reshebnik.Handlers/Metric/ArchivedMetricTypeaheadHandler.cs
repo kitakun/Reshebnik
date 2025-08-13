@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Metric;
 using Reshebnik.EntityFramework;
@@ -39,7 +40,8 @@ public class ArchivedMetricTypeaheadHandler(
                 a.Id,
                 a.FirstDate,
                 a.LastDate,
-                Name = a.Metric.Name
+                Name = a.Metric.Name,
+                IsEmployee = a.Metric.EmployeeLinks.Any()
             })
             .ToListAsync(ct);
         var count = await query.CountAsync(ct);
@@ -49,7 +51,8 @@ public class ArchivedMetricTypeaheadHandler(
             Id = m.Id,
             Name = m.Name,
             FirstDate = m.FirstDate,
-            LastDate = m.LastDate
+            LastDate = m.LastDate,
+            MetricType = m.IsEmployee ? ArchiveMetricTypeEnum.Employee : ArchiveMetricTypeEnum.Company
         }).ToList();
 
         return new PaginationDto<ArchivedMetricDto>(items, count, (int)Math.Ceiling((float)count / COUNT));

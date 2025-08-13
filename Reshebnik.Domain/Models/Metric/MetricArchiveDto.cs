@@ -1,6 +1,6 @@
-using System;
+using Reshebnik.Domain.Enums;
 
 namespace Reshebnik.Domain.Models.Metric;
 
-public record MetricArchiveDto(DateTime FirstDate, DateTime LastDate);
+public record MetricArchiveDto(ArchiveMetricTypeEnum MetricType);
 
