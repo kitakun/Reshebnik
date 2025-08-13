@@ -17,6 +17,15 @@ public class MetricArchiveHandler(
     public async Task HandleAsync(int id, MetricArchiveDto dto, CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
+        if (dto.MetricType == "employee")
+        {
+            // write code
+        }
+
+        if (dto.MetricType == "company")
+        {
+            // write code
+        }
         var metric = await db.Metrics.FirstAsync(m => m.CompanyId == companyId && m.Id == id, ct);
 
         var archived = new ArchivedMetricEntity

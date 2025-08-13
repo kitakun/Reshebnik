@@ -23,8 +23,8 @@ public class EmployeeUpdateHandler(ReshebnikContext db)
         entity.DefaultRole = dto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee;
         // entity.EmailInvitationCode = dto.EmailInvitationCode;
         entity.Role = dto.Role;
-        entity.CreatedAt = dto.CreatedAt.ToUtcFromClient();
-        entity.LastLoginAt = dto.LastLoginAt.ToUtcFromClient();
+        entity.CreatedAt = dto.CreatedAt;
+        entity.LastLoginAt = dto.LastLoginAt;
 
         await db.SaveChangesAsync(ct);
     }

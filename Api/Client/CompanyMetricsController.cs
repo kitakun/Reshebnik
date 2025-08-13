@@ -23,7 +23,7 @@ public class CompanyMetricsController : ControllerBase
         [FromServices] CompanyPreviewMetricsHandler handler,
         CancellationToken cancellationToken)
     {
-        var range = new DateRange(from.ToUtcFromClient(), to.ToUtcFromClient());
+        var range = new DateRange(from, to);
         var result = await handler.HandleAsync(id, range, cancellationToken);
         return Ok(result);
     }

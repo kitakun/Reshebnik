@@ -57,7 +57,7 @@ public class EmployeeMetricsController : ControllerBase
         [FromServices] UserPreviewMetricsHandler handler,
         CancellationToken cancellationToken)
     {
-        var range = new DateRange(from.ToUtcFromClient(), to.ToUtcFromClient());
+        var range = new DateRange(from, to);
         var result = await handler.HandleAsync(id, range, periodType, cancellationToken);
         if (result == null) return NotFound();
         return Ok(result);

@@ -33,7 +33,7 @@ public class MetricTemplatePutHandler(
         entity.PeriodType = dto.PeriodType;
         entity.WeekType = dto.WeekType;
         entity.WeekStartDate = dto.WeekStartDate.HasValue
-            ? (int?)(DateTime.UtcNow.Date - dto.WeekStartDate.Value.ToUtcFromClient().Date).TotalDays
+            ? (int?)(DateTime.UtcNow.Date - dto.WeekStartDate.Value.Date).TotalDays
             : null;
         entity.ShowGrowthPercent = dto.ShowGrowthPercent;
         entity.Plan = dto.Plan;

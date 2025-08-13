@@ -25,7 +25,7 @@ public class IndicatorCategoryController : ControllerBase
         [FromServices] IndicatorCategoryGetHandler handler,
         CancellationToken cancellationToken)
     {
-        var range = new DateRange(from.ToUtcFromClient(), to.ToUtcFromClient());
+        var range = new DateRange(from, to);
         var result = await handler.HandleAsync(categoryName, range, periodType, cancellationToken);
         if (result == null) return NotFound();
         return Ok(result);

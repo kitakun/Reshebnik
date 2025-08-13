@@ -23,7 +23,7 @@ public class KeyIndicatorController : ControllerBase
         [FromServices] KeyIndicatorGetHandler handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(from.ToUtcFromClient(), to.ToUtcFromClient(), periodType, cancellationToken);
+        var result = await handler.HandleAsync(from, to, periodType, cancellationToken);
         return Ok(result);
     }
 }
