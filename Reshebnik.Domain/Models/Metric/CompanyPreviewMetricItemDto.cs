@@ -8,4 +8,5 @@ public class CompanyPreviewMetricItemDto
     public int[] TotalFactData { get; set; } = [];
     public int[] Last12PointsPlan { get; set; } = [];
     public int[] Last12PointsFact { get; set; } = [];
+    public bool IsArchived { get; set; }
 }

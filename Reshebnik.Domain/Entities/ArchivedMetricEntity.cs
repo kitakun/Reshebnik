@@ -9,7 +9,7 @@ public class ArchivedMetricEntity
     public int CompanyId { get; set; }
     public int MetricId { get; set; }
     public MetricEntity Metric { get; set; } = null!;
-    public MetricTypeEnum MetricType { get; set; }
+    public ArchiveMetricTypeEnum MetricType { get; set; }
     public DateTime FirstDate { get; set; }
     public DateTime LastDate { get; set; }
     public DateTime ArchivedAt { get; set; }

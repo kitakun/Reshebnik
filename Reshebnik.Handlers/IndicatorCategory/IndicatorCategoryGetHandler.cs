@@ -67,6 +67,7 @@ public class IndicatorCategoryGetHandler(
                 UnitType = ind.UnitType,
                 ValueType = ind.ValueType,
                 HasEmployees = ind.EmployeeId != null || ind.DepartmentId != null,
+                IsArchived = false,
                 Metrics = new KeyIndicatorMetricsDto
                 {
                     Plan = data.PlanData,

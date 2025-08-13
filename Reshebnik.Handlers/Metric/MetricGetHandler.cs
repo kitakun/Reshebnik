@@ -34,6 +34,7 @@ public class MetricGetHandler(
             Min = metrics.Min,
             Max = metrics.Max,
             Visible = metrics.Visible,
+            IsArchived = metrics.IsArchived,
             WeekType = metrics.WeekType,
             WeekStartDate = metrics.WeekStartDate.HasValue
                 ? DateTime.UtcNow.Date.AddDays(-metrics.WeekStartDate.Value)
@@ -66,6 +67,7 @@ public class MetricGetHandler(
             Min = m.Min,
             Max = m.Max,
             Visible = m.Visible,
+            IsArchived = m.IsArchived,
             WeekType = m.WeekType,
             WeekStartDate = m.WeekStartDate.HasValue
                 ? DateTime.UtcNow.Date.AddDays(-m.WeekStartDate.Value)

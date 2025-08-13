@@ -56,6 +56,7 @@ public class KeyIndicatorGetHandler(
                     Name = ind.Name,
                     UnitType = ind.UnitType,
                     ValueType = ind.ValueType,
+                    IsArchived = false,
                     Metrics = new KeyIndicatorMetricsDto
                     {
                         Plan = data.PlanData,

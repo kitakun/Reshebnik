@@ -44,7 +44,8 @@ public class DashboardGetHandler(
                 Name = ind.Name,
                 Plan = data.PlanData,
                 Fact = data.FactData,
-                PeriodType = (FillmentPeriodWrapper)ind.FillmentPeriod
+                PeriodType = (FillmentPeriodWrapper)ind.FillmentPeriod,
+                IsArchived = false
             });
         }
 

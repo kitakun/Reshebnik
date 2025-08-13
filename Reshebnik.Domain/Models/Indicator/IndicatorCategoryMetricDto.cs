@@ -9,5 +9,6 @@ public class IndicatorCategoryMetricDto
     public IndicatorUnitTypeEnum UnitType { get; set; }
     public IndicatorValueTypeEnum ValueType { get; set; }
     public bool HasEmployees { get; set; }
+    public bool IsArchived { get; set; }
     public KeyIndicatorMetricsDto Metrics { get; set; } = new();
 }

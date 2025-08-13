@@ -38,7 +38,7 @@ public class MetricArchiveHandler(
         {
             CompanyId = companyId,
             MetricId = metric.Id,
-            MetricType = metric.Type,
+            MetricType = dto.MetricType,
             FirstDate = first,
             LastDate = last,
             ArchivedAt = DateTime.UtcNow,

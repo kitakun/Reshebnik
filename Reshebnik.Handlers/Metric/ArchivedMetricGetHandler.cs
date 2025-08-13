@@ -13,7 +13,8 @@ namespace Reshebnik.Handlers.Metric;
 public class ArchivedMetricGetHandler(
     ReshebnikContext db,
     CompanyContextHandler companyContext,
-    FetchCompanyMetricsHandler fetchHandler)
+    FetchCompanyMetricsHandler companyMetricsHandler,
+    FetchUserMetricsHandler userMetricsHandler)
 {
     public async ValueTask<ArchivedMetricGetDto?> HandleAsync(int id, CancellationToken ct = default)
     {
@@ -45,12 +46,30 @@ public class ArchivedMetricGetHandler(
             _ => new DateRange(last.AddDays(-11), last)
         };
 
-        var last12Data = await fetchHandler.HandleAsync(
-            last12Range,
-            metric.Id,
-            metric.PeriodType,
-            metric.PeriodType,
-            ct);
+        int[] plan;
+        int[] fact;
+        if (archived.MetricType == ArchiveMetricTypeEnum.Employee)
+        {
+            var data = await userMetricsHandler.HandleAsync(
+                last12Range,
+                metric.Id,
+                metric.PeriodType,
+                metric.PeriodType,
+                ct);
+            plan = data.PlanData;
+            fact = data.FactData;
+        }
+        else
+        {
+            var data = await companyMetricsHandler.HandleAsync(
+                last12Range,
+                metric.Id,
+                metric.PeriodType,
+                metric.PeriodType,
+                ct);
+            plan = data.PlanData;
+            fact = data.FactData;
+        }
 
         return new ArchivedMetricGetDto
         {
@@ -75,14 +94,15 @@ public class ArchivedMetricGetHandler(
                 Min = metric.Min,
                 Max = metric.Max,
                 Visible = metric.Visible,
+                IsArchived = metric.IsArchived,
                 WeekType = metric.WeekType,
                 WeekStartDate = metric.WeekStartDate.HasValue
                     ? DateTime.UtcNow.Date.AddDays(-metric.WeekStartDate.Value)
                     : null,
                 ShowGrowthPercent = metric.ShowGrowthPercent
             },
-            Last12PointsPlan = last12Data.PlanData,
-            Last12PointsFact = last12Data.FactData
+            Last12PointsPlan = plan,
+            Last12PointsFact = fact
         };
     }
 

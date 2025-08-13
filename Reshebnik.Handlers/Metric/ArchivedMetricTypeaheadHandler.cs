@@ -40,8 +40,8 @@ public class ArchivedMetricTypeaheadHandler(
                 a.Id,
                 a.FirstDate,
                 a.LastDate,
-                Name = a.Metric.Name,
-                IsEmployee = a.Metric.EmployeeLinks.Any()
+                a.MetricType,
+                Name = a.Metric.Name
             })
             .ToListAsync(ct);
         var count = await query.CountAsync(ct);
@@ -52,7 +52,7 @@ public class ArchivedMetricTypeaheadHandler(
             Name = m.Name,
             FirstDate = m.FirstDate,
             LastDate = m.LastDate,
-            MetricType = m.IsEmployee ? ArchiveMetricTypeEnum.Employee : ArchiveMetricTypeEnum.Company
+            MetricType = m.MetricType
         }).ToList();
 
         return new PaginationDto<ArchivedMetricDto>(items, count, (int)Math.Ceiling((float)count / COUNT));

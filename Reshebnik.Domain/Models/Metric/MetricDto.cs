@@ -19,4 +19,5 @@ public class MetricDto
     public decimal? Min { get; set; }
     public decimal? Max { get; set; }
     public bool Visible { get; set; }
+    public bool IsArchived { get; set; }
 }

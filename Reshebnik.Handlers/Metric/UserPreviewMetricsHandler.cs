@@ -116,6 +116,7 @@ public class UserPreviewMetricsHandler(
                 Plan = metric.Plan,
                 Min = metric.Min,
                 Max = metric.Max,
+                IsArchived = metric.IsArchived,
                 Last12PointsFact = last12Data.FactData,
                 Last12PointsPlan = last12Data.PlanData,
                 TotalPlanData = totalData.PlanData,

@@ -66,7 +66,8 @@ public class CompanyPreviewMetricsHandler(
             Last12PointsPlan = last12Data.PlanData,
             Last12PointsFact = last12Data.FactData,
             TotalPlanData = totalData.PlanData,
-            TotalFactData = totalData.FactData
+            TotalFactData = totalData.FactData,
+            IsArchived = false
         };
 
         return dto;

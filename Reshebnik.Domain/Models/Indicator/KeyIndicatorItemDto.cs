@@ -8,5 +8,6 @@ public class KeyIndicatorItemDto
     public string Name { get; set; } = null!;
     public IndicatorUnitTypeEnum UnitType { get; set; }
     public IndicatorValueTypeEnum ValueType { get; set; }
+    public bool IsArchived { get; set; }
     public KeyIndicatorMetricsDto Metrics { get; set; } = new();
 }
