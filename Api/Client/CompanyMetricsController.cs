@@ -5,6 +5,7 @@ using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Metric;
 using Reshebnik.Handlers.Metric;
 using Reshebnik.Domain.Extensions;
+using Reshebnik.Domain.Enums;
 
 namespace Reshebnik.Web.Api.Client;
 
@@ -20,11 +21,12 @@ public class CompanyMetricsController : ControllerBase
         [FromRoute] int id,
         [FromQuery] DateTime from,
         [FromQuery] DateTime to,
+        [FromQuery] PeriodTypeEnum periodType,
         [FromServices] CompanyPreviewMetricsHandler handler,
         CancellationToken cancellationToken)
     {
         var range = new DateRange(from, to);
-        var result = await handler.HandleAsync(id, range, cancellationToken);
+        var result = await handler.HandleAsync(id, range, periodType, cancellationToken);
         return Ok(result);
     }
 
