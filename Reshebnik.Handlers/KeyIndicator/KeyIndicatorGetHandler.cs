@@ -27,6 +27,19 @@ public class KeyIndicatorGetHandler(
             .ToListAsync(ct);
 
         var range = new DateRange(from, to);
+        var last12Range = type switch
+        {
+            PeriodTypeEnum.Day => new DateRange(to.AddDays(-11), to),
+            PeriodTypeEnum.Week => new DateRange(StartOfWeek(to.AddDays(-7 * 11), DayOfWeek.Monday), StartOfWeek(to, DayOfWeek.Monday)),
+            PeriodTypeEnum.Month => new DateRange(
+                new DateTime(to.AddMonths(-11).Year, to.AddMonths(-11).Month, 1),
+                new DateTime(to.Year, to.Month, DateTime.DaysInMonth(to.Year, to.Month))),
+            PeriodTypeEnum.Quartal => new DateRange(
+                new DateTime(to.AddMonths(-3 * 11).Year, ((to.AddMonths(-3 * 11).Month - 1) / 3) * 3 + 1, 1),
+                new DateTime(to.Year, ((to.Month - 1) / 3) * 3 + 3, DateTime.DaysInMonth(to.Year, ((to.Month - 1) / 3) * 3 + 3))),
+            PeriodTypeEnum.Year => new DateRange(new DateTime(to.Year - 11, 1, 1), new DateTime(to.Year, 12, 31)),
+            _ => range
+        };
 
         var result = new List<KeyIndicatorCategoryDto>();
         foreach (var group in indicators.GroupBy(i => i.Category).Where(g => g.Any()))
@@ -40,7 +53,7 @@ public class KeyIndicatorGetHandler(
             foreach (var ind in group)
             {
                 var data = await fetchHandler.HandleAsync(
-                    range,
+                    last12Range,
                     ind.Id,
                     type,
                     (FillmentPeriodWrapper)ind.FillmentPeriod,
@@ -71,5 +84,11 @@ public class KeyIndicatorGetHandler(
         }
 
         return result;
+    }
+
+    private static DateTime StartOfWeek(DateTime date, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+        return date.Date.AddDays(-1 * diff);
     }
 }
