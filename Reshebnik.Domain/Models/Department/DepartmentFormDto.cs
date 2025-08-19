@@ -3,7 +3,7 @@ namespace Reshebnik.Domain.Models.Department;
 public class DepartmentFormDto
 {
     public string Name { get; set; } = null!;
-    public int? SupervisorId { get; set; }
+    public List<int> SupervisorIds { get; set; } = new();
     public int? ParentId { get; set; }
     public List<int> EmployeeIds { get; set; } = new();
     public string Comment { get; set; } = string.Empty;

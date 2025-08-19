@@ -90,17 +90,17 @@ public class DepartmentFormPutHandler(ReshebnikContext db, CompanyContextHandler
             db.EmployeeDepartmentLinks.RemoveRange(existingLinks);
             await db.SaveChangesAsync(ct);
 
-            if (dto.SupervisorId.HasValue)
+            foreach (var supervisorId in dto.SupervisorIds.Distinct())
             {
                 db.EmployeeDepartmentLinks.Add(new EmployeeDepartmentLinkEntity
                 {
-                    EmployeeId = dto.SupervisorId.Value,
+                    EmployeeId = supervisorId,
                     DepartmentId = id!.Value,
                     Type = EmployeeTypeEnum.Supervisor
                 });
             }
 
-            foreach (var empId in dto.EmployeeIds.Distinct())
+            foreach (var empId in dto.EmployeeIds.Except(dto.SupervisorIds).Distinct())
             {
                 db.EmployeeDepartmentLinks.Add(new EmployeeDepartmentLinkEntity
                 {
