@@ -103,7 +103,11 @@ public async ValueTask<DepartmentPreviewDto?> HandleAsync(int id, DateRange rang
     }
 
 
-    var allEmployees = dict.Values.SelectMany(v => v.Employees).ToList();
+    var allEmployees = dict.Values
+        .SelectMany(v => v.Employees)
+        .Concat(dict.Values
+            .SelectMany(v => v.Supervisors))
+        .ToList();
     var best = allEmployees.OrderByDescending(e => e.CompletionPercent).Take(3).ToList();
     var worst = allEmployees.OrderBy(e => e.CompletionPercent).Take(3).ToList();
 
