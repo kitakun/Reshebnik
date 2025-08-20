@@ -16,7 +16,7 @@ public class SuBugHuntTypeaheadHandler(IHttpContextAccessor accessor, ReshebnikC
         var role = accessor.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "user-role")?.Value;
         if (role != RootRolesEnum.SuperAdmin.ToString()) return null;
 
-        const int COUNT = 50;
+        const int COUNT = 25;
         IQueryable<BugHuntEntity> query = db.BugHunts.AsNoTracking();
         if (!string.IsNullOrEmpty(request.Query))
         {
@@ -25,7 +25,13 @@ public class SuBugHuntTypeaheadHandler(IHttpContextAccessor accessor, ReshebnikC
         }
         query = query.OrderByDescending(b => b.CreatedAt);
         var total = await query.CountAsync(cancellationToken);
-        var items = await query.Skip((request.Page ?? 0) * COUNT).Take(COUNT).ToListAsync(cancellationToken);
+
+        var page = Math.Max(request.Page, 1);
+        var items = await query
+            .Skip((page - 1) * COUNT)
+            .Take(COUNT)
+            .ToListAsync(cancellationToken);
+
         return new PaginationDto<BugHuntEntity>(items, total, (int)Math.Ceiling(total / (double)COUNT));
     }
 }

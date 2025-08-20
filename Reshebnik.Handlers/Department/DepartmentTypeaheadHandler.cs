@@ -14,7 +14,7 @@ public class DepartmentTypeaheadHandler(
     public async ValueTask<PaginationDto<DepartmentDto>> HandleAsync(TypeaheadRequest request, CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
-        const int COUNT = 50;
+        const int COUNT = 25;
 
         var rootIds = await db.Departments
             .Where(w => w.IsFundamental && w.CompanyId == companyId && !w.IsDeleted)
@@ -23,8 +23,7 @@ public class DepartmentTypeaheadHandler(
 
         var query = db.Departments
             .AsNoTracking()
-            .Where(d => !d.IsDeleted && db.DepartmentSchemas.Any(s => rootIds.Contains(s.FundamentalDepartmentId) && s.DepartmentId == d.Id))
-            .Take(COUNT);
+            .Where(d => !d.IsDeleted && db.DepartmentSchemas.Any(s => rootIds.Contains(s.FundamentalDepartmentId) && s.DepartmentId == d.Id));
 
         if (!string.IsNullOrEmpty(request.Query))
         {
@@ -32,8 +31,11 @@ public class DepartmentTypeaheadHandler(
             query = query.Where(d => d.Name.ToLower().Contains(q));
         }
 
+        var page = Math.Max(request.Page, 1);
+
         var departments = await query
-            .Skip((request.Page ?? 0) * COUNT)
+            .Skip((page - 1) * COUNT)
+            .Take(COUNT)
             .ToListAsync(ct);
 
         var count = await query.CountAsync(ct);

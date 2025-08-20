@@ -16,7 +16,7 @@ public class SuSpecialInvitationTypeaheadHandler(IHttpContextAccessor accessor, 
         var role = accessor.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "user-role")?.Value;
         if (role != RootRolesEnum.SuperAdmin.ToString()) return null;
 
-        const int COUNT = 50;
+        const int COUNT = 25;
         var query = db.SpecialInvitations.AsNoTracking();
         if (!string.IsNullOrEmpty(request.Query))
         {
@@ -24,7 +24,13 @@ public class SuSpecialInvitationTypeaheadHandler(IHttpContextAccessor accessor, 
             query = query.Where(x => x.CompanyName.ToLower().Contains(q) || x.Email.ToLower().Contains(q) || x.FIO.ToLower().Contains(q));
         }
         var total = await query.CountAsync(cancellationToken);
-        var items = await query.Take(COUNT).Skip((request.Page ?? 0) * COUNT).ToListAsync(cancellationToken);
+
+        var page = Math.Max(request.Page, 1);
+        var items = await query
+            .Skip((page - 1) * COUNT)
+            .Take(COUNT)
+            .ToListAsync(cancellationToken);
+
         return new PaginationDto<SpecialInvitationEntity>(items, total, (int)Math.Ceiling(total / (double)COUNT));
     }
 }

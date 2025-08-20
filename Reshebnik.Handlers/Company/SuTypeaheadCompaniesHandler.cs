@@ -21,26 +21,30 @@ public class SuTypeaheadCompaniesHandler(
         if (roleIdClaim == null) return null;
         if (roleIdClaim.Value != RootRolesEnum.SuperAdmin.ToString()) return null;
 
-        const int COUNT = 50;
+        const int COUNT = 25;
 
         var query = dbContext
             .Companies
-            .AsNoTracking()
-            .Take(COUNT);
+            .AsNoTracking();
 
-        if (!string.IsNullOrEmpty(command.Query) && !string.IsNullOrEmpty(command.Query))
+        if (!string.IsNullOrEmpty(command.Query))
         {
-            query = query.Where(w => w.Name.ToLower().Contains(command.Query.ToLower()));
+            var q = command.Query.ToLower();
+            query = query.Where(w => w.Name.ToLower().Contains(q));
         }
 
+        var page = Math.Max(command.Page, 1);
+
         var companies = await query
-            .Skip(command.Page ?? 0 * COUNT)
+            .Skip((page - 1) * COUNT)
+            .Take(COUNT)
             .ToListAsync(cancellationToken);
 
-        var count = await query.CountAsync(cancellationToken: cancellationToken);
+        var count = await query.CountAsync(cancellationToken);
+
         return new PaginationDto<CompanyEntity>(
             companies,
             count,
-            (int) Math.Ceiling((float) count / COUNT));
+            (int)Math.Ceiling((float)count / COUNT));
     }
 }

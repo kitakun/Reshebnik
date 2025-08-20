@@ -15,12 +15,11 @@ public class EmployeesTypeaheadHandler(
     public async ValueTask<PaginationDto<EmployeeDto>> HandleAsync(TypeaheadRequest request, CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
-        const int COUNT = 50;
+        const int COUNT = 25;
 
         var query = db.Employees
             .AsNoTracking()
-            .Where(e => e.CompanyId == companyId)
-            .Take(COUNT);
+            .Where(e => e.CompanyId == companyId);
 
         if (!string.IsNullOrEmpty(request.Query))
         {
@@ -28,10 +27,13 @@ public class EmployeesTypeaheadHandler(
             query = query.Where(e => e.FIO.ToLower().Contains(q) || (e.Email != null && e.Email.ToLower().Contains(q)));
         }
 
+        var page = Math.Max(request.Page, 1);
+
         var employees = await query
             .Include(i => i.DepartmentLinks)
             .ThenInclude(i => i.Department)
-            .Skip((Math.Max(request.Page ?? 1, 1) - 1) * COUNT)
+            .Skip((page - 1) * COUNT)
+            .Take(COUNT)
             .ToListAsync(ct);
 
         var count = await query.CountAsync(ct);

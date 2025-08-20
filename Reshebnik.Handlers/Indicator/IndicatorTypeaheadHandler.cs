@@ -14,12 +14,11 @@ public class IndicatorTypeaheadHandler(
     public async ValueTask<PaginationDto<IndicatorDto>> HandleAsync(TypeaheadRequest request, CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
-        const int COUNT = 50;
+        const int COUNT = 25;
 
         var query = db.Indicators
             .AsNoTracking()
-            .Where(i => i.CreatedBy == companyId)
-            .Take(COUNT);
+            .Where(i => i.CreatedBy == companyId);
 
         if (!string.IsNullOrEmpty(request.Query))
         {
@@ -27,8 +26,11 @@ public class IndicatorTypeaheadHandler(
             query = query.Where(i => i.Name.ToLower().Contains(q) || i.Category.ToLower().Contains(q));
         }
 
+        var page = Math.Max(request.Page, 1);
+
         var items = await query
-            .Skip((Math.Max(request.Page ?? 1, 1) - 1) * COUNT)
+            .Skip((page - 1) * COUNT)
+            .Take(COUNT)
             .ToListAsync(ct);
 
         var count = await query.CountAsync(ct);

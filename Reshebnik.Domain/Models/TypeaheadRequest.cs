@@ -1,3 +1,4 @@
-﻿namespace Reshebnik.Domain.Models;
+namespace Reshebnik.Domain.Models;
 
-public record TypeaheadRequest(string? Query, int? Page);
+public record TypeaheadRequest(string? Query = null, int Page = 1);
+

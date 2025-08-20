@@ -35,6 +35,7 @@ public class DepartmentPreviewHandler(
         {
             Id = d.Id,
             Name = d.Name,
+            Depth = d.Id == id ? 0 : 1,
             CompletionPercent = 0,
             Metrics = new DepartmentPreviewMetricsDto()
         });
@@ -122,8 +123,8 @@ public class DepartmentPreviewHandler(
 
         if (metricsCount > 0 && planSums != null && factSums != null)
         {
-            var planAvg = planSums.Select(s => (int) Math.Round(s / metricsCount, 0, MidpointRounding.ToZero)).ToArray();
-            var factAvg = factSums.Select(s => (int) Math.Round(s / metricsCount, 0, MidpointRounding.ToZero)).ToArray();
+            var planAvg = planSums.Select(s => (int)Math.Round(s / metricsCount, 0, MidpointRounding.ToZero)).ToArray();
+            var factAvg = factSums.Select(s => (int)Math.Round(s / metricsCount, 0, MidpointRounding.ToZero)).ToArray();
             rootDto.Metrics = new DepartmentPreviewMetricsDto
             {
                 PlanData = planAvg,
@@ -151,7 +152,7 @@ public class DepartmentPreviewHandler(
         if (planValue == 0) return 0;
 
         var percent = factValue / planValue * 100;
-        var doubleVal = (double) percent;
+        var doubleVal = (double)percent;
         return double.IsFinite(doubleVal) ? (double)percent : 0;
     }
 }

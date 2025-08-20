@@ -16,7 +16,7 @@ public class ArchivedMetricTypeaheadHandler(
     public async ValueTask<PaginationDto<ArchivedMetricDto>> HandleAsync(TypeaheadRequest request, CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
-        const int COUNT = 50;
+        const int COUNT = 25;
 
         var query = db.ArchivedMetrics
             .AsNoTracking()
@@ -30,8 +30,10 @@ public class ArchivedMetricTypeaheadHandler(
             query = query.Where(a => a.Metric.Name.ToLower().Contains(q));
         }
 
+        var page = Math.Max(request.Page, 1);
+
         var itemsQuery = query
-            .Skip((request.Page ?? 0) * COUNT)
+            .Skip((page - 1) * COUNT)
             .Take(COUNT);
 
         var metrics = await itemsQuery
