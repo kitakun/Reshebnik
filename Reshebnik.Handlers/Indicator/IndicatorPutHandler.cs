@@ -17,7 +17,7 @@ public class IndicatorPutHandler(
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
         var userId = userContextHandler.CurrentUserId;
-        
+
         IndicatorEntity entity;
         if (dto.Id != 0)
         {
@@ -55,6 +55,9 @@ public class IndicatorPutHandler(
         entity.ShowToEmployees = dto.ShowToEmployees;
         entity.ShowOnMainScreen = dto.ShowOnMainScreen;
         entity.ShowOnKeyIndicators = dto.ShowOnKeyIndicators;
+        entity.Plan = dto.Plan;
+        entity.Min = dto.Min;
+        entity.Max = dto.Max;
         entity.EmployeeId = dto.EmployeeId;
         entity.DepartmentId = dto.DepartmentId;
 

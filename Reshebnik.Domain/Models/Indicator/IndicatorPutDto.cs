@@ -15,6 +15,9 @@ public class IndicatorPutDto
     public bool ShowToEmployees { get; set; }
     public bool ShowOnMainScreen { get; set; }
     public bool ShowOnKeyIndicators { get; set; }
+    public decimal? Plan { get; set; }
+    public decimal? Min { get; set; }
+    public decimal? Max { get; set; }
     public int? EmployeeId { get; set; }
     public int? DepartmentId { get; set; }
 }

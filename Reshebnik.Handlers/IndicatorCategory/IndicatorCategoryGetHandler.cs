@@ -49,6 +49,7 @@ public class IndicatorCategoryGetHandler(
                 PeriodTypeEnum.Quartal => new DateRange(new DateTime(range.To.AddMonths(-3 * 11).Year, ((range.To.AddMonths(-3 * 11).Month - 1) / 3) * 3 + 1, 1),
                                                          new DateTime(range.To.Year, ((range.To.Month - 1) / 3) * 3 + 3, DateTime.DaysInMonth(range.To.Year, ((range.To.Month - 1) / 3) * 3 + 3))),
                 PeriodTypeEnum.Year => new DateRange(new DateTime(range.To.Year - 11, 1, 1), new DateTime(range.To.Year, 12, 31)),
+                PeriodTypeEnum.Custom => range,
                 _ => range
             };
 

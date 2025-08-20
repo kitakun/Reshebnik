@@ -9,6 +9,8 @@ using Reshebnik.Domain.Models.Metric;
 using Reshebnik.Handlers.Company;
 using Reshebnik.Handlers.Metric;
 
+using System.Collections.Concurrent;
+
 using TaskExtensions = Reshebnik.Domain.Extensions.TaskExtensions;
 
 namespace Reshebnik.Handlers.Dashboard;
@@ -29,7 +31,8 @@ public class DashboardGetHandler(
             .Where(i => i.CreatedBy == companyId && i.ShowOnMainScreen)
             .ToListAsync(ct);
 
-        foreach (var ind in indicators)
+        var concurrentMetrics = new ConcurrentBag<DashboardMetricDto>();
+        await Task.WhenAll(indicators.Select(async ind =>
         {
             var data = await companyMetricsHandler.HandleAsync(
                 range,
@@ -38,7 +41,7 @@ public class DashboardGetHandler(
                 (FillmentPeriodWrapper)ind.FillmentPeriod,
                 ct);
 
-            dto.Metrics.Add(new DashboardMetricDto
+            concurrentMetrics.Add(new DashboardMetricDto
             {
                 Id = ind.Id,
                 Name = ind.Name,
@@ -47,7 +50,8 @@ public class DashboardGetHandler(
                 PeriodType = (FillmentPeriodWrapper)ind.FillmentPeriod,
                 IsArchived = false
             });
-        }
+        }));
+        dto.Metrics.AddRange(concurrentMetrics);
 
         var employees = await db.Employees
             .AsNoTracking()

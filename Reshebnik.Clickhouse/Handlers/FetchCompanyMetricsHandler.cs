@@ -25,7 +25,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         var fact = new int[length];
 
         var unionFrom = range.From.AddYears(-1);
-        var totalRange = new DateRange(unionFrom, range.To);
+        var totalRange = range with { From = unionFrom };
 
         var key = $"company-metric-{metricId}";
         var builder = new ClickHouseConnectionStringBuilder
@@ -58,8 +58,6 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         cmd.CommandText = sql;
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        var monthsCount = GetMonthDiff(totalRange.From.Date, totalRange.To.Date);
-        var step = (int)Math.Ceiling(monthsCount / (double)length);
         while (await reader.ReadAsync(cancellationToken))
         {
             var date = reader.GetDateTime(0);
@@ -71,21 +69,6 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             {
                 fact[idx] += factVal;
                 plan[idx] += planVal;
-            }
-
-            var totalIdxRaw = GetIndex(date, totalRange.From.Date, PeriodTypeEnum.Month);
-            var totalIdx = totalIdxRaw >= 0 ? Math.Min(11, totalIdxRaw / step) : -1;
-            if (totalIdx is >= 0 && totalIdx < 12)
-            {
-            }
-
-            if (date <= range.From)
-            {
-                var lastIdxRaw = GetIndex(date, unionFrom.Date, PeriodTypeEnum.Month);
-                var lastIdx = lastIdxRaw >= 0 ? Math.Min(11, lastIdxRaw) : -1;
-                if (lastIdx is >= 0 && lastIdx < 12)
-                {
-                }
             }
         }
         return new MetricsDataResponse(plan, fact);

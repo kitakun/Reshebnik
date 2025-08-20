@@ -43,6 +43,7 @@ public class ArchivedMetricGetHandler(
             PeriodTypeEnum.Month => new DateRange(new DateTime(last.AddMonths(-11).Year, last.AddMonths(-11).Month, 1), new DateTime(last.Year, last.Month, DateTime.DaysInMonth(last.Year, last.Month))),
             PeriodTypeEnum.Quartal => new DateRange(new DateTime(last.AddMonths(-3 * 11).Year, ((last.AddMonths(-3 * 11).Month - 1) / 3) * 3 + 1, 1), new DateTime(last.Year, ((last.Month - 1) / 3) * 3 + 3, DateTime.DaysInMonth(last.Year, ((last.Month - 1) / 3) * 3 + 3))),
             PeriodTypeEnum.Year => new DateRange(new DateTime(last.Year - 11, 1, 1), new DateTime(last.Year, 12, 31)),
+            PeriodTypeEnum.Custom => new DateRange(last.AddDays(-11), last),
             _ => new DateRange(last.AddDays(-11), last)
         };
 

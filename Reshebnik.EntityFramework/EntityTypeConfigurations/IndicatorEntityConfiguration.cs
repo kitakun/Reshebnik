@@ -56,6 +56,13 @@ public class IndicatorEntityConfiguration : IEntityTypeConfiguration<IndicatorEn
         builder.Property(i => i.ShowOnKeyIndicators)
             .HasColumnName("show_on_key_indicators");
 
+        builder.Property(i => i.Plan)
+            .HasColumnName("plan_value");
+        builder.Property(i => i.Min)
+            .HasColumnName("min_value");
+        builder.Property(i => i.Max)
+            .HasColumnName("max_value");
+
         builder.Property(i => i.EmployeeId).HasColumnName("employee_id");
         builder.Property(i => i.DepartmentId).HasColumnName("department_id");
 
@@ -73,7 +80,7 @@ public class IndicatorEntityConfiguration : IEntityTypeConfiguration<IndicatorEn
             .WithMany()
             .HasForeignKey(i => i.DepartmentId)
             .OnDelete(DeleteBehavior.SetNull);
-            
+
         builder.HasOne(i => i.CreatedByCompany)
             .WithMany()
             .HasForeignKey(i => i.CreatedBy)

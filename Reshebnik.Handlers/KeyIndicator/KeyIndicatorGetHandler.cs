@@ -38,6 +38,7 @@ public class KeyIndicatorGetHandler(
                 new DateTime(to.AddMonths(-3 * 11).Year, ((to.AddMonths(-3 * 11).Month - 1) / 3) * 3 + 1, 1),
                 new DateTime(to.Year, ((to.Month - 1) / 3) * 3 + 3, DateTime.DaysInMonth(to.Year, ((to.Month - 1) / 3) * 3 + 3))),
             PeriodTypeEnum.Year => new DateRange(new DateTime(to.Year - 11, 1, 1), new DateTime(to.Year, 12, 31)),
+            PeriodTypeEnum.Custom => range,
             _ => range
         };
 
