@@ -84,7 +84,10 @@ public class DepartmentPutHandler(
             await AddSchemeAsync(entity.Id, parentId.Value, company, ct);
         }
 
-        await UpsertUsersAsync(entity, dto.Users, companyId: company.Id, ct);
+        if (dto.Users.Count > 0)
+        {
+            await UpsertUsersAsync(entity, dto.Users, companyId: company.Id, ct);
+        }
 
         foreach (var child in dto.Children)
         {

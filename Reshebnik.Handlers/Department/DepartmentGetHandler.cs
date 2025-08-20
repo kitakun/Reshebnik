@@ -26,13 +26,16 @@ public class DepartmentGetHandler(
         foreach (var root in roots)
         {
             var dto = await BuildTreeAsync(root.Id, cancellationToken);
-            result.Add(dto);
+            if (dto != null)
+            {
+                result.Add(dto);
+            }
         }
 
         return result;
     }
 
-    private async Task<DepartmentTreeDto> BuildTreeAsync(int rootId, CancellationToken ct)
+    private async Task<DepartmentTreeDto?> BuildTreeAsync(int rootId, CancellationToken ct)
     {
         var departments = await db.Departments
             .AsNoTracking()
@@ -84,6 +87,6 @@ public class DepartmentGetHandler(
             }
         }
 
-        return dict[rootId];
+        return dict.GetValueOrDefault(rootId);
     }
 }
