@@ -11,11 +11,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
 
     public record MetricsDataResponse(
         int[] PlanData,
-        int[] FactData,
-        int[] TotalPlanData,
-        int[] TotalFactData,
-        int[] Last12PointsPlan,
-        int[] Last12PointsFact);
+        int[] FactData);
 
     public async Task<MetricsDataResponse> HandleAsync(
         DateRange range,
@@ -27,10 +23,6 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         var length = GetPeriodLength(expectedValues, range);
         var plan = new int[length];
         var fact = new int[length];
-        var totalPlan = new int[12];
-        var totalFact = new int[12];
-        var lastPlan = new int[12];
-        var lastFact = new int[12];
 
         var unionFrom = range.From.AddYears(-1);
         var totalRange = new DateRange(unionFrom, range.To);
@@ -85,8 +77,6 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             var totalIdx = totalIdxRaw >= 0 ? Math.Min(11, totalIdxRaw / step) : -1;
             if (totalIdx is >= 0 && totalIdx < 12)
             {
-                totalPlan[totalIdx] += planVal;
-                totalFact[totalIdx] += factVal;
             }
 
             if (date <= range.From)
@@ -95,12 +85,10 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
                 var lastIdx = lastIdxRaw >= 0 ? Math.Min(11, lastIdxRaw) : -1;
                 if (lastIdx is >= 0 && lastIdx < 12)
                 {
-                    lastPlan[lastIdx] += planVal;
-                    lastFact[lastIdx] += factVal;
                 }
             }
         }
-        return new MetricsDataResponse(plan, fact, totalPlan, totalFact, lastPlan, lastFact);
+        return new MetricsDataResponse(plan, fact);
     }
 
     public async Task PutAsync(
