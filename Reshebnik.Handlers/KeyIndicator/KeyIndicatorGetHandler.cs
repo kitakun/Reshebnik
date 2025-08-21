@@ -71,6 +71,9 @@ public class KeyIndicatorGetHandler(
                     UnitType = ind.UnitType,
                     ValueType = ind.ValueType,
                     IsArchived = false,
+                    Min = ind.Min,
+                    Max = ind.Max,
+                    Plan = ind.Plan,
                     Metrics = new KeyIndicatorMetricsDto
                     {
                         Plan = data.PlanData,

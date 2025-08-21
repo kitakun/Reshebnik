@@ -10,4 +10,7 @@ public class KeyIndicatorItemDto
     public IndicatorValueTypeEnum ValueType { get; set; }
     public bool IsArchived { get; set; }
     public KeyIndicatorMetricsDto Metrics { get; set; } = new();
+    public decimal? Min { get; set; }
+    public decimal? Max { get; set; }
+    public decimal? Plan { get; set; }
 }
