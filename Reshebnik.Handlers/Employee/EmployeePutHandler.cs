@@ -40,21 +40,13 @@ public class EmployeePutHandler(
                 .Include(i => i.DepartmentLinks)
                 .FirstOrDefaultAsync(e => e.Id == dto.Id, ct) ?? throw new Exception("not found");
 
-            var departmentLink = entity.DepartmentLinks.FirstOrDefault(f => f.DepartmentId == dto.DepartmentId);
-            if (departmentLink != null)
+            entity.DepartmentLinks.Clear();
+            entity.DepartmentLinks.AddRange(dto.DepartmentIds.Select(s => new EmployeeDepartmentLinkEntity
             {
-                departmentLink.DepartmentId = dto.DepartmentId!.Value;
-                departmentLink.Type = dto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee;
-            }
-            else if (dto.DepartmentId.HasValue)
-            {
-                db.EmployeeDepartmentLinks.Add(new EmployeeDepartmentLinkEntity
-                {
-                    EmployeeId = dto.Id,
-                    DepartmentId = dto.DepartmentId!.Value,
-                    Type = dto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee,
-                });
-            }
+                Employee = entity,
+                DepartmentId = s,
+                Type = dto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee
+            }));
         }
         else
         {
@@ -69,14 +61,14 @@ public class EmployeePutHandler(
             db.Employees.Add(entity);
 
             entity.CompanyId = await companyContext.CurrentCompanyIdAsync;
-            if (dto.DepartmentId.HasValue)
+            if (dto.DepartmentIds.Length > 0)
             {
-                entity.DepartmentLinks.Add(new EmployeeDepartmentLinkEntity
+                entity.DepartmentLinks.AddRange(dto.DepartmentIds.Select(s => new EmployeeDepartmentLinkEntity
                 {
                     Employee = entity,
-                    DepartmentId = dto.DepartmentId.Value,
+                    DepartmentId = s,
                     Type = dto.IsSupervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee
-                });
+                }));
             }
         }
 

@@ -1,5 +1,6 @@
 using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models.Company;
+using Reshebnik.Domain.Models.Department;
 
 namespace Reshebnik.Domain.Models.Employee;
 
@@ -16,6 +17,7 @@ public class EmployeeFullDto
     public RootRolesEnum Role { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    public DepartmentShortDto[] Departments { get; set; }
 
     public CompanyDto Company { get; set; } = null!;
 }

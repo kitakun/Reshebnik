@@ -1,4 +1,5 @@
 using Reshebnik.Domain.Enums;
+using Reshebnik.Domain.Models.Department;
 
 namespace Reshebnik.Domain.Models.Employee;
 
@@ -12,7 +13,6 @@ public class EmployeeDto
     public string Comment { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public bool IsSupervisor { get; set; }
-    public required string? DepartmentName { get; set; }
-    public required int? DepartmentId { get; set; }
+    public required DepartmentShortDto[] Departments { get; set; }
     public EmployeeTypeEnum? DefaultRole { get; set; }
 }

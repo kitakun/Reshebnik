@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Employee;
 using Reshebnik.Domain.Enums;
+using Reshebnik.Domain.Models.Department;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
 
@@ -49,8 +50,7 @@ public class EmployeesTypeaheadHandler(
             IsActive = e.IsActive,
             IsSupervisor = e.DefaultRole == EmployeeTypeEnum.Supervisor,
             DefaultRole = e.DefaultRole,
-            DepartmentId = e.DepartmentLinks.FirstOrDefault()?.DepartmentId,
-            DepartmentName = e.DepartmentLinks.FirstOrDefault()?.Department?.Name,
+            Departments = e.DepartmentLinks.Select(s => new DepartmentShortDto(s.Department.Id, s.Department.Name)).ToArray()
         }).ToList();
 
         return new PaginationDto<EmployeeDto>(items, count, (int)Math.Ceiling((float)count / COUNT));

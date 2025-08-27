@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Reshebnik.Domain.Models.Company;
 using Reshebnik.Domain.Models.Employee;
 using Reshebnik.Domain.Enums;
+using Reshebnik.Domain.Models.Department;
 using Reshebnik.EntityFramework;
 
 namespace Reshebnik.Handlers.Employee;
@@ -14,10 +15,8 @@ public class EmployeeGetByIdHandler(ReshebnikContext db)
         var entity = await db.Employees
             .AsNoTracking()
             .Include(i => i.Company)
-            .FirstOrDefaultAsync(e => e.Id == id, ct);
-        return entity == null
-            ? null
-            : new EmployeeFullDto
+            .Include(employeeEntity => employeeEntity.DepartmentLinks)
+            .Select(entity => new EmployeeFullDto
             {
                 Id = entity.Id,
                 Fio = entity.FIO,
@@ -30,6 +29,7 @@ public class EmployeeGetByIdHandler(ReshebnikContext db)
                 Role = entity.Role,
                 CreatedAt = entity.CreatedAt,
                 LastLoginAt = entity.LastLoginAt,
+                Departments = entity.DepartmentLinks.Select(s => new DepartmentShortDto(s.Department.Id, s.Department.Name)).ToArray(),
                 Company = new CompanyDto
                 {
                     Industry = entity.Company.Industry,
@@ -42,6 +42,8 @@ public class EmployeeGetByIdHandler(ReshebnikContext db)
                     NotifyAboutLoweringMetrics = entity.Company.NotifyAboutLoweringMetrics,
                     Email = entity.Company.Email,
                 }
-            };
+            })
+            .FirstOrDefaultAsync(w => w.Id == id, ct);
+        return entity;
     }
 }

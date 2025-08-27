@@ -15,7 +15,7 @@ public class DepartmentGetHandler(
     public async ValueTask<List<DepartmentTreeDto>> HandleAsync(CancellationToken cancellationToken = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
-        if (companyId <= 0) return new List<DepartmentTreeDto>(0);
+        if (companyId <= 0) return [];
 
         var roots = await db.Departments
             .AsNoTracking()
