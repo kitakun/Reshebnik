@@ -25,30 +25,51 @@ public class MetricArchiveHandler(
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
 
-        var (first, last) = dto.MetricType switch
+        switch (dto.MetricType)
         {
-            ArchiveMetricTypeEnum.Employee => await LoadDatesAsync($"user-metric-{id}", $"{_options.Prefix}_user_metrics", $"has(company_ids, {companyId})", ct),
-            ArchiveMetricTypeEnum.Company => await LoadDatesAsync($"company-metric-{id}", $"{_options.Prefix}_company_metrics", $"company_id = {companyId}", ct),
-            _ => throw new ArgumentOutOfRangeException(nameof(dto.MetricType))
-        };
+            case ArchiveMetricTypeEnum.Employee:
+                var employeeData = await LoadDatesAsync($"user-metric-{id}", $"{_options.Prefix}_user_metrics", $"has(company_ids, {companyId})", ct);
+                var metric = await db.Metrics.FirstAsync(m => m.CompanyId == companyId && m.Id == id, ct);
 
-        var metric = await db.Metrics.FirstAsync(m => m.CompanyId == companyId && m.Id == id, ct);
+                var archived = new ArchivedMetricEntity
+                {
+                    CompanyId = companyId,
+                    MetricId = metric.Id,
+                    MetricType = dto.MetricType,
+                    FirstDate = employeeData.FirstDate,
+                    LastDate = employeeData.LastDate,
+                    ArchivedAt = DateTime.UtcNow,
+                    ArchivedByUserId = userContext.CurrentUserId
+                };
 
-        var archived = new ArchivedMetricEntity
-        {
-            CompanyId = companyId,
-            MetricId = metric.Id,
-            MetricType = dto.MetricType,
-            FirstDate = first,
-            LastDate = last,
-            ArchivedAt = DateTime.UtcNow,
-            ArchivedByUserId = userContext.CurrentUserId
-        };
+                metric.IsArchived = true;
+                metric.ArchivedMetric = archived;
 
-        metric.IsArchived = true;
-        metric.ArchivedMetric = archived;
+                db.ArchivedMetrics.Add(archived);
+                break;
+            case ArchiveMetricTypeEnum.Company:
+                var companyData = await LoadDatesAsync($"company-metric-{id}", $"{_options.Prefix}_company_metrics", $"company_id = {companyId}", ct);
+                var companyMetric = await db.Indicators.FirstAsync(m => m.CreatedBy == companyId && m.Id == id, ct);
+                var archivedCompany = new ArchivedMetricEntity
+                {
+                    CompanyId = companyId,
+                    IndicatorId = companyMetric.Id,
+                    MetricType = dto.MetricType,
+                    FirstDate = companyData.FirstDate,
+                    LastDate = companyData.LastDate,
+                    ArchivedAt = DateTime.UtcNow,
+                    ArchivedByUserId = userContext.CurrentUserId
+                };
+                
+                companyMetric.IsArchived = true;
+                companyMetric.ArchivedMetric = archivedCompany;
 
-        db.ArchivedMetrics.Add(archived);
+                db.ArchivedMetrics.Add(archivedCompany);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(dto.MetricType));
+        }
+        
         await db.SaveChangesAsync(ct);
     }
 

@@ -85,5 +85,12 @@ public class IndicatorEntityConfiguration : IEntityTypeConfiguration<IndicatorEn
             .WithMany()
             .HasForeignKey(i => i.CreatedBy)
             .OnDelete(DeleteBehavior.SetNull);
+        
+        builder.Property(i => i.IsArchived)
+            .HasColumnName("is_archived");
+        builder.HasOne(i => i.ArchivedMetric)
+            .WithOne(o => o.Indicator)
+            .HasForeignKey<IndicatorEntity>(a => a.ArchiveMetricId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

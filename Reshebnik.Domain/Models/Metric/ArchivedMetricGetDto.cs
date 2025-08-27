@@ -1,5 +1,6 @@
 using System;
 using Reshebnik.Domain.Enums;
+using Reshebnik.Domain.Models.Indicator;
 
 namespace Reshebnik.Domain.Models.Metric;
 
@@ -13,6 +14,7 @@ public class ArchivedMetricGetDto
     public DateTime ArchivedAt { get; set; }
     public int ArchivedByUserId { get; set; }
     public MetricDto Metric { get; set; } = new();
+    public IndicatorDto Indicator { get; set; }
     public int[] Last12PointsPlan { get; set; } = [];
     public int[] Last12PointsFact { get; set; } = [];
 }

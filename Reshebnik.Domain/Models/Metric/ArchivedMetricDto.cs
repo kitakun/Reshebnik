@@ -1,4 +1,3 @@
-using System;
 using Reshebnik.Domain.Enums;
 
 namespace Reshebnik.Domain.Models.Metric;
@@ -9,6 +8,7 @@ public class ArchivedMetricDto
     public string Name { get; set; } = string.Empty;
     public DateTime FirstDate { get; set; }
     public DateTime LastDate { get; set; }
+    public int EntityId { get; set; }
     public ArchiveMetricTypeEnum MetricType { get; set; }
 }
 

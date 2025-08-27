@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Reshebnik.EntityFramework;
@@ -11,9 +12,11 @@ using Reshebnik.EntityFramework;
 namespace Reshebnik.EntityFramework.Migrations
 {
     [DbContext(typeof(ReshebnikContext))]
-    partial class ReshebnikContextModelSnapshot : ModelSnapshot
+    [Migration("20250827131110_ArchiveIndicatorEntity")]
+    partial class ArchiveIndicatorEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,7 +54,7 @@ namespace Reshebnik.EntityFramework.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("first_date");
 
-                    b.Property<int?>("IndicatorId")
+                    b.Property<int>("IndicatorId")
                         .HasColumnType("integer")
                         .HasColumnName("indicator_id");
 
@@ -59,7 +62,7 @@ namespace Reshebnik.EntityFramework.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_date");
 
-                    b.Property<int?>("MetricId")
+                    b.Property<int>("MetricId")
                         .HasColumnType("integer")
                         .HasColumnName("metric_id");
 
@@ -1016,7 +1019,8 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.HasOne("Reshebnik.Domain.Entities.MetricEntity", "Metric")
                         .WithOne("ArchivedMetric")
                         .HasForeignKey("Reshebnik.Domain.Entities.ArchivedMetricEntity", "MetricId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("ArchivedByUser");
 
@@ -1285,7 +1289,8 @@ namespace Reshebnik.EntityFramework.Migrations
 
             modelBuilder.Entity("Reshebnik.Domain.Entities.ArchivedMetricEntity", b =>
                 {
-                    b.Navigation("Indicator");
+                    b.Navigation("Indicator")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Reshebnik.Domain.Entities.CompanyEntity", b =>

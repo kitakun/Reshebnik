@@ -20,6 +20,7 @@ public class CompanyPreviewMetricsHandler(
 {
     var indicator = await db.Indicators
         .AsNoTracking()
+        .IgnoreQueryFilters()
         .FirstAsync(i => i.Id == id, ct);
 
     var dto = new CompanyPreviewMetricsDto
