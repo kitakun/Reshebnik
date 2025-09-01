@@ -17,7 +17,10 @@ public class DashboardGetHandler(
     FetchCompanyMetricsHandler companyMetricsHandler,
     UserPreviewMetricsHandler userMetricsHandler)
 {
-    public async ValueTask<DashboardDto> HandleAsync(DateRange range, CancellationToken ct = default)
+    public async ValueTask<DashboardDto> HandleAsync(
+        DateRange range,
+        PeriodTypeEnum periodType,
+        CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
         var dto = new DashboardDto();
@@ -33,27 +36,39 @@ public class DashboardGetHandler(
 
         if (indicators.Count > 0)
         {
-            var metricRequests = indicators
-                .Select(ind => new FetchCompanyMetricsHandler.MetricRequest(
-                    ind.Id,
-                    (PeriodTypeEnum)ind.FillmentPeriod, // expected
-                    (PeriodTypeEnum)ind.FillmentPeriod  // source
-                ))
+            var metricInfos = indicators
+                .Select(ind =>
+                {
+                    var source = (PeriodTypeEnum)(FillmentPeriodWrapper)ind.FillmentPeriod;
+                    var expected = ComparePeriods(source, periodType) > 0 ? source : periodType;
+                    var request = new FetchCompanyMetricsHandler.MetricRequest(
+                        ind.Id,
+                        expected,
+                        source);
+                    return new { Indicator = ind, Request = request };
+                })
                 .ToList();
 
             var bulkMetrics = new Dictionary<int, FetchCompanyMetricsHandler.MetricsDataResponse>();
-            foreach (var group in metricRequests.GroupBy(r => r.ExpectedValues))
+            var rangeByPeriod = new Dictionary<PeriodTypeEnum, DateRange>();
+
+            foreach (var group in metricInfos.GroupBy(x => x.Request.ExpectedValues))
             {
                 var groupRange = BuildRangeForPeriod(range.To, group.Key);
-                var groupMetrics = await companyMetricsHandler.HandleBulkAsync(groupRange, group, ct);
+                rangeByPeriod[group.Key] = groupRange;
+                var groupMetrics = await companyMetricsHandler.HandleBulkAsync(
+                    groupRange,
+                    group.Select(x => x.Request),
+                    ct);
                 foreach (var (metricId, data) in groupMetrics)
                 {
                     bulkMetrics[metricId] = data;
                 }
             }
 
-            foreach (var ind in indicators)
+            foreach (var info in metricInfos)
             {
+                var ind = info.Indicator;
                 if (!bulkMetrics.TryGetValue(ind.Id, out var data))
                 {
                     data = new FetchCompanyMetricsHandler.MetricsDataResponse(new int[12], new int[12]);
@@ -62,8 +77,17 @@ public class DashboardGetHandler(
                 var plan = data.PlanData;
                 var fact = data.FactData;
 
-                if (plan.Length != 12) Array.Resize(ref plan, 12);
-                if (fact.Length != 12) Array.Resize(ref fact, 12);
+                if (ComparePeriods(info.Request.SourcePeriod, periodType) > 0)
+                {
+                    var groupRange = rangeByPeriod[info.Request.ExpectedValues];
+                    plan = ExpandTo(plan, groupRange.From, range.To, info.Request.ExpectedValues, periodType);
+                    fact = ExpandTo(fact, groupRange.From, range.To, info.Request.ExpectedValues, periodType);
+                }
+                else
+                {
+                    if (plan.Length != 12) Array.Resize(ref plan, 12);
+                    if (fact.Length != 12) Array.Resize(ref fact, 12);
+                }
 
                 dto.Metrics.Add(new DashboardMetricDto
                 {
@@ -71,7 +95,7 @@ public class DashboardGetHandler(
                     Name = ind.Name,
                     Plan = plan,
                     Fact = fact,
-                    PeriodType = (FillmentPeriodWrapper)ind.FillmentPeriod,
+                    PeriodType = periodType,
                     IsArchived = false
                 });
             }
@@ -158,13 +182,16 @@ public class DashboardGetHandler(
             }
 
             // берем avg сотрудников, привязанных к отделам root-а
-            var values = links
+            var employeeIdsInRoot = links
                 .Where(l => deptIdsForRoot.Contains(l.DepartmentId))
-                .Select(l => employeeAverages.TryGetValue(l.EmployeeId, out var avg) ? (double?)avg : null)
-                .Where(v => v.HasValue)
-                .Select(v => v!.Value);
+                .Select(l => l.EmployeeId)
+                .Distinct();
 
-            var avgDept = values.Any() ? values.Average() : 0d;
+            var values = employeeIdsInRoot
+                .Select(id => employeeAverages.TryGetValue(id, out var avg) ? avg : 0d)
+                .ToList();
+
+            var avgDept = values.Count > 0 ? values.Average() : 0d;
 
             dto.Departments.Add(new DashboardDepartmentDto
             {
@@ -181,13 +208,128 @@ public class DashboardGetHandler(
         return dto;
     }
 
-    private static DateRange BuildRangeForPeriod(DateTime to, PeriodTypeEnum period) => period switch
+    private static DateRange BuildRangeForPeriod(DateTime to, PeriodTypeEnum period)
     {
-        PeriodTypeEnum.Day or PeriodTypeEnum.Custom => new DateRange(to.Date.AddDays(-11), to),
-        PeriodTypeEnum.Week => new DateRange(to.Date.AddDays(-7 * 11), to),
-        PeriodTypeEnum.Month => new DateRange(new DateTime(to.Year, to.Month, 1).AddMonths(-11), to),
-        PeriodTypeEnum.Quartal => new DateRange(new DateTime(to.Year, ((to.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3 * 11), to),
-        PeriodTypeEnum.Year => new DateRange(new DateTime(to.Year - 11, 1, 1), to),
-        _ => new DateRange(to.Date.AddDays(-11), to)
+        return period switch
+        {
+            PeriodTypeEnum.Day or PeriodTypeEnum.Custom =>
+                new DateRange(to.Date.AddDays(-11), to.Date),
+            PeriodTypeEnum.Week =>
+                ToWeekRange(to),
+            PeriodTypeEnum.Month =>
+                ToMonthRange(to),
+            PeriodTypeEnum.Quartal =>
+                ToQuartalRange(to),
+            PeriodTypeEnum.Year =>
+                ToYearRange(to),
+            _ => new DateRange(to.Date.AddDays(-11), to.Date)
+        };
+    }
+
+    private static DateRange ToWeekRange(DateTime to)
+    {
+        var end = StartOfWeek(to, DayOfWeek.Monday);
+        return new DateRange(end.AddDays(-7 * 11), end);
+    }
+
+    private static DateRange ToMonthRange(DateTime to)
+    {
+        var end = new DateTime(to.Year, to.Month, DateTime.DaysInMonth(to.Year, to.Month));
+        var start = new DateTime(end.AddMonths(-11).Year, end.AddMonths(-11).Month, 1);
+        return new DateRange(start, end);
+    }
+
+    private static DateRange ToQuartalRange(DateTime to)
+    {
+        var endMonth = ((to.Month - 1) / 3) * 3 + 3;
+        var end = new DateTime(to.Year, endMonth, DateTime.DaysInMonth(to.Year, endMonth));
+        var startMonth = ((end.AddMonths(-3 * 11).Month - 1) / 3) * 3 + 1;
+        var start = new DateTime(end.AddMonths(-3 * 11).Year, startMonth, 1);
+        return new DateRange(start, end);
+    }
+
+    private static DateRange ToYearRange(DateTime to)
+    {
+        var end = new DateTime(to.Year, 12, 31);
+        var start = new DateTime(end.Year - 11, 1, 1);
+        return new DateRange(start, end);
+    }
+
+    private static int ComparePeriods(PeriodTypeEnum a, PeriodTypeEnum b) => GetOrder(a).CompareTo(GetOrder(b));
+
+    private static int GetOrder(PeriodTypeEnum p) => p switch
+    {
+        PeriodTypeEnum.Day or PeriodTypeEnum.Custom => 0,
+        PeriodTypeEnum.Week => 1,
+        PeriodTypeEnum.Month => 2,
+        PeriodTypeEnum.Quartal => 3,
+        PeriodTypeEnum.Year => 4,
+        _ => 5
     };
+
+    private static int[] ExpandTo(int[] data, DateTime rangeStart, DateTime rangeEnd, PeriodTypeEnum from, PeriodTypeEnum to)
+    {
+        var list = new List<int>();
+        var start = NormalizeStart(rangeStart, from);
+        foreach (var value in data)
+        {
+            var next = AddPeriod(start, from, 1);
+            var small = NormalizeStart(start, to);
+            if (small < start)
+                small = AddPeriod(small, to, 1);
+            for (; small < next; small = AddPeriod(small, to, 1))
+            {
+                list.Add(value);
+            }
+            start = next;
+        }
+
+        var endCount = Math.Min(list.Count, CountPeriods(rangeStart, rangeEnd, to));
+        if (endCount >= 12)
+            return list.Skip(endCount - 12).Take(12).ToArray();
+
+        var result = new int[12];
+        list.Take(endCount).ToArray().CopyTo(result, 12 - endCount);
+        return result;
+    }
+
+    private static DateTime AddPeriod(DateTime date, PeriodTypeEnum period, int amount) => period switch
+    {
+        PeriodTypeEnum.Day or PeriodTypeEnum.Custom => date.AddDays(amount),
+        PeriodTypeEnum.Week => date.AddDays(7 * amount),
+        PeriodTypeEnum.Month => date.AddMonths(amount),
+        PeriodTypeEnum.Quartal => date.AddMonths(3 * amount),
+        PeriodTypeEnum.Year => date.AddYears(amount),
+        _ => date
+    };
+
+    private static int CountPeriods(DateTime from, DateTime to, PeriodTypeEnum period)
+    {
+        from = NormalizeStart(from, period);
+        to = NormalizeStart(to, period);
+        return period switch
+        {
+            PeriodTypeEnum.Day or PeriodTypeEnum.Custom => (int)(to - from).TotalDays + 1,
+            PeriodTypeEnum.Week => (int)((to - from).TotalDays / 7) + 1,
+            PeriodTypeEnum.Month => (to.Year - from.Year) * 12 + to.Month - from.Month + 1,
+            PeriodTypeEnum.Quartal => ((to.Year - from.Year) * 12 + to.Month - from.Month) / 3 + 1,
+            PeriodTypeEnum.Year => to.Year - from.Year + 1,
+            _ => 1
+        };
+    }
+
+    private static DateTime NormalizeStart(DateTime start, PeriodTypeEnum period) => period switch
+    {
+        PeriodTypeEnum.Week => StartOfWeek(start, DayOfWeek.Monday),
+        PeriodTypeEnum.Month => new DateTime(start.Year, start.Month, 1),
+        PeriodTypeEnum.Quartal => new DateTime(start.Year, ((start.Month - 1) / 3) * 3 + 1, 1),
+        PeriodTypeEnum.Year => new DateTime(start.Year, 1, 1),
+        _ => start.Date
+    };
+
+    private static DateTime StartOfWeek(DateTime date, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+        return date.Date.AddDays(-1 * diff);
+    }
 }

@@ -5,6 +5,7 @@ using Reshebnik.Domain.Models.Dashboard;
 using Reshebnik.Domain.Models;
 using Reshebnik.Handlers.Dashboard;
 using Reshebnik.Domain.Extensions;
+using Reshebnik.Domain.Enums;
 
 namespace Reshebnik.Web.Api.Client;
 
@@ -19,15 +20,14 @@ public class DashboardController : ControllerBase
     public async Task<IActionResult> GetAsync(
         [FromQuery] DateTime from,
         [FromQuery] DateTime to,
+        [FromQuery] PeriodTypeEnum periodType,
         [FromServices] DashboardGetHandler handler,
         CancellationToken cancellationToken)
     {
         var fromUtc = from;
         var toUtc = to;
-        // Adjust range to ensure at most a 7-day period
-        var adjustedTo = fromUtc.AddDays(6) < toUtc ? fromUtc.AddDays(6) : toUtc;
-        var range = new DateRange(fromUtc, adjustedTo);
-        var result = await handler.HandleAsync(range, cancellationToken);
+        var range = new DateRange(fromUtc, toUtc);
+        var result = await handler.HandleAsync(range, periodType, cancellationToken);
         return Ok(result);
     }
 }
