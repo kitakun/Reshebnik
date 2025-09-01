@@ -167,6 +167,7 @@ builder.Services.AddScoped<CompanyContextHandler>();
 builder.Services.AddScoped<AuthLoginHandler>();
 builder.Services.AddScoped<AuthInviteHandler>();
 builder.Services.AddScoped<AuthGetInviteHandler>();
+builder.Services.AddScoped<AuthResetPasswordHandler>();
 
 builder.Services.AddScoped<DepartmentGetHandler>();
 builder.Services.AddScoped<DepartmentPreviewHandler>();

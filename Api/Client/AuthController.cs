@@ -55,4 +55,20 @@ public class AuthController : ControllerBase
         if (result == null) return Forbid();
         return Ok(new AdminLoginResponse(result.Value.User, result.Value.Jwt, result.Value.CurrentCompanyId));
     }
+
+    [AllowAnonymous]
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPasswordAsync(
+        [FromBody] JsonElement request,
+        [FromServices] AuthResetPasswordHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var email = request.GetProperty("email").GetString();
+        if (string.IsNullOrWhiteSpace(email))
+            return BadRequest("required email");
+
+        var result = await handler.HandleAsync(email, cancellationToken);
+        if (!result) return BadRequest();
+        return Ok();
+    }
 }
