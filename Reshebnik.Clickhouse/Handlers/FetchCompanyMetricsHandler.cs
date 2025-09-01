@@ -2,6 +2,7 @@ using ClickHouse.Client.ADO;
 using Microsoft.Extensions.Options;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
+using System.Collections.Concurrent;
 
 namespace Reshebnik.Clickhouse.Handlers;
 
@@ -9,25 +10,65 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
 {
     private readonly ClickhouseOptions _options = optionsAccessor.Value;
 
-    public record MetricsDataResponse(
-        int[] PlanData,
-        int[] FactData);
+    public record MetricsDataResponse(int[] PlanData, int[] FactData);
+
+    public record MetricRequest(int MetricId, PeriodTypeEnum ExpectedValues, PeriodTypeEnum SourcePeriod);
 
     public async Task<MetricsDataResponse> HandleAsync(
         DateRange range,
         int metricId,
         PeriodTypeEnum expectedValues,
         PeriodTypeEnum sourcePeriod,
-        CancellationToken cancellationToken)
+        CancellationToken ct = default)
     {
-        var length = GetPeriodLength(expectedValues, range);
-        var plan = new int[length];
-        var fact = new int[length];
+        var map = await HandleBulkAsync(
+            range,
+            [new MetricRequest(metricId, expectedValues, sourcePeriod)],
+            ct);
 
+        return map.TryGetValue(metricId, out var resp)
+            ? resp
+            : new MetricsDataResponse(new int[GetPeriodLength(expectedValues, range)], new int[GetPeriodLength(expectedValues, range)]);
+    }
+
+    /// <summary>
+    /// BULK: один запрос в CH для множества метрик и period_type.
+    /// Возвращает словарь { metricId -> MetricsDataResponse }.
+    /// </summary>
+    public async Task<Dictionary<int, MetricsDataResponse>> HandleBulkAsync(
+        DateRange range,
+        IEnumerable<MetricRequest> requests,
+        CancellationToken ct = default)
+    {
+        // Нормализуем вход
+        var reqList = requests?.ToList() ?? [];
+        if (reqList.Count == 0)
+            return new Dictionary<int, MetricsDataResponse>();
+
+        // Подготовка ключей и буферов
         var unionFrom = range.From.AddYears(-1);
-        var totalRange = range with { From = unionFrom };
+        var totalTo = range.To;
 
-        var key = $"company-metric-{metricId}";
+        // key -> metricId
+        string Key(int metricId) => $"company-metric-{metricId}";
+
+        var metricIds = reqList.Select(r => r.MetricId).Distinct().ToList();
+        var metricKeyToId = metricIds.ToDictionary(id => Key(id), id => id);
+
+        // period_type, которые понадобятся
+        var sourcePeriods = reqList.Select(r => r.SourcePeriod).Distinct().ToList();
+
+        // Буферы под ответы, и сопоставление metricId -> expectedValues
+        var expectedByMetric = reqList.ToDictionary(r => r.MetricId, r => r.ExpectedValues);
+        var buffers = new ConcurrentDictionary<int, (int[] plan, int[] fact)>();
+
+        foreach (var r in reqList)
+        {
+            var len = GetPeriodLength(r.ExpectedValues, range);
+            buffers.TryAdd(r.MetricId, (new int[len], new int[len]));
+        }
+
+        // --- Подключение и одиночный SELECT ---
         var builder = new ClickHouseConnectionStringBuilder
         {
             Host = _options.Host,
@@ -36,44 +77,68 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             Password = _options.Password,
             Protocol = "http",
         };
-        var connStr = builder.ToString();
-
-        await using var connection = new ClickHouseConnection(connStr);
-        await connection.OpenAsync(cancellationToken);
+        await using var connection = new ClickHouseConnection(builder.ToString());
+        await connection.OpenAsync(ct);
 
         var table = $"{_options.Prefix}_company_metrics";
+
+        // Сформируем IN-списки (безопасно — только ints/enums, без пользовательского ввода).
+        var inKeys = string.Join(", ", metricKeyToId.Keys.Select(k => $"'{k}'"));
+        var inPeriods = string.Join(", ", sourcePeriods.Select(p => $"'{p}'"));
+
         var sql = $"""
             SELECT
+                metric_key,
                 upsert_date,
                 plan_value,
-                fact_value
+                fact_value,
+                period_type
             FROM {table}
-            WHERE metric_key = '{key}'
-              AND period_type = '{sourcePeriod}'
-              AND upsert_date BETWEEN toDate('{unionFrom:yyyy-MM-dd}') AND toDate('{totalRange.To:yyyy-MM-dd}')
-            ORDER BY upsert_date
+            WHERE metric_key IN ({inKeys})
+              AND period_type IN ({inPeriods})
+              AND upsert_date BETWEEN toDate('{unionFrom:yyyy-MM-dd}')
+                                 AND toDate('{totalTo:yyyy-MM-dd}')
+            ORDER BY metric_key, upsert_date
         """;
 
         await using var cmd = connection.CreateCommand();
         cmd.CommandText = sql;
 
-        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
         {
-            var date = reader.GetDateTime(0);
-            var planVal = reader.GetInt32(1);
-            var factVal = reader.GetInt32(2);
+            var metricKey = reader.GetString(0);
+            if (!metricKeyToId.TryGetValue(metricKey, out var metricId))
+                continue;
 
-            var idx = GetIndex(date, range.From.Date, expectedValues);
-            if (idx is >= 0 && idx < length)
+            var date = reader.GetDateTime(1);
+            var planVal = reader.GetInt32(2);
+            var factVal = reader.GetInt32(3);
+            // var periodType = Enum.Parse<PeriodTypeEnum>(reader.GetString(4)); // при необходимости
+
+            var expected = expectedByMetric[metricId];
+            var (plan, fact) = buffers[metricId];
+
+            var idx = GetIndex(date, range.From.Date, expected);
+            if (idx is >= 0 && idx < plan.Length)
             {
-                fact[idx] += factVal;
                 plan[idx] += planVal;
+                fact[idx] += factVal;
             }
         }
-        return new MetricsDataResponse(plan, fact);
+
+        // Сборка результата
+        var result = new Dictionary<int, MetricsDataResponse>(buffers.Count);
+        foreach (var kv in buffers)
+        {
+            var p = kv.Value.plan;
+            var f = kv.Value.fact;
+            result[kv.Key] = new MetricsDataResponse(p, f);
+        }
+        return result;
     }
 
+    // --- PutAsync оставляем, но см. заметки ниже ---
     public async Task PutAsync(
         int metricId,
         MetricValueTypeEnum valueType,
@@ -93,21 +158,23 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             Password = _options.Password,
             Protocol = "http",
         };
-        var connStr = builder.ToString();
-        await using var connection = new ClickHouseConnection(connStr);
+        await using var connection = new ClickHouseConnection(builder.ToString());
         await connection.OpenAsync(ct);
 
         var table = $"{_options.Prefix}_company_metrics";
 
+        // Чтение текущего значения
         var selectSql = $"""
             SELECT plan_value, fact_value
             FROM {table}
-            WHERE metric_key = '{key}' AND company_id = {companyId} AND upsert_date = toDate('{upsertDate:yyyy-MM-dd}') AND period_type = '{periodType}'
+            WHERE metric_key = '{key}'
+              AND company_id = {companyId}
+              AND upsert_date = toDate('{upsertDate:yyyy-MM-dd}')
+              AND period_type = '{periodType}'
             LIMIT 1
         """;
 
-        int planVal = 0;
-        int factVal = 0;
+        int planVal = 0, factVal = 0;
         await using (var selectCmd = connection.CreateCommand())
         {
             selectCmd.CommandText = selectSql;
@@ -119,14 +186,16 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             }
         }
 
-        if (valueType == MetricValueTypeEnum.Plan)
-            planVal = value;
-        else
-            factVal = value;
+        if (valueType == MetricValueTypeEnum.Plan) planVal = value;
+        else                                       factVal = value;
 
+        // delete + insert (см. заметки)
         var deleteSql = $"""
             ALTER TABLE {table}
-            DELETE WHERE metric_key = '{key}' AND company_id = {companyId} AND upsert_date = toDate('{upsertDate:yyyy-MM-dd}') AND period_type = '{periodType}'
+            DELETE WHERE metric_key = '{key}'
+              AND company_id = {companyId}
+              AND upsert_date = toDate('{upsertDate:yyyy-MM-dd}')
+              AND period_type = '{periodType}'
         """;
         await using (var deleteCmd = connection.CreateCommand())
         {
@@ -145,68 +214,53 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         }
     }
 
+    // --- Вспомогательные функции (как у тебя) ---
     private static int GetIndex(DateTime date, DateTime start, PeriodTypeEnum expected)
     {
         start = NormalizeStart(start, expected);
         return expected switch
         {
-            PeriodTypeEnum.Day => (int)(date.Date - start).TotalDays,
-            PeriodTypeEnum.Custom => (int)(date.Date - start).TotalDays,
-            PeriodTypeEnum.Week => (int)((date.Date - start).TotalDays / 7),
-            PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month,
+            PeriodTypeEnum.Day     => (int)(date.Date - start).TotalDays,
+            PeriodTypeEnum.Custom  => (int)(date.Date - start).TotalDays,
+            PeriodTypeEnum.Week    => (int)((date.Date - start).TotalDays / 7),
+            PeriodTypeEnum.Month   => (date.Year - start.Year) * 12 + date.Month - start.Month,
             PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3,
-            PeriodTypeEnum.Year => date.Year - start.Year,
-            _ => -1
+            PeriodTypeEnum.Year    => date.Year - start.Year,
+            _                      => -1
         };
     }
 
-    private static DateTime NormalizeStart(DateTime start, PeriodTypeEnum expected)
+    private static DateTime NormalizeStart(DateTime start, PeriodTypeEnum expected) => expected switch
     {
-        return expected switch
-        {
-            PeriodTypeEnum.Week => StartOfWeek(start, DayOfWeek.Monday),
-            PeriodTypeEnum.Month => new DateTime(start.Year, start.Month, 1),
-            PeriodTypeEnum.Quartal => new DateTime(start.Year, ((start.Month - 1) / 3) * 3 + 1, 1),
-            PeriodTypeEnum.Year => new DateTime(start.Year, 1, 1),
-            _ => start.Date
-        };
-    }
+        PeriodTypeEnum.Week    => StartOfWeek(start, DayOfWeek.Monday),
+        PeriodTypeEnum.Month   => new DateTime(start.Year, start.Month, 1),
+        PeriodTypeEnum.Quartal => new DateTime(start.Year, ((start.Month - 1) / 3) * 3 + 1, 1),
+        PeriodTypeEnum.Year    => new DateTime(start.Year, 1, 1),
+        _                      => start.Date
+    };
 
-    private static int GetPeriodLength(PeriodTypeEnum expected, DateRange range)
+    private static int GetPeriodLength(PeriodTypeEnum expected, DateRange range) => expected switch
     {
-        return expected switch
-        {
-            PeriodTypeEnum.Day => (int)(range.To.Date - range.From.Date).TotalDays + 1,
-            PeriodTypeEnum.Custom => (int)(range.To.Date - range.From.Date).TotalDays + 1,
-            PeriodTypeEnum.Week => GetWeekDiff(range.From.Date, range.To.Date),
-            PeriodTypeEnum.Month => 12,
-            PeriodTypeEnum.Quartal => GetQuartalDiff(range.From.Date, range.To.Date),
-            PeriodTypeEnum.Year => GetYearDiff(range.From.Date, range.To.Date),
-            _ => 1
-        };
-    }
+        PeriodTypeEnum.Day     => (int)(range.To.Date - range.From.Date).TotalDays + 1,
+        PeriodTypeEnum.Custom  => (int)(range.To.Date - range.From.Date).TotalDays + 1,
+        PeriodTypeEnum.Week    => GetWeekDiff(range.From.Date, range.To.Date),
+        PeriodTypeEnum.Month   => 12,
+        PeriodTypeEnum.Quartal => GetQuartalDiff(range.From.Date, range.To.Date),
+        PeriodTypeEnum.Year    => GetYearDiff(range.From.Date, range.To.Date),
+        _                      => 1
+    };
 
-    private static int GetYearDiff(DateTime from, DateTime to)
-    {
-        return to.Year - from.Year + 1;
-    }
-
-    private static int GetQuartalDiff(DateTime from, DateTime to)
-    {
-        return ((to.Year - from.Year) * 12 + to.Month - from.Month) / 3 + 1;
-    }
+    private static int GetYearDiff(DateTime from, DateTime to)    => to.Year - from.Year + 1;
+    private static int GetQuartalDiff(DateTime from, DateTime to) => ((to.Year - from.Year) * 12 + to.Month - from.Month) / 3 + 1;
 
     private static int GetWeekDiff(DateTime from, DateTime to)
     {
         from = StartOfWeek(from, DayOfWeek.Monday);
-        to = StartOfWeek(to, DayOfWeek.Monday);
+        to   = StartOfWeek(to, DayOfWeek.Monday);
         return (int)((to - from).TotalDays / 7) + 1;
     }
 
-    private static int GetMonthDiff(DateTime from, DateTime to)
-    {
-        return (to.Year - from.Year) * 12 + to.Month - from.Month + 1;
-    }
+    private static int GetMonthDiff(DateTime from, DateTime to) => (to.Year - from.Year) * 12 + to.Month - from.Month + 1;
 
     private static DateTime StartOfWeek(DateTime date, DayOfWeek startOfWeek)
     {
