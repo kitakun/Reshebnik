@@ -24,14 +24,15 @@ public class DashboardGetHandler(
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
         var dto = new DashboardDto();
+        var indicatorAverages = new List<double>();
 
         // ---------------------------
         // 1) Индикаторы + BULK по метрикам компании (1 запрос к CH)
         // ---------------------------
         var indicators = await db.Indicators
             .AsNoTracking()
-            .Where(i => i.CreatedBy == companyId && i.ShowOnMainScreen)
-            .Select(i => new { i.Id, i.Name, i.FillmentPeriod })
+            .Where(i => i.CreatedBy == companyId && i.ShowOnKeyIndicators)
+            .Select(i => new { i.Id, i.Name, i.FillmentPeriod, i.ShowOnMainScreen })
             .ToListAsync(ct);
 
         if (indicators.Count > 0)
@@ -89,16 +90,28 @@ public class DashboardGetHandler(
                     if (fact.Length != 12) Array.Resize(ref fact, 12);
                 }
 
-                dto.Metrics.Add(new DashboardMetricDto
+                var factAvg = fact.Length > 0 ? fact.Average() : 0d;
+                var planAvg = plan.Length > 0 ? plan.Average() : 0d;
+                var avgPercent = planAvg != 0 ? (factAvg / planAvg) * 100 : 0d;
+                indicatorAverages.Add(avgPercent);
+
+                if (ind.ShowOnMainScreen)
                 {
-                    Id = ind.Id,
-                    Name = ind.Name,
-                    Plan = plan,
-                    Fact = fact,
-                    PeriodType = periodType,
-                    IsArchived = false
-                });
+                    dto.Metrics.Add(new DashboardMetricDto
+                    {
+                        Id = ind.Id,
+                        Name = ind.Name,
+                        Plan = plan,
+                        Fact = fact,
+                        PeriodType = periodType,
+                        IsArchived = false
+                    });
+                }
             }
+
+            dto.DepartmentsAverage = indicatorAverages.Count > 0
+                ? Math.Round(indicatorAverages.Average(), 0, MidpointRounding.ToZero)
+                : 0;
         }
 
         // ---------------------------
@@ -200,10 +213,6 @@ public class DashboardGetHandler(
                 Average = Math.Round(avgDept, 0, MidpointRounding.ToZero)
             });
         }
-
-        dto.DepartmentsAverage = dto.Departments.Count > 0
-            ? Math.Round(dto.Departments.Average(d => d.Average), 0, MidpointRounding.ToZero)
-            : 0;
 
         return dto;
     }
