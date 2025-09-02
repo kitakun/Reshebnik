@@ -4,6 +4,9 @@ public class CompanyPreviewMetricItemDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
+    public decimal? Plan { get; set; }
+    public decimal? Min { get; set; }
+    public decimal? Max { get; set; }
     public int[] TotalPlanData { get; set; } = [];
     public int[] TotalFactData { get; set; } = [];
     public int[] Last12PointsPlan { get; set; } = [];

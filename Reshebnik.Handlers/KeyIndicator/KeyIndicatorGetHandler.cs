@@ -19,80 +19,80 @@ public class KeyIndicatorGetHandler(
         DateTime to,
         PeriodTypeEnum type,
         CancellationToken ct = default)
-    {
-        var companyId = await companyContext.CurrentCompanyIdAsync;
-        var indicators = await db.Indicators
-            .AsNoTracking()
-            .Where(i => i.CreatedBy == companyId && i.ShowOnKeyIndicators)
-            .ToListAsync(ct);
+{
+    var companyId = await companyContext.CurrentCompanyIdAsync;
+    var indicators = await db.Indicators
+        .AsNoTracking()
+        .Where(i => i.CreatedBy == companyId && i.ShowOnKeyIndicators && !i.IsArchived)
+        .ToListAsync(ct);
 
-        var range = new DateRange(from, to);
-        var last12Range = type switch
+    var range = new DateRange(from, to);
+    var last12Range = type switch
+    {
+        PeriodTypeEnum.Day => new DateRange(to.AddDays(-11), to),
+        PeriodTypeEnum.Week => new DateRange(StartOfWeek(to.AddDays(-7 * 11), DayOfWeek.Monday), StartOfWeek(to, DayOfWeek.Monday)),
+        PeriodTypeEnum.Month => new DateRange(
+            new DateTime(to.AddMonths(-11).Year, to.AddMonths(-11).Month, 1),
+            new DateTime(to.Year, to.Month, DateTime.DaysInMonth(to.Year, to.Month))),
+        PeriodTypeEnum.Quartal => new DateRange(
+            new DateTime(to.AddMonths(-3 * 11).Year, ((to.AddMonths(-3 * 11).Month - 1) / 3) * 3 + 1, 1),
+            new DateTime(to.Year, ((to.Month - 1) / 3) * 3 + 3, DateTime.DaysInMonth(to.Year, ((to.Month - 1) / 3) * 3 + 3))),
+        PeriodTypeEnum.Year => new DateRange(new DateTime(to.Year - 11, 1, 1), new DateTime(to.Year, 12, 31)),
+        PeriodTypeEnum.Custom => range,
+        _ => range
+    };
+
+    var result = new List<KeyIndicatorCategoryDto>();
+    foreach (var group in indicators.GroupBy(i => i.Category).Where(g => g.Any()))
+    {
+        var categoryDto = new KeyIndicatorCategoryDto
         {
-            PeriodTypeEnum.Day => new DateRange(to.AddDays(-11), to),
-            PeriodTypeEnum.Week => new DateRange(StartOfWeek(to.AddDays(-7 * 11), DayOfWeek.Monday), StartOfWeek(to, DayOfWeek.Monday)),
-            PeriodTypeEnum.Month => new DateRange(
-                new DateTime(to.AddMonths(-11).Year, to.AddMonths(-11).Month, 1),
-                new DateTime(to.Year, to.Month, DateTime.DaysInMonth(to.Year, to.Month))),
-            PeriodTypeEnum.Quartal => new DateRange(
-                new DateTime(to.AddMonths(-3 * 11).Year, ((to.AddMonths(-3 * 11).Month - 1) / 3) * 3 + 1, 1),
-                new DateTime(to.Year, ((to.Month - 1) / 3) * 3 + 3, DateTime.DaysInMonth(to.Year, ((to.Month - 1) / 3) * 3 + 3))),
-            PeriodTypeEnum.Year => new DateRange(new DateTime(to.Year - 11, 1, 1), new DateTime(to.Year, 12, 31)),
-            PeriodTypeEnum.Custom => range,
-            _ => range
+            CategoryName = group.Key,
+            Metrics = new List<KeyIndicatorItemDto>()
         };
 
-        var result = new List<KeyIndicatorCategoryDto>();
-        foreach (var group in indicators.GroupBy(i => i.Category).Where(g => g.Any()))
+        foreach (var ind in group)
         {
-            var categoryDto = new KeyIndicatorCategoryDto
+            var data = await fetchHandler.HandleAsync(
+                last12Range,
+                ind.Id,
+                type,
+                (FillmentPeriodWrapper)ind.FillmentPeriod,
+                ct);
+
+            var planSum = data.PlanData.Sum();
+            var factSum = data.FactData.Sum();
+            var avg = planSum != 0 ? factSum / (double)planSum * 100 : 0;
+
+            categoryDto.Metrics.Add(new KeyIndicatorItemDto
             {
-                CategoryName = group.Key,
-                Metrics = new List<KeyIndicatorItemDto>()
-            };
-
-            foreach (var ind in group)
-            {
-                var data = await fetchHandler.HandleAsync(
-                    last12Range,
-                    ind.Id,
-                    type,
-                    (FillmentPeriodWrapper)ind.FillmentPeriod,
-                    ct);
-
-                var planSum = data.PlanData.Sum();
-                var factSum = data.FactData.Sum();
-                var avg = planSum != 0 ? factSum / (double)planSum * 100 : 0;
-
-                categoryDto.Metrics.Add(new KeyIndicatorItemDto
+                Id = ind.Id,
+                Name = ind.Name,
+                UnitType = ind.UnitType,
+                ValueType = ind.ValueType,
+                IsArchived = ind.IsArchived,
+                Min = ind.Min,
+                Max = ind.Max,
+                Plan = ind.Plan,
+                Metrics = new KeyIndicatorMetricsDto
                 {
-                    Id = ind.Id,
-                    Name = ind.Name,
-                    UnitType = ind.UnitType,
-                    ValueType = ind.ValueType,
-                    IsArchived = false,
-                    Min = ind.Min,
-                    Max = ind.Max,
-                    Plan = ind.Plan,
-                    Metrics = new KeyIndicatorMetricsDto
-                    {
-                        Plan = data.PlanData,
-                        Fact = data.FactData,
-                        Average = Math.Round(avg, 0, MidpointRounding.ToZero),
-                        Period = ind.FillmentPeriod
-                    }
-                });
-            }
-
-            result.Add(categoryDto);
+                    Plan = data.PlanData,
+                    Fact = data.FactData,
+                    Average = Math.Round(avg, 0, MidpointRounding.ToZero),
+                    Period = ind.FillmentPeriod
+                }
+            });
         }
 
-        return result;
+        result.Add(categoryDto);
     }
 
-    private static DateTime StartOfWeek(DateTime date, DayOfWeek startOfWeek)
-    {
-        int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
-        return date.Date.AddDays(-1 * diff);
-    }
+    return result;
+}
+
+private static DateTime StartOfWeek(DateTime date, DayOfWeek startOfWeek)
+{
+    int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+    return date.Date.AddDays(-1 * diff);
+}
 }
