@@ -132,20 +132,12 @@ public class UserPreviewMetricsHandler(
                         }
                     }
 
-                    var factAvg = last12Data.FactData.Length > 0 ? last12Data.FactData.Average() : 0d;
-                    var planAvg = last12Data.PlanData.Length > 0 ? last12Data.PlanData.Average() : 0d;
-                    if (planAvg == 0 && metric.Plan.HasValue)
-                        planAvg = (double)metric.Plan.Value;
-
-                    var avgPercent = (int)(planAvg != 0 ? (factAvg / planAvg) * 100 : 0);
-
                     metricCalcCache[metric.Id] = new MetricCalcResult(
                         last12Data.PlanData,
                         last12Data.FactData,
                         totalData.PlanData,
                         totalData.FactData,
-                        growth,
-                        avgPercent
+                        growth
                     );
                 }
                 finally
@@ -173,15 +165,10 @@ public class UserPreviewMetricsHandler(
                 continue;
             }
 
-            double sumAvg = 0d;
-            int count = 0;
-
             foreach (var m in metrics)
             {
                 if (!metricCalcCache.TryGetValue(m.Id, out var calc))
                     continue;
-
-                var avgRounded = calc.AvgPercent;
 
                 dto.Metrics.Add(new UserPreviewMetricItemDto
                 {
@@ -197,16 +184,9 @@ public class UserPreviewMetricsHandler(
                     TotalFactData = calc.TotalFact,
                     GrowthPercent = calc.Growth,
                     Period = m.PeriodType,
-                    Type = m.Type,
-                    Average = avgRounded
+                    Type = m.Type
                 });
-
-                sumAvg += calc.AvgPercent;
-                count++;
             }
-
-            if (count > 0)
-                dto.Average = Math.Round(sumAvg / count, 0, MidpointRounding.ToZero);
 
             result[e.Id] = dto;
         }
@@ -263,6 +243,5 @@ public class UserPreviewMetricsHandler(
         int[] Last12Fact,
         int[] TotalPlan,
         int[] TotalFact,
-        double?[] Growth,
-        int AvgPercent);
+        double?[] Growth);
 }

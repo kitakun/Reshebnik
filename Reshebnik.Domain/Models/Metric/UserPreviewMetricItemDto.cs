@@ -16,6 +16,5 @@ public class UserPreviewMetricItemDto
     public int[] TotalFactData { get; set; } = [];
     public int[] Last12PointsPlan { get; set; } = [];
     public int[] Last12PointsFact { get; set; } = [];
-    public double Average { get; set; }
     public double?[] GrowthPercent { get; set; } = [];
 }

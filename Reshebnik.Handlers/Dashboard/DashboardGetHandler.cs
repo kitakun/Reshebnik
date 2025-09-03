@@ -133,7 +133,18 @@ public class DashboardGetHandler(
         foreach (var e in employees)
         {
             if (previewsMap.TryGetValue(e.Id, out var preview) && preview is { Metrics.Count: > 0 })
-                employeeAverages[e.Id] = preview.Average;
+            {
+                double sum = 0;
+                int count = 0;
+                foreach (var metric in preview.Metrics)
+                {
+                    sum += GetCompletionPercent(metric);
+                    count++;
+                }
+                employeeAverages[e.Id] = count > 0
+                    ? Math.Round(sum / count, 0, MidpointRounding.ToZero)
+                    : 0;
+            }
         }
 
         // одна проекция → два отбора (best/worst)
@@ -215,6 +226,27 @@ public class DashboardGetHandler(
         }
 
         return dto;
+    }
+
+    private static double GetCompletionPercent(UserPreviewMetricItemDto metric)
+    {
+        var fact = metric.Last12PointsFact;
+        var plan = metric.Last12PointsPlan;
+        var factValue = fact.Length > 0 ? fact[^1] : 0;
+
+        decimal planValue = metric.Type switch
+        {
+            MetricTypeEnum.PlanFact => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
+            MetricTypeEnum.FactOnly => metric.Plan ?? (plan.Length > 0 ? plan[^1] : 0),
+            MetricTypeEnum.Cumulative => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
+            _ => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0
+        };
+
+        if (planValue == 0) return 0;
+
+        var percent = factValue / planValue * 100;
+        var doubleVal = (double)percent;
+        return double.IsFinite(doubleVal) ? (double)percent : 0;
     }
 
     private static DateRange BuildRangeForPeriod(DateTime to, PeriodTypeEnum period)
