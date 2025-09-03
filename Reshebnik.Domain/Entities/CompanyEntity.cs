@@ -13,7 +13,7 @@ public class CompanyEntity
     public required CompanyTypeEnum Type { get; set; }
     public string Email { get; set; } = null!;
     public string? Phone { get; set; }
-    
+
     // settings
     public bool NotifyAboutLoweringMetrics { get; set; }
     public SystemNotificationTypeEnum NotificationType { get; set; }
@@ -24,7 +24,7 @@ public class CompanyEntity
     public bool AllowForEmployeesEditMetrics { get; set; }
     public bool EnableNotificationsInApp { get; set; }
     public bool ShowNewMetrics { get; set; }
-    
+
     // refs
     [JsonIgnore]
     public List<EmployeeEntity> Employees { get; set; } = new();
@@ -34,4 +34,6 @@ public class CompanyEntity
     public List<MetricEntity> Metrics { get; set; } = new();
     [JsonIgnore]
     public List<ArchivedMetricEntity> ArchivedMetrics { get; set; } = new();
+    [JsonIgnore]
+    public List<ArchivedUserEntity> ArchivedUsers { get; set; } = new();
 }

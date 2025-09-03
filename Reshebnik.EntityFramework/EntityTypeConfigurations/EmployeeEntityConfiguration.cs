@@ -50,6 +50,9 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
         builder.Property(e => e.IsActive)
             .HasColumnName("is_active");
 
+        builder.Property(e => e.IsArchived)
+            .HasColumnName("is_archived");
+
         builder.Property(e => e.EmailInvitationCode)
             .HasColumnName("email_invitation_code")
             .HasMaxLength(128);
@@ -76,5 +79,11 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
 
         builder.Property(p => p.Salt).IsRequired();
         builder.Property(p => p.Password).IsRequired();
+
+        builder.HasOne(e => e.ArchivedUser)
+            .WithOne(a => a.Employee)
+            .HasForeignKey<ArchivedUserEntity>(a => a.EmployeeId);
+
+        builder.HasQueryFilter(e => !e.IsArchived);
     }
 }

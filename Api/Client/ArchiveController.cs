@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Metric;
+using Reshebnik.Domain.Models.Employee;
 using Reshebnik.Handlers.Metric;
+using Reshebnik.Handlers.Employee;
 
 namespace Reshebnik.Web.Api.Client;
 
@@ -50,6 +52,48 @@ public class ArchiveController : ControllerBase
     public async Task<IActionResult> UnarchiveAsync(
         [FromRoute] int id,
         [FromServices] MetricUnarchiveHandler handler,
+        CancellationToken cancellationToken)
+    {
+        await handler.HandleAsync(id, cancellationToken);
+        return Ok();
+    }
+
+    [HttpPost("users/{id}")]
+    public async Task<IActionResult> ArchiveUserAsync(
+        [FromRoute] int id,
+        [FromServices] EmployeeArchiveHandler handler,
+        CancellationToken cancellationToken)
+    {
+        await handler.HandleAsync(id, cancellationToken);
+        return Ok();
+    }
+
+    [HttpGet("users/{id}")]
+    [ProducesResponseType(typeof(ArchivedUserGetDto), 200)]
+    public async Task<IActionResult> GetUserAsync(
+        [FromRoute] int id,
+        [FromServices] ArchivedUserGetHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("users/typeahead")]
+    [ProducesResponseType(typeof(PaginationDto<ArchivedUserDto>), 200)]
+    public async Task<IActionResult> ArchiveUsersTypeaheadAsync(
+        [FromQuery] TypeaheadRequest request,
+        [FromServices] ArchivedUserTypeaheadHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(request, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpDelete("users/{id}")]
+    public async Task<IActionResult> UnarchiveUserAsync(
+        [FromRoute] int id,
+        [FromServices] EmployeeUnarchiveHandler handler,
         CancellationToken cancellationToken)
     {
         await handler.HandleAsync(id, cancellationToken);

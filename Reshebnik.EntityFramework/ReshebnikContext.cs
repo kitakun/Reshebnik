@@ -24,6 +24,7 @@ public class ReshebnikContext(DbContextOptions<ReshebnikContext> options) : DbCo
     public DbSet<MetricEntity> Metrics { get; set; }
     public DbSet<MetricTemplateEntity> MetricTemplates { get; set; }
     public DbSet<ArchivedMetricEntity> ArchivedMetrics { get; set; }
+    public DbSet<ArchivedUserEntity> ArchivedUsers { get; set; }
     public DbSet<IndicatorEntity> Indicators { get; set; }
     public DbSet<CategoryRecordEntity> CategoryRecords { get; set; }
 

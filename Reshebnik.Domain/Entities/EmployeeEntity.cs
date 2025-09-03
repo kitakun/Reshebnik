@@ -15,6 +15,7 @@ public class EmployeeEntity
     public string Phone { get; set; } = null!;
     public string Comment { get; set; } = null!;
     public bool IsActive { get; set; }
+    public bool IsArchived { get; set; }
     public string? EmailInvitationCode { get; set; }
 
     public string Password { get; set; } = null!;
@@ -32,4 +33,5 @@ public class EmployeeEntity
     public List<UserNotification> UserNotification { get; set; } = new();
 
     public List<MetricEmployeeLinkEntity> MetricLinks { get; set; } = new();
+    public ArchivedUserEntity? ArchivedUser { get; set; }
 }
