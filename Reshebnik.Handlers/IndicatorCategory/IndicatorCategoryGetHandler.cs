@@ -44,7 +44,7 @@ public class IndicatorCategoryGetHandler(
             var metricPeriod = (PeriodTypeEnum)(FillmentPeriodWrapper)ind.FillmentPeriod;
             var needExpand = ComparePeriods(metricPeriod, periodType) > 0;
             var expected = needExpand ? metricPeriod : periodType;
-            var last12Range = BuildRangeForPeriod(range.To, expected);
+            var last12Range = periodType == PeriodTypeEnum.Custom ? range : BuildRangeForPeriod(range.To, expected);
 
             var data = await fetchHandler.HandleAsync(
                 last12Range,
@@ -61,7 +61,7 @@ public class IndicatorCategoryGetHandler(
                 plan = ExpandTo(plan, last12Range.From, range.To, expected, periodType);
                 fact = ExpandTo(fact, last12Range.From, range.To, expected, periodType);
             }
-            else
+            else if (periodType != PeriodTypeEnum.Custom)
             {
                 if (plan.Length != 12) Array.Resize(ref plan, 12);
                 if (fact.Length != 12) Array.Resize(ref fact, 12);
@@ -145,38 +145,78 @@ public class IndicatorCategoryGetHandler(
 
     private static int[] ExpandTo(int[] data, DateTime rangeStart, DateTime rangeEnd, PeriodTypeEnum from, PeriodTypeEnum to)
     {
-        var endCount = CountPeriods(rangeStart, rangeEnd, to);
-        var list = new List<int>(endCount);
-        var start = NormalizeStart(rangeStart, from);
+        if (to == PeriodTypeEnum.Custom)
+        {
+            var start = NormalizeStart(rangeStart, from);
+            var offset = (int)(rangeStart.Date - start.Date).TotalDays;
+            var endCount = CountPeriods(start, rangeEnd, to);
+            var list = new List<int>(endCount);
+
+            foreach (var value in data)
+            {
+                var next = AddPeriod(start, from, 1);
+                var small = NormalizeStart(start, to);
+                if (small < start)
+                    small = AddPeriod(small, to, 1);
+
+                for (; small < next && list.Count < endCount; small = AddPeriod(small, to, 1))
+                    list.Add(value);
+
+                if (list.Count >= endCount)
+                    break;
+
+                start = next;
+            }
+
+            if (list.Count < endCount)
+            {
+                var last = list.Count > 0 ? list[^1] : 0;
+                while (list.Count < endCount)
+                    list.Add(last);
+            }
+
+            if (offset > 0 && list.Count > offset)
+                list.RemoveRange(0, Math.Min(offset, list.Count));
+
+            var needed = CountPeriods(rangeStart, rangeEnd, to);
+            if (list.Count > needed)
+                list = list.Take(needed).ToList();
+
+            return list.ToArray();
+        }
+
+        var endCountDefault = CountPeriods(rangeStart, rangeEnd, to);
+        var listDefault = new List<int>(endCountDefault);
+        var startNorm = NormalizeStart(rangeStart, from);
 
         foreach (var value in data)
         {
-            var next = AddPeriod(start, from, 1);
-            var small = NormalizeStart(start, to);
-            if (small < start)
+            var next = AddPeriod(startNorm, from, 1);
+            var small = NormalizeStart(startNorm, to);
+            if (small < startNorm)
                 small = AddPeriod(small, to, 1);
 
-            for (; small < next && list.Count < endCount; small = AddPeriod(small, to, 1))
-                list.Add(value);
+            for (; small < next && listDefault.Count < endCountDefault; small = AddPeriod(small, to, 1))
+                listDefault.Add(value);
 
-            if (list.Count >= endCount)
+            if (listDefault.Count >= endCountDefault)
                 break;
 
-            start = next;
+            startNorm = next;
         }
 
-        if (list.Count < endCount)
+        if (listDefault.Count < endCountDefault)
         {
-            var last = list.Count > 0 ? list[^1] : 0;
-            while (list.Count < endCount)
-                list.Add(last);
+            var last = listDefault.Count > 0 ? listDefault[^1] : 0;
+            while (listDefault.Count < endCountDefault)
+                listDefault.Add(last);
         }
 
-        if (endCount >= 12)
-            return list.Skip(endCount - 12).Take(12).ToArray();
+        if (endCountDefault >= 12)
+            return listDefault.Skip(endCountDefault - 12).Take(12).ToArray();
 
         var result = new int[12];
-        list.CopyTo(result, 12 - endCount);
+        listDefault.CopyTo(result, 12 - endCountDefault);
         return result;
     }
 

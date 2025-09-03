@@ -6,6 +6,7 @@ using Reshebnik.Handlers.Company;
 using Reshebnik.Clickhouse.Handlers;
 using Reshebnik.Domain.Enums;
 using System.Collections.Concurrent;
+using System.Linq;
 
 namespace Reshebnik.Handlers.Metric;
 
@@ -94,7 +95,8 @@ public class UserPreviewMetricsHandler(
                 await sem.WaitAsync(ct);
                 try
                 {
-                    var expected = GetExpectedPeriod(periodType, metric.PeriodType);
+                    var needExpand = ComparePeriods(metric.PeriodType, periodType) > 0;
+                    var expected = needExpand ? metric.PeriodType : periodType;
                     var last12Range = BuildLast12Range(periodType, metric.PeriodType, range);
 
                     var last12Data = await fetchHandler.HandleAsync(
@@ -103,6 +105,37 @@ public class UserPreviewMetricsHandler(
                         expected,
                         metric.PeriodType,
                         ct);
+
+                    var plan = last12Data.PlanData;
+                    var fact = last12Data.FactData;
+
+                    if (needExpand)
+                    {
+                        plan = ExpandTo(plan, last12Range.From, range.To, expected, periodType);
+                        fact = ExpandTo(fact, last12Range.From, range.To, expected, periodType);
+                    }
+                    else if (periodType != PeriodTypeEnum.Custom)
+                    {
+                        if (plan.Length != 12) Array.Resize(ref plan, 12);
+                        if (fact.Length != 12) Array.Resize(ref fact, 12);
+                    }
+
+                    double?[] growth = [];
+                    if (metric.ShowGrowthPercent)
+                    {
+                        growth = new double?[fact.Length];
+                        if (metric.WeekType == WeekTypeEnum.Sliding)
+                        {
+                            for (var i = 7; i < growth.Length; i++)
+                                growth[i] = fact[i - 7] - fact[i];
+                        }
+                        else
+                        {
+                            var offset = metric.WeekStartDate ?? 0;
+                            for (var i = offset; i < growth.Length; i++)
+                                growth[i] = fact[i - offset] - fact[i];
+                        }
+                    }
 
                     var yearRange = new DateRange(
                         new DateTime(range.To.Year, 1, 1),
@@ -115,26 +148,9 @@ public class UserPreviewMetricsHandler(
                         metric.PeriodType,
                         ct);
 
-                    double?[] growth = [];
-                    if (metric.ShowGrowthPercent)
-                    {
-                        growth = new double?[last12Data.FactData.Length];
-                        if (metric.WeekType == WeekTypeEnum.Sliding)
-                        {
-                            for (var i = 7; i < growth.Length; i++)
-                                growth[i] = last12Data.FactData[i - 7] - last12Data.FactData[i];
-                        }
-                        else
-                        {
-                            var offset = metric.WeekStartDate ?? 0;
-                            for (var i = offset; i < growth.Length; i++)
-                                growth[i] = last12Data.FactData[i - offset] - last12Data.FactData[i];
-                        }
-                    }
-
                     metricCalcCache[metric.Id] = new MetricCalcResult(
-                        last12Data.PlanData,
-                        last12Data.FactData,
+                        plan,
+                        fact,
                         totalData.PlanData,
                         totalData.FactData,
                         growth
@@ -194,26 +210,23 @@ public class UserPreviewMetricsHandler(
         return result;
     }
 
-    private static PeriodTypeEnum GetExpectedPeriod(PeriodTypeEnum outer, PeriodTypeEnum metricPeriod)
-    {
-        if (metricPeriod == PeriodTypeEnum.Week && (outer == PeriodTypeEnum.Day || outer == PeriodTypeEnum.Custom))
-            return PeriodTypeEnum.Week;
-        return outer;
-    }
-
     private static DateRange BuildLast12Range(PeriodTypeEnum outer, PeriodTypeEnum metricPeriod, DateRange range)
     {
         // Logика идентична твоей, но вынесена в функцию для переиспользования
         return outer switch
         {
             PeriodTypeEnum.Day when metricPeriod == PeriodTypeEnum.Week =>
-                new DateRange(StartOfWeek(range.To.AddDays(-7 * 11), DayOfWeek.Monday), StartOfWeek(range.To, DayOfWeek.Monday)),
+                new DateRange(
+                    StartOfWeek(range.To.AddDays(-7 * 11), DayOfWeek.Monday),
+                    StartOfWeek(range.To, DayOfWeek.Monday).AddDays(6)),
 
             PeriodTypeEnum.Day =>
                 new DateRange(range.To.AddDays(-11), range.To),
 
             PeriodTypeEnum.Week =>
-                new DateRange(StartOfWeek(range.To.AddDays(-7 * 11), DayOfWeek.Monday), StartOfWeek(range.To, DayOfWeek.Monday)),
+                new DateRange(
+                    StartOfWeek(range.To.AddDays(-7 * 11), DayOfWeek.Monday),
+                    StartOfWeek(range.To, DayOfWeek.Monday).AddDays(6)),
 
             PeriodTypeEnum.Month =>
                 new DateRange(new DateTime(range.To.AddMonths(-11).Year, range.To.AddMonths(-11).Month, 1),
@@ -228,9 +241,137 @@ public class UserPreviewMetricsHandler(
             PeriodTypeEnum.Year =>
                 new DateRange(new DateTime(range.To.Year - 11, 1, 1), new DateTime(range.To.Year, 12, 31)),
 
+            PeriodTypeEnum.Custom when metricPeriod == PeriodTypeEnum.Week =>
+                new DateRange(
+                    StartOfWeek(range.From, DayOfWeek.Monday),
+                    StartOfWeek(range.To, DayOfWeek.Monday).AddDays(6)),
+
             _ => range
         };
     }
+
+    private static int ComparePeriods(PeriodTypeEnum a, PeriodTypeEnum b) => GetOrder(a).CompareTo(GetOrder(b));
+
+    private static int GetOrder(PeriodTypeEnum p) => p switch
+    {
+        PeriodTypeEnum.Day or PeriodTypeEnum.Custom => 0,
+        PeriodTypeEnum.Week => 1,
+        PeriodTypeEnum.Month => 2,
+        PeriodTypeEnum.Quartal => 3,
+        PeriodTypeEnum.Year => 4,
+        _ => 5
+    };
+
+    private static int[] ExpandTo(int[] data, DateTime rangeStart, DateTime rangeEnd, PeriodTypeEnum from, PeriodTypeEnum to)
+    {
+        if (to == PeriodTypeEnum.Custom)
+        {
+            var start = NormalizeStart(rangeStart, from);
+            var offset = (int)(rangeStart.Date - start.Date).TotalDays;
+            var endCount = CountPeriods(start, rangeEnd, to);
+            var list = new List<int>(endCount);
+
+            foreach (var value in data)
+            {
+                var next = AddPeriod(start, from, 1);
+                var small = NormalizeStart(start, to);
+                if (small < start)
+                    small = AddPeriod(small, to, 1);
+
+                for (; small < next && list.Count < endCount; small = AddPeriod(small, to, 1))
+                    list.Add(value);
+
+                if (list.Count >= endCount)
+                    break;
+
+                start = next;
+            }
+
+            if (list.Count < endCount)
+            {
+                var last = list.Count > 0 ? list[^1] : 0;
+                while (list.Count < endCount)
+                    list.Add(last);
+            }
+
+            if (offset > 0 && list.Count > offset)
+                list.RemoveRange(0, Math.Min(offset, list.Count));
+
+            var needed = CountPeriods(rangeStart, rangeEnd, to);
+            if (list.Count > needed)
+                list = list.Take(needed).ToList();
+
+            return list.ToArray();
+        }
+
+        var endCountDefault = CountPeriods(rangeStart, rangeEnd, to);
+        var listDefault = new List<int>(endCountDefault);
+        var startNorm = NormalizeStart(rangeStart, from);
+
+        foreach (var value in data)
+        {
+            var next = AddPeriod(startNorm, from, 1);
+            var small = NormalizeStart(startNorm, to);
+            if (small < startNorm)
+                small = AddPeriod(small, to, 1);
+
+            for (; small < next && listDefault.Count < endCountDefault; small = AddPeriod(small, to, 1))
+                listDefault.Add(value);
+
+            if (listDefault.Count >= endCountDefault)
+                break;
+
+            startNorm = next;
+        }
+
+        if (listDefault.Count < endCountDefault)
+        {
+            var last = listDefault.Count > 0 ? listDefault[^1] : 0;
+            while (listDefault.Count < endCountDefault)
+                listDefault.Add(last);
+        }
+
+        if (endCountDefault >= 12)
+            return listDefault.Skip(endCountDefault - 12).Take(12).ToArray();
+
+        var result = new int[12];
+        listDefault.CopyTo(result, 12 - endCountDefault);
+        return result;
+    }
+
+    private static DateTime AddPeriod(DateTime date, PeriodTypeEnum period, int amount) => period switch
+    {
+        PeriodTypeEnum.Day or PeriodTypeEnum.Custom => date.AddDays(amount),
+        PeriodTypeEnum.Week => date.AddDays(7 * amount),
+        PeriodTypeEnum.Month => date.AddMonths(amount),
+        PeriodTypeEnum.Quartal => date.AddMonths(3 * amount),
+        PeriodTypeEnum.Year => date.AddYears(amount),
+        _ => date
+    };
+
+    private static int CountPeriods(DateTime from, DateTime to, PeriodTypeEnum period)
+    {
+        from = NormalizeStart(from, period);
+        to = NormalizeStart(to, period);
+        return period switch
+        {
+            PeriodTypeEnum.Day or PeriodTypeEnum.Custom => (int)(to - from).TotalDays + 1,
+            PeriodTypeEnum.Week => (int)((to - from).TotalDays / 7) + 1,
+            PeriodTypeEnum.Month => (to.Year - from.Year) * 12 + to.Month - from.Month + 1,
+            PeriodTypeEnum.Quartal => ((to.Year - from.Year) * 12 + to.Month - from.Month) / 3 + 1,
+            PeriodTypeEnum.Year => to.Year - from.Year + 1,
+            _ => 1
+        };
+    }
+
+    private static DateTime NormalizeStart(DateTime start, PeriodTypeEnum period) => period switch
+    {
+        PeriodTypeEnum.Week => StartOfWeek(start, DayOfWeek.Monday),
+        PeriodTypeEnum.Month => new DateTime(start.Year, start.Month, 1),
+        PeriodTypeEnum.Quartal => new DateTime(start.Year, ((start.Month - 1) / 3) * 3 + 1, 1),
+        PeriodTypeEnum.Year => new DateTime(start.Year, 1, 1),
+        _ => start.Date
+    };
 
     private static DateTime StartOfWeek(DateTime date, DayOfWeek startOfWeek)
     {

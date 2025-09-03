@@ -56,7 +56,7 @@ public class DashboardGetHandler(
 
             foreach (var group in metricInfos.GroupBy(x => x.Request.ExpectedValues))
             {
-                var groupRange = BuildRangeForPeriod(range.To, group.Key);
+                var groupRange = periodType == PeriodTypeEnum.Custom ? range : BuildRangeForPeriod(range.To, group.Key);
                 rangeByPeriod[group.Key] = groupRange;
                 var groupMetrics = await companyMetricsHandler.HandleBulkAsync(
                     groupRange,
@@ -85,7 +85,7 @@ public class DashboardGetHandler(
                     plan = ExpandTo(plan, groupRange.From, range.To, info.Request.ExpectedValues, periodType);
                     fact = ExpandTo(fact, groupRange.From, range.To, info.Request.ExpectedValues, periodType);
                 }
-                else
+                else if (periodType != PeriodTypeEnum.Custom)
                 {
                     if (plan.Length != 12) Array.Resize(ref plan, 12);
                     if (fact.Length != 12) Array.Resize(ref fact, 12);
@@ -162,8 +162,18 @@ public class DashboardGetHandler(
             };
         });
 
-        dto.BestEmployees = employeeDtos.OrderByDescending(x => x.Average).Take(3).ToList();
-        dto.WorstEmployees = employeeDtos.OrderBy(x => x.Average).Take(3).ToList();
+        var bestEmployees = employeeDtos
+            .OrderByDescending(x => x.Average)
+            .Take(3)
+            .ToList();
+        var worstEmployees = employeeDtos
+            .Where(e => bestEmployees.All(b => b.Id != e.Id))
+            .OrderBy(x => x.Average)
+            .Take(3)
+            .ToList();
+
+        dto.BestEmployees = bestEmployees;
+        dto.WorstEmployees = worstEmployees;
 
         // ---------------------------
         // 3) Департаменты: минимизируем запросы и Contains на List
@@ -290,27 +300,62 @@ public class DashboardGetHandler(
 
     private static int[] ExpandTo(int[] data, DateTime rangeStart, DateTime rangeEnd, PeriodTypeEnum from, PeriodTypeEnum to)
     {
-        var list = new List<int>();
-        var start = NormalizeStart(rangeStart, from);
+        if (to == PeriodTypeEnum.Custom)
+        {
+            var start = NormalizeStart(rangeStart, from);
+            var offset = (int)(rangeStart.Date - start.Date).TotalDays;
+            var list = new List<int>();
+
+            foreach (var value in data)
+            {
+                var next = AddPeriod(start, from, 1);
+                var small = NormalizeStart(start, to);
+                if (small < start)
+                    small = AddPeriod(small, to, 1);
+
+                for (; small < next; small = AddPeriod(small, to, 1))
+                    list.Add(value);
+
+                start = next;
+            }
+
+            if (offset > 0 && list.Count > offset)
+                list.RemoveRange(0, Math.Min(offset, list.Count));
+
+            var needed = CountPeriods(rangeStart, rangeEnd, to);
+            if (list.Count > needed)
+                list = list.Take(needed).ToList();
+            else if (list.Count < needed)
+            {
+                var last = list.Count > 0 ? list[^1] : 0;
+                while (list.Count < needed)
+                    list.Add(last);
+            }
+
+            return list.ToArray();
+        }
+
+        var listDefault = new List<int>();
+        var startNorm = NormalizeStart(rangeStart, from);
         foreach (var value in data)
         {
-            var next = AddPeriod(start, from, 1);
-            var small = NormalizeStart(start, to);
-            if (small < start)
+            var next = AddPeriod(startNorm, from, 1);
+            var small = NormalizeStart(startNorm, to);
+            if (small < startNorm)
                 small = AddPeriod(small, to, 1);
             for (; small < next; small = AddPeriod(small, to, 1))
             {
-                list.Add(value);
+                listDefault.Add(value);
             }
-            start = next;
+            startNorm = next;
         }
 
-        var endCount = Math.Min(list.Count, CountPeriods(rangeStart, rangeEnd, to));
+        var endCount = Math.Min(listDefault.Count, CountPeriods(rangeStart, rangeEnd, to));
         if (endCount >= 12)
-            return list.Skip(endCount - 12).Take(12).ToArray();
+            return listDefault.Skip(endCount - 12).Take(12).ToArray();
 
         var result = new int[12];
-        list.Take(endCount).ToArray().CopyTo(result, 12 - endCount);
+        listDefault.Take(endCount).ToArray().CopyTo(result, 12 - endCount);
         return result;
     }
 

@@ -4,9 +4,9 @@ using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Department;
 using Reshebnik.Domain.Models.Metric;
-using Reshebnik.Domain.Extensions;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Metric;
+using System.Linq;
 
 namespace Reshebnik.Handlers.Department;
 
@@ -86,7 +86,7 @@ public class DepartmentPreviewHandler(
                             factSums[i] += fact[i];
                         }
 
-                        userSum += metric.GetCompletionPercent();
+                        userSum += CalcPercent(metric);
                         metricsCount++;
                         userMetricCount++;
                     }
@@ -102,20 +102,31 @@ public class DepartmentPreviewHandler(
                 : 0;
 
             dto.Supervisors = dto.Supervisors
+                .GroupBy(u => u.Id)
+                .Select(g => g.First())
                 .OrderByDescending(u => u.CompletionPercent)
                 .ToList();
             dto.Employees = dto.Employees
+                .GroupBy(u => u.Id)
+                .Select(g => g.First())
                 .OrderByDescending(u => u.CompletionPercent)
                 .ToList();
         }
 
         var allEmployees = dict.Values
             .SelectMany(v => v.Employees)
-            .Concat(dict.Values
-                .SelectMany(v => v.Supervisors))
+            .GroupBy(e => e.Id)
+            .Select(g => g.First())
             .ToList();
-        var best = allEmployees.OrderByDescending(e => e.CompletionPercent).Take(3).ToList();
-        var worst = allEmployees.OrderBy(e => e.CompletionPercent).Take(3).ToList();
+        var best = allEmployees
+            .OrderByDescending(e => e.CompletionPercent)
+            .Take(3)
+            .ToList();
+        var worst = allEmployees
+            .Where(e => best.All(b => b.Id != e.Id))
+            .OrderBy(e => e.CompletionPercent)
+            .Take(3)
+            .ToList();
 
         var rootDto = dict[id];
         rootDto.Children = childIds.Select(cid => dict[cid]).ToList();
@@ -131,10 +142,35 @@ public class DepartmentPreviewHandler(
                 PlanData = planAvg,
                 FactData = factAvg
             };
+            if (planAvg.Length > 0 && factAvg.Length > 0)
+                rootDto.CompletionPercent = CalcPercent(planAvg[^1], factAvg[^1]);
         }
 
         return rootDto;
     }
 
-}
+    private static double CalcPercent(UserPreviewMetricItemDto metric)
+    {
+        var fact = metric.Last12PointsFact;
+        var plan = metric.Last12PointsPlan;
+        var factValue = fact.Length > 0 ? fact[^1] : 0;
 
+        decimal planValue = metric.Type switch
+        {
+            MetricTypeEnum.PlanFact => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
+            MetricTypeEnum.FactOnly => metric.Plan ?? (plan.Length > 0 ? plan[^1] : 0),
+            MetricTypeEnum.Cumulative => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
+            _ => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0
+        };
+
+        return CalcPercent((int)planValue, factValue);
+    }
+
+    private static double CalcPercent(int planValue, int factValue)
+    {
+        if (planValue == 0) return 0;
+
+        var percent = (double)factValue / planValue * 100;
+        return double.IsFinite(percent) ? percent : 0;
+    }
+}
