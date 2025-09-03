@@ -4,6 +4,7 @@ using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Department;
 using Reshebnik.Domain.Models.Metric;
+using Reshebnik.Domain.Extensions;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Metric;
 
@@ -85,7 +86,7 @@ public class DepartmentPreviewHandler(
                             factSums[i] += fact[i];
                         }
 
-                        userSum += GetCompletionPercent(metric);
+                        userSum += metric.GetCompletionPercent();
                         metricsCount++;
                         userMetricCount++;
                     }
@@ -135,24 +136,5 @@ public class DepartmentPreviewHandler(
         return rootDto;
     }
 
-    private static double GetCompletionPercent(UserPreviewMetricItemDto metric)
-    {
-        var fact = metric.Last12PointsFact;
-        var plan = metric.Last12PointsPlan;
-        var factValue = fact.Length > 0 ? fact[^1] : 0;
-
-        decimal planValue = metric.Type switch
-        {
-            MetricTypeEnum.PlanFact => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
-            MetricTypeEnum.FactOnly => metric.Plan ?? (plan.Length > 0 ? plan[^1] : 0),
-            MetricTypeEnum.Cumulative => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
-            _ => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0
-        };
-
-        if (planValue == 0) return 0;
-
-        var percent = factValue / planValue * 100;
-        var doubleVal = (double)percent;
-        return double.IsFinite(doubleVal) ? (double)percent : 0;
-    }
 }
+

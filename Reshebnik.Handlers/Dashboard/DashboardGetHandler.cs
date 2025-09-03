@@ -8,6 +8,7 @@ using Reshebnik.Clickhouse.Handlers;
 using Reshebnik.Domain.Models.Metric;
 using Reshebnik.Handlers.Company;
 using Reshebnik.Handlers.Metric;
+using Reshebnik.Domain.Extensions;
 
 namespace Reshebnik.Handlers.Dashboard;
 
@@ -138,7 +139,7 @@ public class DashboardGetHandler(
                 int count = 0;
                 foreach (var metric in preview.Metrics)
                 {
-                    sum += GetCompletionPercent(metric);
+                    sum += metric.GetCompletionPercent();
                     count++;
                 }
                 employeeAverages[e.Id] = count > 0
@@ -226,27 +227,6 @@ public class DashboardGetHandler(
         }
 
         return dto;
-    }
-
-    private static double GetCompletionPercent(UserPreviewMetricItemDto metric)
-    {
-        var fact = metric.Last12PointsFact;
-        var plan = metric.Last12PointsPlan;
-        var factValue = fact.Length > 0 ? fact[^1] : 0;
-
-        decimal planValue = metric.Type switch
-        {
-            MetricTypeEnum.PlanFact => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
-            MetricTypeEnum.FactOnly => metric.Plan ?? (plan.Length > 0 ? plan[^1] : 0),
-            MetricTypeEnum.Cumulative => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
-            _ => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0
-        };
-
-        if (planValue == 0) return 0;
-
-        var percent = factValue / planValue * 100;
-        var doubleVal = (double)percent;
-        return double.IsFinite(doubleVal) ? (double)percent : 0;
     }
 
     private static DateRange BuildRangeForPeriod(DateTime to, PeriodTypeEnum period)
@@ -374,3 +354,4 @@ public class DashboardGetHandler(
         return date.Date.AddDays(-1 * diff);
     }
 }
+
