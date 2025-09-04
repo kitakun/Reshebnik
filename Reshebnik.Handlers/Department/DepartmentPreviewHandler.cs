@@ -4,10 +4,9 @@ using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Department;
 using Reshebnik.Domain.Models.Metric;
+using Reshebnik.Domain.Extensions;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Metric;
-
-using System.Collections.Concurrent;
 
 namespace Reshebnik.Handlers.Department;
 
@@ -156,7 +155,7 @@ public class DepartmentPreviewHandler(
                         factSums[i] += fact[i];
                     }
 
-                    userSum += CalcPercent(metric);
+                    userSum += metric.GetCompletionPercent();
                     userMetricCount++;
                     metricsCount++;
                 }
@@ -166,7 +165,7 @@ public class DepartmentPreviewHandler(
                     : 0;
             }
 
-            department.CompletionPercent = department.Depth > 0 && allUsers.Count > 0
+            department.CompletionPercent = allUsers.Count > 0
                 ? Math.Round(allUsers.Average(u => u.CompletionPercent), 0, MidpointRounding.ToZero)
                 : 0;
 
@@ -214,34 +213,8 @@ public class DepartmentPreviewHandler(
 
         rootDto.CompletionPercent = rootDto.Children.Count > 0
             ? Math.Round(rootDto.Children.Average(c => c.CompletionPercent), 0, MidpointRounding.ToZero)
-            : 0;
+            : rootDto.CompletionPercent;
 
         return rootDto;
-    }
-
-    // --- Helpers -------------------------------------------------------------
-
-    private static double CalcPercent(UserPreviewMetricItemDto metric)
-    {
-        var fact = metric.Last12PointsFact;
-        var plan = metric.Last12PointsPlan;
-        var factValue = fact.Length > 0 ? fact[^1] : 0;
-
-        decimal planValue = metric.Type switch
-        {
-            MetricTypeEnum.PlanFact   => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
-            MetricTypeEnum.FactOnly   => metric.Plan ?? (plan.Length > 0 ? plan[^1] : 0),
-            MetricTypeEnum.Cumulative => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
-            _                         => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0
-        };
-
-        return CalcPercent((int)planValue, factValue);
-    }
-
-    private static double CalcPercent(int planValue, int factValue)
-    {
-        if (planValue == 0) return 0;
-        var percent = (double)factValue / planValue * 100;
-        return double.IsFinite(percent) ? percent : 0;
     }
 }

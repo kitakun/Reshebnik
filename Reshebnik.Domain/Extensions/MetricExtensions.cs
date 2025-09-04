@@ -10,15 +10,13 @@ public static class MetricExtensions
     {
         decimal factValue;
         decimal? planValue;
-        bool hasFactData;
 
         if (metric.Period == PeriodTypeEnum.Year)
         {
             factValue = metric.TotalFactData.Sum(x => (decimal)x);
             planValue = metric.TotalPlanData.Sum(x => (decimal)x);
-            if (planValue == 0 && metric.Plan.HasValue)
+            if ((planValue == null || planValue == 0) && metric.Plan.HasValue)
                 planValue = metric.Plan;
-            hasFactData = metric.TotalFactData.Any(x => x != 0);
         }
         else
         {
@@ -27,37 +25,35 @@ public static class MetricExtensions
 
             factValue = factArray.Length > 0 ? (decimal)factArray[^1] : 0m;
             planValue = planArray.Length > 0 ? planArray[^1] : metric.Plan;
-            hasFactData = factArray.Length > 0 && factArray[^1] != 0;
         }
-
-        if (!hasFactData)
-            return 100;
 
         return CalcPercent(factValue, planValue, metric.Min, metric.Max, metric.Type);
     }
 
     public static double CalcPercent(decimal fact, decimal? plan, decimal? min, decimal? max, MetricTypeEnum type)
     {
-        if (type == MetricTypeEnum.FactOnly)
+        var planFilled = plan.HasValue && plan.Value != 0;
+        var minFilled = min.HasValue && min.Value != 0;
+        var maxFilled = max.HasValue && max.Value != 0;
+
+        if (type == MetricTypeEnum.FactOnly || (!planFilled && !minFilled && !maxFilled))
         {
-            return fact > 0 ? 100 : 0;
+            return fact == 0 ? 0 : 100;
         }
 
-        if (min.HasValue && max.HasValue && max.Value > min.Value)
-        {
-            var denominator = max.Value - min.Value;
-            if (denominator == 0) return 0;
-            var percent = (fact - min.Value) / denominator * 100;
-            return double.IsFinite((double)percent) ? (double)percent : 0;
-        }
-
-        if (plan.HasValue && plan.Value > 0)
+        if (planFilled)
         {
             var percent = fact / plan.Value * 100;
             return double.IsFinite((double)percent) ? (double)percent : 0;
         }
 
-        return 100;
+        if (!planFilled && maxFilled)
+        {
+            var percent = fact / max.Value * 100;
+            return double.IsFinite((double)percent) ? (double)percent : 0;
+        }
+
+        return fact == 0 ? 0 : 100;
     }
 }
 
