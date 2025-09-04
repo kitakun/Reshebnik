@@ -200,12 +200,30 @@ public class UserPreviewMetricsHandler(
                     TotalFactData = calc.TotalFact,
                     GrowthPercent = calc.Growth,
                     Period = m.PeriodType,
-                    Type = m.Type
+                    Type = m.Type,
+                    MetricType = ArchiveMetricTypeEnum.Employee
                 });
             }
 
             result[e.Id] = dto;
         }
+
+        return result;
+    }
+
+    public async ValueTask<Dictionary<int, List<UserPreviewMetricItemDto>>> HandleBulkItemsAsync(
+        IEnumerable<int> userIds,
+        DateRange range,
+        PeriodTypeEnum periodType,
+        CancellationToken ct = default)
+    {
+        // Reuse the existing bulk method to compute everything once
+        var full = await HandleBulkAsync(userIds, range, periodType, ct);
+
+        // Project to the lean structure expected by DepartmentPreviewHandler
+        var result = new Dictionary<int, List<UserPreviewMetricItemDto>>(full.Count);
+        foreach (var kv in full)
+            result[kv.Key] = kv.Value.Metrics; // same list reference is fine (read-only downstream)
 
         return result;
     }

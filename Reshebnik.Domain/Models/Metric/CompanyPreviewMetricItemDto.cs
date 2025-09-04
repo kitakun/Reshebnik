@@ -1,3 +1,5 @@
+using Reshebnik.Domain.Enums;
+
 namespace Reshebnik.Domain.Models.Metric;
 
 public class CompanyPreviewMetricItemDto
@@ -12,4 +14,5 @@ public class CompanyPreviewMetricItemDto
     public int[] Last12PointsPlan { get; set; } = [];
     public int[] Last12PointsFact { get; set; } = [];
     public bool IsArchived { get; set; }
+    public ArchiveMetricTypeEnum MetricType { get; set; }
 }

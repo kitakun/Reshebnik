@@ -10,7 +10,7 @@ namespace Reshebnik.EntityFramework.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-migrationBuilder.Sql("""
+            migrationBuilder.Sql("""
                                  INSERT INTO public."companies" (
                                      "name",
                                      "industry",
@@ -48,7 +48,7 @@ migrationBuilder.Sql("""
                                      SELECT 1 FROM public."companies" WHERE "name" = 'SuperCompany'
                                  );
                                  """);
-            
+
             migrationBuilder.Sql("""
                              INSERT INTO public."employees" (
                                  "Id", 

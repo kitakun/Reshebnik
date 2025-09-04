@@ -26,7 +26,7 @@ public class EmployeeDepartmentLinkEntityConfiguration : IEntityTypeConfiguratio
         builder.Property(e => e.DepartmentId)
             .HasColumnName("department_id")
             .IsRequired();
-        
+
         builder.Property(e => e.Type)
             .HasColumnName("type")
             .HasConversion<string>()

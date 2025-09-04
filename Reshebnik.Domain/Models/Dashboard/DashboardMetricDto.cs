@@ -10,4 +10,5 @@ public class DashboardMetricDto
     public int[] Fact { get; set; } = [];
     public PeriodTypeEnum PeriodType { get; set; }
     public bool IsArchived { get; set; }
+    public ArchiveMetricTypeEnum MetricType { get; set; }
 }

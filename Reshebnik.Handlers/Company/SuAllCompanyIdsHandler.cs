@@ -12,5 +12,5 @@ public class SuAllCompanyIdsHandler(ReshebnikContext dbContext)
             .Companies
             .AsNoTracking()
             .ToDictionaryAsync(s => s.Id, v => v.Name, cancellationToken: cancellationToken);
-    }   
+    }
 }

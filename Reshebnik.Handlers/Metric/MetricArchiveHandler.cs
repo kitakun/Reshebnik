@@ -60,7 +60,7 @@ public class MetricArchiveHandler(
                     ArchivedAt = DateTime.UtcNow,
                     ArchivedByUserId = userContext.CurrentUserId
                 };
-                
+
                 companyMetric.IsArchived = true;
                 companyMetric.ArchivedMetric = archivedCompany;
 
@@ -69,7 +69,7 @@ public class MetricArchiveHandler(
             default:
                 throw new ArgumentOutOfRangeException(nameof(dto.MetricType));
         }
-        
+
         await db.SaveChangesAsync(ct);
     }
 

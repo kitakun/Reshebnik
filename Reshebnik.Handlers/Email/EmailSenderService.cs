@@ -25,14 +25,14 @@ public class EmailSenderService(
                 await using var scope = serviceProvider.CreateAsyncScope();
                 var queue = scope.ServiceProvider.GetRequiredService<IEmailQueue>();
                 email = await queue.DequeueAsync(stoppingToken);
-                if(email == null) continue;
+                if (email == null) continue;
                 await emailSender.SendEmailAsync(email, stoppingToken);
-                
+
                 var db = scope.ServiceProvider.GetRequiredService<ReshebnikContext>();
                 email = await db.EmailQueue.FirstAsync(f => f.Id == email.Id, cancellationToken: CancellationToken.None);
                 email.SentAt = DateTime.UtcNow;
                 email.IsSent = true;
-                
+
                 await db.SaveChangesAsync(stoppingToken);
             }
             catch (OperationCanceledException)

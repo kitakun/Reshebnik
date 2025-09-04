@@ -83,7 +83,8 @@ public class CompanyPreviewMetricsHandler(
             Last12PointsFact = fact,
             TotalPlanData = totalData.PlanData,
             TotalFactData = totalData.FactData,
-            IsArchived = false
+            IsArchived = false,
+            MetricType = ArchiveMetricTypeEnum.Company
         };
 
         return dto;

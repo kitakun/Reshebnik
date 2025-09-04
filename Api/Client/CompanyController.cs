@@ -27,7 +27,7 @@ public class CompanyController : ControllerBase
         {
             return Ok(await suHandler.HandleAsync(companyId.Value, cancellationToken));
         }
-        
+
         var result = await handler.HandleAsync(cancellationToken);
         if (result == null) return Forbid();
         return Ok(result);
@@ -48,7 +48,7 @@ public class CompanyController : ControllerBase
             await suHandler.HandleAsync(companyId.Value, request, cancellationToken);
             return Ok();
         }
-        
+
         await handler.HandleAsync(request, cancellationToken);
         return Ok();
     }

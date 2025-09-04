@@ -50,7 +50,7 @@ public class EmailMessageEntityConfiguration : IEntityTypeConfiguration<EmailMes
             nav.Property(a => a.FileName).IsRequired();
             nav.Property(a => a.Content).IsRequired();
             nav.Property(a => a.ContentType).HasDefaultValue("application/octet-stream");
-            
+
             builder.HasOne(e => e.SentByCompany)
                 .WithMany()
                 .HasForeignKey(e => e.SentByCompanyId);

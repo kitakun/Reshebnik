@@ -6,7 +6,8 @@ using Reshebnik.Domain.Models.Department;
 using Reshebnik.Domain.Models.Metric;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Metric;
-using System.Linq;
+
+using System.Collections.Concurrent;
 
 namespace Reshebnik.Handlers.Department;
 
@@ -14,129 +15,196 @@ public class DepartmentPreviewHandler(
     ReshebnikContext db,
     UserPreviewMetricsHandler userMetricsHandler)
 {
-    public async ValueTask<DepartmentPreviewDto?> HandleAsync(int id, DateRange range, PeriodTypeEnum periodType, CancellationToken ct = default)
+    public async ValueTask<DepartmentPreviewDto?> HandleAsync(
+        int id,
+        DateRange range,
+        PeriodTypeEnum periodType,
+        CancellationToken ct = default)
     {
+        // 1) Fetch the root + its direct children (by schema) in one shot
+        var childIdsQuery = db.DepartmentSchemas
+            .AsNoTracking()
+            .Where(s => s.AncestorDepartmentId == id && s.Depth == 1)
+            .Select(s => s.DepartmentId);
+
         var departments = await db.Departments
             .AsNoTracking()
-            .Where(d => !d.IsDeleted && (d.Id == id || db.DepartmentSchemas.Any(s => s.AncestorDepartmentId == id && s.Depth == 1 && s.DepartmentId == d.Id)))
+            .Where(d => !d.IsDeleted && (d.Id == id || childIdsQuery.Contains(d.Id)))
+            .Select(d => new { d.Id, d.Name })
             .ToListAsync(ct);
+
         if (departments.Count == 0) return null;
 
-        var childIds = departments.Where(d => d.Id != id).Select(d => d.Id).ToList();
+        var deptIds = departments.Select(d => d.Id).ToArray();
+        var childIds = departments.Where(d => d.Id != id).Select(d => d.Id).ToArray();
 
-        var deptIds = departments.Select(d => d.Id).ToList();
-
+        // 2) Fetch links with only needed employee fields (no Include)
         var links = await db.EmployeeDepartmentLinks
             .AsNoTracking()
-            .Include(l => l.Employee)
             .Where(l => deptIds.Contains(l.DepartmentId))
+            .Select(l => new
+            {
+                l.DepartmentId,
+                l.EmployeeId,
+                l.Type,
+                Fio = l.Employee.FIO,
+                JobTitle = l.Employee.JobTitle
+            })
             .ToListAsync(ct);
 
-        var dict = departments.ToDictionary(d => d.Id, d => new DepartmentPreviewDto
-        {
-            Id = d.Id,
-            Name = d.Name,
-            Depth = d.Id == id ? 0 : 1,
-            CompletionPercent = 0,
-            Metrics = new DepartmentPreviewMetricsDto()
-        });
-
-        foreach (var link in links)
-        {
-            var userDto = new DepartmentPreviewUserDto
+        // 3) Build base dict (no duplicates later)
+        var dict = departments.ToDictionary(
+            d => d.Id,
+            d => new DepartmentPreviewDto
             {
-                Id = link.EmployeeId,
-                Fio = link.Employee.FIO,
-                JobTitle = link.Employee.JobTitle,
-                IsSupervisor = link.Type == EmployeeTypeEnum.Supervisor,
+                Id = d.Id,
+                Name = d.Name,
+                Depth = d.Id == id ? 0 : 1,
+                CompletionPercent = 0,
+                Metrics = new DepartmentPreviewMetricsDto()
+            });
+
+        // 4) Map unique users to departments
+        //    Use HashSet per dept to dedupe quickly.
+        var seenSupervisorByDept = deptIds.ToDictionary(k => k, _ => new HashSet<int>());
+        var seenEmployeeByDept = deptIds.ToDictionary(k => k, _ => new HashSet<int>());
+
+        foreach (var l in links)
+        {
+            var dto = new DepartmentPreviewUserDto
+            {
+                Id = l.EmployeeId,
+                Fio = l.Fio,
+                JobTitle = l.JobTitle,
+                IsSupervisor = l.Type == EmployeeTypeEnum.Supervisor,
                 CompletionPercent = 0
             };
 
-            if (link.Type == EmployeeTypeEnum.Supervisor)
-                dict[link.DepartmentId].Supervisors.Add(userDto);
+            if (dto.IsSupervisor)
+            {
+                if (seenSupervisorByDept[l.DepartmentId].Add(dto.Id))
+                    dict[l.DepartmentId].Supervisors.Add(dto);
+            }
             else
-                dict[link.DepartmentId].Employees.Add(userDto);
+            {
+                if (seenEmployeeByDept[l.DepartmentId].Add(dto.Id))
+                    dict[l.DepartmentId].Employees.Add(dto);
+            }
         }
 
+        // 5) Collect all distinct user ids once
+        var allUserIds = dict.Values
+            .SelectMany(v => v.Supervisors.Concat(v.Employees))
+            .Select(u => u.Id)
+            .Distinct()
+            .ToArray();
+
+        if (allUserIds.Length == 0)
+        {
+            var emptyRoot = dict[id];
+            emptyRoot.Children = childIds.Select(cid => dict[cid]).ToList();
+            emptyRoot.BestEmployees = [];
+            emptyRoot.WorstEmployees = [];
+            emptyRoot.CompletionPercent = 0;
+            return emptyRoot;
+        }
+
+        // 6) Fetch metrics in parallel with bounded concurrency
+        var userMetrics = await userMetricsHandler.HandleBulkItemsAsync(
+            userIds: allUserIds,
+            range,
+            periodType,
+            ct);
+
+        // 7) Compute per-user completion and aggregate plan/fact for department+root
         double[]? planSums = null;
         double[]? factSums = null;
         var metricsCount = 0;
 
-        foreach (var dto in dict.Values)
+        // Make a quick lookup to avoid repeated LINQ
+        var metricsByUser = userMetrics;
+
+        foreach (var department in dict.Values)
         {
-            var allUsers = dto.Supervisors.Concat(dto.Employees).ToList();
+            var allUsers = department.Supervisors.Count == 0
+                ? department.Employees
+                : department.Supervisors.Concat(department.Employees).ToList();
+
             foreach (var user in allUsers)
             {
-                var metricsDto = await userMetricsHandler.HandleAsync(user.Id, range, periodType, ct);
-                if (metricsDto != null && metricsDto.Metrics.Count > 0)
+                if (!metricsByUser.TryGetValue(user.Id, out var userItems) || userItems.Count == 0)
                 {
-                    double userSum = 0;
-                    var userMetricCount = 0;
+                    user.CompletionPercent = 0;
+                    continue;
+                }
 
-                    foreach (var metric in metricsDto.Metrics)
+                double userSum = 0;
+                int userMetricCount = 0;
+
+                foreach (var metric in userItems)
+                {
+                    var plan = metric.Last12PointsPlan;
+                    var fact = metric.Last12PointsFact;
+
+                    planSums ??= new double[plan.Length];
+                    factSums ??= new double[fact.Length];
+
+                    var len = Math.Min(planSums.Length, Math.Min(plan.Length, fact.Length));
+                    for (int i = 0; i < len; i++)
                     {
-                        var plan = metric.Last12PointsPlan;
-                        var fact = metric.Last12PointsFact;
-                        planSums ??= new double[plan.Length];
-                        factSums ??= new double[fact.Length];
-                        var len = Math.Min(planSums.Length, Math.Min(plan.Length, fact.Length));
-                        for (var i = 0; i < len; i++)
-                        {
-                            planSums[i] += plan[i];
-                            factSums[i] += fact[i];
-                        }
-
-                        userSum += CalcPercent(metric);
-                        metricsCount++;
-                        userMetricCount++;
+                        planSums[i] += plan[i];
+                        factSums[i] += fact[i];
                     }
 
-                    user.CompletionPercent = userMetricCount > 0
-                        ? Math.Round(userSum / userMetricCount, 0, MidpointRounding.ToZero)
-                        : 0;
+                    userSum += CalcPercent(metric);
+                    userMetricCount++;
+                    metricsCount++;
                 }
+
+                user.CompletionPercent = userMetricCount > 0
+                    ? Math.Round(userSum / userMetricCount, 0, MidpointRounding.ToZero)
+                    : 0;
             }
 
-            dto.CompletionPercent = dto.Depth > 0 && allUsers.Count > 0
+            department.CompletionPercent = department.Depth > 0 && allUsers.Count > 0
                 ? Math.Round(allUsers.Average(u => u.CompletionPercent), 0, MidpointRounding.ToZero)
                 : 0;
 
-            dto.Supervisors = dto.Supervisors
-                .GroupBy(u => u.Id)
-                .Select(g => g.First())
-                .OrderByDescending(u => u.CompletionPercent)
-                .ToList();
-            dto.Employees = dto.Employees
-                .GroupBy(u => u.Id)
-                .Select(g => g.First())
-                .OrderByDescending(u => u.CompletionPercent)
-                .ToList();
+            // Sorted lists without extra GroupBy/First
+            department.Supervisors.Sort((a, b) => b.CompletionPercent.CompareTo(a.CompletionPercent));
+            department.Employees.Sort((a, b) => b.CompletionPercent.CompareTo(a.CompletionPercent));
         }
 
+        // 8) Best / Worst across unique employees
         var allEmployees = dict.Values
             .SelectMany(v => v.Employees)
             .GroupBy(e => e.Id)
             .Select(g => g.First())
             .ToList();
+
         var best = allEmployees
             .OrderByDescending(e => e.CompletionPercent)
             .Take(3)
             .ToList();
+
+        var bestIds = best.Select(b => b.Id).ToHashSet();
+
         var worst = allEmployees
-            .Where(e => best.All(b => b.Id != e.Id))
+            .Where(e => !bestIds.Contains(e.Id))
             .OrderBy(e => e.CompletionPercent)
             .Take(3)
             .ToList();
 
+        // 9) Root assembly
         var rootDto = dict[id];
         rootDto.Children = childIds.Select(cid => dict[cid]).ToList();
         rootDto.BestEmployees = best;
         rootDto.WorstEmployees = worst;
 
-        if (metricsCount > 0 && planSums != null && factSums != null)
+        if (metricsCount > 0 && planSums is not null && factSums is not null)
         {
-            var planAvg = planSums.Select(s => (int)Math.Round(s / metricsCount, 0, MidpointRounding.ToZero)).ToArray();
-            var factAvg = factSums.Select(s => (int)Math.Round(s / metricsCount, 0, MidpointRounding.ToZero)).ToArray();
+            var planAvg = Array.ConvertAll(planSums, s => (int)Math.Round(s / metricsCount, 0, MidpointRounding.ToZero));
+            var factAvg = Array.ConvertAll(factSums, s => (int)Math.Round(s / metricsCount, 0, MidpointRounding.ToZero));
             rootDto.Metrics = new DepartmentPreviewMetricsDto
             {
                 PlanData = planAvg,
@@ -151,6 +219,8 @@ public class DepartmentPreviewHandler(
         return rootDto;
     }
 
+    // --- Helpers -------------------------------------------------------------
+
     private static double CalcPercent(UserPreviewMetricItemDto metric)
     {
         var fact = metric.Last12PointsFact;
@@ -159,10 +229,10 @@ public class DepartmentPreviewHandler(
 
         decimal planValue = metric.Type switch
         {
-            MetricTypeEnum.PlanFact => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
-            MetricTypeEnum.FactOnly => metric.Plan ?? (plan.Length > 0 ? plan[^1] : 0),
+            MetricTypeEnum.PlanFact   => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
+            MetricTypeEnum.FactOnly   => metric.Plan ?? (plan.Length > 0 ? plan[^1] : 0),
             MetricTypeEnum.Cumulative => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0,
-            _ => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0
+            _                         => plan.Length > 0 ? plan[^1] : metric.Plan ?? 0
         };
 
         return CalcPercent((int)planValue, factValue);
@@ -171,7 +241,6 @@ public class DepartmentPreviewHandler(
     private static double CalcPercent(int planValue, int factValue)
     {
         if (planValue == 0) return 0;
-
         var percent = (double)factValue / planValue * 100;
         return double.IsFinite(percent) ? percent : 0;
     }

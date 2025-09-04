@@ -20,4 +20,5 @@ public class MetricDto
     public decimal? Max { get; set; }
     public bool Visible { get; set; }
     public bool IsArchived { get; set; }
+    public ArchiveMetricTypeEnum MetricType { get; set; }
 }

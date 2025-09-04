@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Reshebnik.Domain.Models.Metric;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
+using Reshebnik.Domain.Enums;
 using System.Linq;
 
 namespace Reshebnik.Handlers.Metric;
@@ -39,7 +40,8 @@ public class MetricGetHandler(
             WeekStartDate = metrics.WeekStartDate.HasValue
                 ? DateTime.UtcNow.Date.AddDays(-metrics.WeekStartDate.Value)
                 : null,
-            ShowGrowthPercent = metrics.ShowGrowthPercent
+            ShowGrowthPercent = metrics.ShowGrowthPercent,
+            MetricType = ArchiveMetricTypeEnum.Employee
         };
     }
 
@@ -72,7 +74,8 @@ public class MetricGetHandler(
             WeekStartDate = m.WeekStartDate.HasValue
                 ? DateTime.UtcNow.Date.AddDays(-m.WeekStartDate.Value)
                 : null,
-            ShowGrowthPercent = m.ShowGrowthPercent
+            ShowGrowthPercent = m.ShowGrowthPercent,
+            MetricType = ArchiveMetricTypeEnum.Employee
         }).ToList();
     }
 }

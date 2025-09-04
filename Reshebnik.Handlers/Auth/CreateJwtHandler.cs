@@ -36,7 +36,7 @@ public class CreateJwtHandler(IConfiguration configuration)
         );
 
         var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-        
+
         user.Password = null!;
         user.Salt = null!;
         // TODO separate modal

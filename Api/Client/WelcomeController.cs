@@ -16,7 +16,7 @@ public class WelcomeController(WelcomeHandler handler) : ControllerBase
     {
         return await handler.HandleGetStatus();
     }
-    
+
     [HttpPut]
     public async Task SetWelcomeWasSeen()
     {

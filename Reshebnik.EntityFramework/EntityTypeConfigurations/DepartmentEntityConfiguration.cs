@@ -43,7 +43,7 @@ public class DepartmentEntityConfiguration : IEntityTypeConfiguration<Department
         builder.HasOne(o => o.Company)
             .WithMany(m => m.Departments)
             .HasForeignKey(k => k.CompanyId);
-        
+
         builder.HasMany(d => d.LinkEntities)
             .WithOne(e => e.Department)
             .HasForeignKey(e => e.DepartmentId)

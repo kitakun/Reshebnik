@@ -105,7 +105,8 @@ public class DashboardGetHandler(
                         Plan = plan,
                         Fact = fact,
                         PeriodType = periodType,
-                        IsArchived = false
+                        IsArchived = false,
+                        MetricType = ArchiveMetricTypeEnum.Company
                     });
                 }
             }

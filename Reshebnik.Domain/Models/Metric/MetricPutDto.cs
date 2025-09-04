@@ -20,4 +20,5 @@ public class MetricPutDto
     public decimal? Max { get; set; }
     public bool Visible { get; set; }
     public bool IsSupervisor { get; set; }
+    public ArchiveMetricTypeEnum MetricType { get; set; }
 }

@@ -21,7 +21,7 @@ public class EmployeesController : ControllerBase
         var result = await handler.HandleAsync(request, cancellationToken);
         return Ok(result);
     }
-    
+
     [HttpGet]
     public async Task<IActionResult> GetAsync(
         [FromQuery] TypeaheadRequest request,

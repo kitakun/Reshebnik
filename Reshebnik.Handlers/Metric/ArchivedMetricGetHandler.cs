@@ -93,7 +93,8 @@ public class ArchivedMetricGetHandler(
                         WeekStartDate = metric.WeekStartDate.HasValue
                             ? DateTime.UtcNow.Date.AddDays(-metric.WeekStartDate.Value)
                             : null,
-                        ShowGrowthPercent = metric.ShowGrowthPercent
+                        ShowGrowthPercent = metric.ShowGrowthPercent,
+                        MetricType = ArchiveMetricTypeEnum.Employee
                     },
                     Last12PointsPlan = plan,
                     Last12PointsFact = fact
@@ -112,8 +113,8 @@ public class ArchivedMetricGetHandler(
                 var dataCompany = await companyMetricsHandler.HandleAsync(
                     last12RangeCompany,
                     indicatorMetric.Id,
-                    (FillmentPeriodWrapper) indicatorMetric.FillmentPeriod,
-                    (FillmentPeriodWrapper) indicatorMetric.FillmentPeriod,
+                    (FillmentPeriodWrapper)indicatorMetric.FillmentPeriod,
+                    (FillmentPeriodWrapper)indicatorMetric.FillmentPeriod,
                     ct);
                 plan = dataCompany.PlanData;
                 fact = dataCompany.FactData;

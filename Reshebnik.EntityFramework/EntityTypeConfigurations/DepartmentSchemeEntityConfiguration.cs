@@ -14,7 +14,7 @@ public class DepartmentSchemeEntityConfiguration : IEntityTypeConfiguration<Depa
         builder.HasKey(e => e.Id);
 
         builder.HasIndex(i => new { i.FundamentalDepartmentId, i.DepartmentId, i.AncestorDepartmentId });
-        
+
         builder.Property(e => e.Id)
             .HasColumnName("id")
             .ValueGeneratedOnAdd();

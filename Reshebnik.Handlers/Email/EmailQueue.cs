@@ -19,7 +19,7 @@ public class EfEmailQueue(ReshebnikContext db) : IEmailQueue
     {
         return new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
     }
-    
+
     public async Task EnqueueAsync(EmailMessageEntity message)
     {
         db.EmailQueue.Add(message);

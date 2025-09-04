@@ -22,7 +22,7 @@ public class MigrateClickhouseDatabase(IOptions<ClickhouseOptions> optionsAccess
             Protocol = "http",
         };
         var connStr = builder.ToString();
-        
+
         await using var connection = new ClickHouseConnection(connStr);
         await connection.OpenAsync();
 

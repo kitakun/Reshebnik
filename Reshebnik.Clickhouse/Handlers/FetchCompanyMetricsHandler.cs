@@ -187,7 +187,7 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         }
 
         if (valueType == MetricValueTypeEnum.Plan) planVal = value;
-        else                                       factVal = value;
+        else factVal = value;
 
         // delete + insert (см. заметки)
         var deleteSql = $"""
@@ -220,43 +220,43 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         start = NormalizeStart(start, expected);
         return expected switch
         {
-            PeriodTypeEnum.Day     => (int)(date.Date - start).TotalDays,
-            PeriodTypeEnum.Custom  => (int)(date.Date - start).TotalDays,
-            PeriodTypeEnum.Week    => (int)((date.Date - start).TotalDays / 7),
-            PeriodTypeEnum.Month   => (date.Year - start.Year) * 12 + date.Month - start.Month,
+            PeriodTypeEnum.Day => (int)(date.Date - start).TotalDays,
+            PeriodTypeEnum.Custom => (int)(date.Date - start).TotalDays,
+            PeriodTypeEnum.Week => (int)((date.Date - start).TotalDays / 7),
+            PeriodTypeEnum.Month => (date.Year - start.Year) * 12 + date.Month - start.Month,
             PeriodTypeEnum.Quartal => ((date.Year - start.Year) * 12 + date.Month - start.Month) / 3,
-            PeriodTypeEnum.Year    => date.Year - start.Year,
-            _                      => -1
+            PeriodTypeEnum.Year => date.Year - start.Year,
+            _ => -1
         };
     }
 
     private static DateTime NormalizeStart(DateTime start, PeriodTypeEnum expected) => expected switch
     {
-        PeriodTypeEnum.Week    => StartOfWeek(start, DayOfWeek.Monday),
-        PeriodTypeEnum.Month   => new DateTime(start.Year, start.Month, 1),
+        PeriodTypeEnum.Week => StartOfWeek(start, DayOfWeek.Monday),
+        PeriodTypeEnum.Month => new DateTime(start.Year, start.Month, 1),
         PeriodTypeEnum.Quartal => new DateTime(start.Year, ((start.Month - 1) / 3) * 3 + 1, 1),
-        PeriodTypeEnum.Year    => new DateTime(start.Year, 1, 1),
-        _                      => start.Date
+        PeriodTypeEnum.Year => new DateTime(start.Year, 1, 1),
+        _ => start.Date
     };
 
     private static int GetPeriodLength(PeriodTypeEnum expected, DateRange range) => expected switch
     {
-        PeriodTypeEnum.Day     => (int)(range.To.Date - range.From.Date).TotalDays + 1,
-        PeriodTypeEnum.Custom  => (int)(range.To.Date - range.From.Date).TotalDays + 1,
-        PeriodTypeEnum.Week    => GetWeekDiff(range.From.Date, range.To.Date),
-        PeriodTypeEnum.Month   => 12,
+        PeriodTypeEnum.Day => (int)(range.To.Date - range.From.Date).TotalDays + 1,
+        PeriodTypeEnum.Custom => (int)(range.To.Date - range.From.Date).TotalDays + 1,
+        PeriodTypeEnum.Week => GetWeekDiff(range.From.Date, range.To.Date),
+        PeriodTypeEnum.Month => 12,
         PeriodTypeEnum.Quartal => GetQuartalDiff(range.From.Date, range.To.Date),
-        PeriodTypeEnum.Year    => GetYearDiff(range.From.Date, range.To.Date),
-        _                      => 1
+        PeriodTypeEnum.Year => GetYearDiff(range.From.Date, range.To.Date),
+        _ => 1
     };
 
-    private static int GetYearDiff(DateTime from, DateTime to)    => to.Year - from.Year + 1;
+    private static int GetYearDiff(DateTime from, DateTime to) => to.Year - from.Year + 1;
     private static int GetQuartalDiff(DateTime from, DateTime to) => ((to.Year - from.Year) * 12 + to.Month - from.Month) / 3 + 1;
 
     private static int GetWeekDiff(DateTime from, DateTime to)
     {
         from = StartOfWeek(from, DayOfWeek.Monday);
-        to   = StartOfWeek(to, DayOfWeek.Monday);
+        to = StartOfWeek(to, DayOfWeek.Monday);
         return (int)((to - from).TotalDays / 7) + 1;
     }
 
