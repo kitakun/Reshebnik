@@ -97,7 +97,7 @@ public class DepartmentPreviewHandler(
                 }
             }
 
-            dto.CompletionPercent = allUsers.Count > 0
+            dto.CompletionPercent = dto.Depth > 0 && allUsers.Count > 0
                 ? Math.Round(allUsers.Average(u => u.CompletionPercent), 0, MidpointRounding.ToZero)
                 : 0;
 
@@ -142,9 +142,11 @@ public class DepartmentPreviewHandler(
                 PlanData = planAvg,
                 FactData = factAvg
             };
-            if (planAvg.Length > 0 && factAvg.Length > 0)
-                rootDto.CompletionPercent = CalcPercent(planAvg[^1], factAvg[^1]);
         }
+
+        rootDto.CompletionPercent = rootDto.Children.Count > 0
+            ? Math.Round(rootDto.Children.Average(c => c.CompletionPercent), 0, MidpointRounding.ToZero)
+            : 0;
 
         return rootDto;
     }
