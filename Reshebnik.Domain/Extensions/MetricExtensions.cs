@@ -31,28 +31,24 @@ public static class MetricExtensions
 
     public static double CalcPercent(decimal fact, decimal? plan, decimal? min, decimal? max, MetricTypeEnum type)
     {
-        var planFilled = plan.HasValue && plan.Value != 0;
-        var minFilled = min.HasValue && min.Value != 0;
-        var maxFilled = max.HasValue && max.Value != 0;
+        var planFilled = plan.HasValue && plan.Value != 0m;
+        var minFilled  = min.HasValue  && min.Value  != 0m;
+        var maxFilled  = max.HasValue  && max.Value  != 0m;
 
+        // if type is FactOnly OR plan/min/max all empty -> 0% when fact==0, else 100%
         if (type == MetricTypeEnum.FactOnly || (!planFilled && !minFilled && !maxFilled))
-        {
-            return fact == 0 ? 0 : 100;
-        }
+            return fact == 0m ? 0d : 100d;
 
-        if (planFilled)
-        {
-            var percent = fact / plan.Value * 100;
-            return double.IsFinite((double)percent) ? (double)percent : 0;
-        }
+        // plan wins when present and non-zero
+        if (planFilled && plan.HasValue)
+            return (double)(fact / plan.Value * 100m);
 
-        if (!planFilled && maxFilled)
-        {
-            var percent = fact / max.Value * 100;
-            return double.IsFinite((double)percent) ? (double)percent : 0;
-        }
+        // otherwise, if max present -> fact/max * 100
+        if (!planFilled && maxFilled && max.HasValue)
+            return (double)(fact / max.Value * 100m);
 
-        return fact == 0 ? 0 : 100;
+        // fallback
+        return fact == 0m ? 0d : 100d;
     }
 }
 

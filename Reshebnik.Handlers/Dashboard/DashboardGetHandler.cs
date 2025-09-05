@@ -41,7 +41,7 @@ public class DashboardGetHandler(
             var metricInfos = indicators
                 .Select(ind =>
                 {
-                    var source = (PeriodTypeEnum)(FillmentPeriodWrapper)ind.FillmentPeriod;
+                    var source = (PeriodTypeEnum) (FillmentPeriodWrapper) ind.FillmentPeriod;
                     var expected = ComparePeriods(source, periodType) > 0 ? source : periodType;
                     var request = new FetchCompanyMetricsHandler.MetricRequest(
                         ind.Id,
@@ -117,7 +117,7 @@ public class DashboardGetHandler(
         }
 
         // ---------------------------
-        // 2) Сотрудники + BULK превью (0 N+1, контролируемая агрегация)
+        // 2) Сотрудники + BULK превью (используем ТЕКУЩИЙ periodType)
         // ---------------------------
         var employees = await db.Employees
             .AsNoTracking()
@@ -129,7 +129,7 @@ public class DashboardGetHandler(
 
         var previewsMap = employeeIds.Count == 0
             ? new Dictionary<int, UserPreviewMetricsDto>()
-            : await userMetricsHandler.HandleBulkAsync(employeeIds, range, PeriodTypeEnum.Month, ct);
+            : await userMetricsHandler.HandleBulkAsync(employeeIds, range, periodType, ct); // was Month
 
         var employeeAverages = new Dictionary<int, double>(employees.Count);
         foreach (var e in employees)
@@ -143,13 +143,15 @@ public class DashboardGetHandler(
                     sum += metric.GetCompletionPercent();
                     count++;
                 }
+
+                // user.CompletionPercent from DepartmentPreviewHandler
                 employeeAverages[e.Id] = count > 0
                     ? Math.Round(sum / count, 0, MidpointRounding.ToZero)
                     : 0;
             }
         }
 
-        // одна проекция → два отбора (best/worst)
+        // одна проекция → два отбора (best/worst) — как было
         var employeeDtos = employees.Select(e =>
         {
             var avg = employeeAverages.GetValueOrDefault(e.Id, 0d);
@@ -163,77 +165,144 @@ public class DashboardGetHandler(
             };
         });
 
-        var bestEmployees = employeeDtos
-            .OrderByDescending(x => x.Average)
-            .Take(3)
-            .ToList();
-        var worstEmployees = employeeDtos
-            .Where(e => bestEmployees.All(b => b.Id != e.Id))
-            .OrderBy(x => x.Average)
-            .Take(3)
-            .ToList();
+        var bestEmployees = employeeDtos.OrderByDescending(x => x.Average).Take(3).ToList();
+        var worstEmployees = employeeDtos.Where(e => bestEmployees.All(b => b.Id != e.Id))
+            .OrderBy(x => x.Average).Take(3).ToList();
 
         dto.BestEmployees = bestEmployees;
         dto.WorstEmployees = worstEmployees;
 
         // ---------------------------
-        // 3) Департаменты: минимизируем запросы и Contains на List
-        //    (один join для корней, HashSet для связей)
+        // 3) Департаменты: как в DepartmentPreviewHandler
+        //    (child depth=1; per-dept avg -> root avg по детям)
         // ---------------------------
+        // корни
         var rootDeptPairs = await (
             from s in db.DepartmentSchemas.AsNoTracking()
             join d in db.Departments.AsNoTracking() on s.DepartmentId equals d.Id
             where s.FundamentalDepartmentId == s.DepartmentId
-               && s.Depth == 0
-               && d.CompanyId == companyId
-               && !d.IsDeleted
+                  && s.Depth == 0
+                  && d.CompanyId == companyId
+                  && !d.IsDeleted
             select new { RootId = d.Id, RootName = d.Name }
         ).Distinct().ToListAsync(ct);
 
         var rootIds = rootDeptPairs.Select(x => x.RootId).ToHashSet();
 
-        var schemas = await db.DepartmentSchemas.AsNoTracking()
-            .Where(s => rootIds.Contains(s.FundamentalDepartmentId))
-            .Select(s => new { s.FundamentalDepartmentId, s.DepartmentId })
+        // direct children (Depth == 1)
+        var directChildren = await db.DepartmentSchemas.AsNoTracking()
+            .Where(s => rootIds.Contains(s.AncestorDepartmentId) && s.Depth == 1)
+            .Select(s => new { ParentId = s.AncestorDepartmentId, ChildId = s.DepartmentId })
             .ToListAsync(ct);
 
-        var allDeptIds = schemas.Select(s => s.DepartmentId).ToHashSet();
+        var childrenByRoot = directChildren
+            .GroupBy(x => x.ParentId)
+            .ToDictionary(g => g.Key, g => g.Select(v => v.ChildId).ToList());
+
+        // нам нужны линк-типы для логики "если есть руководители → берём всех, иначе только сотрудников"
+        var deptIdsForLinks = new HashSet<int>(rootIds);
+        foreach (var list in childrenByRoot.Values)
+        {
+            foreach (var cid in list)
+            {
+                deptIdsForLinks.Add(cid);
+            }
+        }
 
         var links = await db.EmployeeDepartmentLinks.AsNoTracking()
-            .Where(l => allDeptIds.Contains(l.DepartmentId))
-            .Select(l => new { l.DepartmentId, l.EmployeeId })
+            .Where(l => deptIdsForLinks.Contains(l.DepartmentId))
+            .Select(l => new { l.DepartmentId, l.EmployeeId, l.Type })
             .ToListAsync(ct);
 
-        // root -> set(deptIds)
-        var rootToDeptIds = schemas
-            .GroupBy(s => s.FundamentalDepartmentId)
-            .ToDictionary(g => g.Key, g => g.Select(x => x.DepartmentId).ToHashSet());
+        var linksByDept = links.GroupBy(l => l.DepartmentId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var leafRootIds = rootDeptPairs
+            .Where(r => !childrenByRoot.TryGetValue(r.RootId, out var ch) || ch.Count == 0)
+            .Select(r => r.RootId)
+            .ToList();
+
+        // all userIds linked to leaf roots
+        var leafUserIds = links
+            .Where(l => leafRootIds.Contains(l.DepartmentId))
+            .Select(l => l.EmployeeId)
+            .Distinct()
+            .ToList();
+
+        // we already loaded active employees into employeeAverages;
+        // bring in the missing ones (e.g., not in the active list) just for dept averages
+        var missingUserIds = leafUserIds.Where(uid => !employeeAverages.ContainsKey(uid)).ToList();
+
+        if (missingUserIds.Count > 0)
+        {
+            var extraPreviews = await userMetricsHandler.HandleBulkAsync(missingUserIds, range, periodType, ct);
+            foreach (var kv in extraPreviews)
+            {
+                var preview = kv.Value;
+                if (preview is { Metrics.Count: > 0 })
+                {
+                    double sum = 0;
+                    int count = 0;
+                    foreach (var m in preview.Metrics)
+                    {
+                        sum += m.GetCompletionPercent();
+                        count++;
+                    }
+
+                    employeeAverages[kv.Key] = count > 0
+                        ? Math.Round(sum / count, 0, MidpointRounding.ToZero)
+                        : 0;
+                }
+                else
+                {
+                    employeeAverages[kv.Key] = 0;
+                }
+            }
+        }
+
+        // локальная функция: среднее по департаменту как в DepartmentPreviewHandler
+        double DeptAvg(int deptId)
+        {
+            if (!linksByDept.TryGetValue(deptId, out var lnk) || lnk.Count == 0)
+                return 0;
+
+            // ALWAYS include supervisors + employees
+            var userIds = lnk.Select(x => x.EmployeeId).Distinct();
+
+            var vals = userIds
+                .Select(uid => employeeAverages.GetValueOrDefault(uid, 0d))
+                .ToList();
+
+            if (vals.Count == 0) return 0;
+
+            // mirror DepartmentPreviewHandler: round per-department
+            return Math.Round(vals.Average(), 0, MidpointRounding.ToZero);
+        }
 
         foreach (var root in rootDeptPairs)
         {
-            if (!rootToDeptIds.TryGetValue(root.RootId, out var deptIdsForRoot) || deptIdsForRoot.Count == 0)
+            var childIds = childrenByRoot.GetValueOrDefault(root.RootId, []);
+
+            double avg;
+            if (childIds.Count > 0)
             {
-                dto.Departments.Add(new DashboardDepartmentDto { Id = root.RootId, Name = root.RootName, Average = 0 });
-                continue;
+                // root = среднее по дочерним департаментам (равный вес детям)
+                var childAverages = childIds.Select(DeptAvg).ToList();
+                avg = childAverages.Count > 0
+                    ? Math.Round(childAverages.Average(), 0, MidpointRounding.ToZero)
+                    : 0;
             }
-
-            // берем avg сотрудников, привязанных к отделам root-а
-            var employeeIdsInRoot = links
-                .Where(l => deptIdsForRoot.Contains(l.DepartmentId))
-                .Select(l => l.EmployeeId)
-                .Distinct();
-
-            var values = employeeIdsInRoot
-                .Select(id => employeeAverages.TryGetValue(id, out var avg) ? avg : 0d)
-                .ToList();
-
-            var avgDept = values.Count > 0 ? values.Average() : 0d;
+            else
+            {
+                // fallback: если нет детей — считаем по самому root’у
+                avg = DeptAvg(root.RootId);
+            }
 
             dto.Departments.Add(new DashboardDepartmentDto
             {
                 Id = root.RootId,
                 Name = root.RootName,
-                Average = Math.Round(avgDept, 0, MidpointRounding.ToZero)
+                Average = avg
             });
         }
 
@@ -304,7 +373,7 @@ public class DashboardGetHandler(
         if (to == PeriodTypeEnum.Custom)
         {
             var start = NormalizeStart(rangeStart, from);
-            var offset = (int)(rangeStart.Date - start.Date).TotalDays;
+            var offset = (int) (rangeStart.Date - start.Date).TotalDays;
             var list = new List<int>();
 
             foreach (var value in data)
@@ -348,6 +417,7 @@ public class DashboardGetHandler(
             {
                 listDefault.Add(value);
             }
+
             startNorm = next;
         }
 
@@ -376,8 +446,8 @@ public class DashboardGetHandler(
         to = NormalizeStart(to, period);
         return period switch
         {
-            PeriodTypeEnum.Day or PeriodTypeEnum.Custom => (int)(to - from).TotalDays + 1,
-            PeriodTypeEnum.Week => (int)((to - from).TotalDays / 7) + 1,
+            PeriodTypeEnum.Day or PeriodTypeEnum.Custom => (int) (to - from).TotalDays + 1,
+            PeriodTypeEnum.Week => (int) ((to - from).TotalDays / 7) + 1,
             PeriodTypeEnum.Month => (to.Year - from.Year) * 12 + to.Month - from.Month + 1,
             PeriodTypeEnum.Quartal => ((to.Year - from.Year) * 12 + to.Month - from.Month) / 3 + 1,
             PeriodTypeEnum.Year => to.Year - from.Year + 1,
@@ -400,4 +470,3 @@ public class DashboardGetHandler(
         return date.Date.AddDays(-1 * diff);
     }
 }
-
