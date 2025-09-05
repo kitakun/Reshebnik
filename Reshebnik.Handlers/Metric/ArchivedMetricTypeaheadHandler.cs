@@ -5,7 +5,6 @@ using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Metric;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
-using System.Linq;
 
 namespace Reshebnik.Handlers.Metric;
 

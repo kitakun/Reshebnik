@@ -1,5 +1,3 @@
-using System;
-
 namespace Reshebnik.Domain.Models.SpecialInvitation;
 
 public class SpecialInvitationDto

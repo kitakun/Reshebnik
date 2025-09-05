@@ -1,4 +1,3 @@
-using System.Linq;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models.Metric;
 

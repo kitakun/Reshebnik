@@ -3,7 +3,6 @@ using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Employee;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
-using System.Linq;
 
 namespace Reshebnik.Handlers.Employee;
 

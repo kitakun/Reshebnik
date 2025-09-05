@@ -5,8 +5,6 @@ using Reshebnik.Domain.Models.Metric;
 using Reshebnik.EntityFramework;
 using Reshebnik.Clickhouse.Handlers;
 using Reshebnik.Domain.Enums;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Reshebnik.Handlers.Metric;
 

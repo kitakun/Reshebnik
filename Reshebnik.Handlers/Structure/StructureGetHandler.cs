@@ -1,4 +1,3 @@
-using System.Linq;
 using Reshebnik.Domain.Models.Structure;
 using Reshebnik.Domain.Models.Department;
 using Reshebnik.Handlers.Department;

@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Department;
-using Reshebnik.Domain.Models.Metric;
 using Reshebnik.Domain.Extensions;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Metric;

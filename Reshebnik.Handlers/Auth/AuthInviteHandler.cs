@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;

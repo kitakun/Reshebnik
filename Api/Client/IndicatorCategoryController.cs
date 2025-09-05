@@ -5,7 +5,6 @@ using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Indicator;
 using Reshebnik.Handlers.IndicatorCategory;
-using Reshebnik.Domain.Extensions;
 
 namespace Reshebnik.Web.Api.Client;
 

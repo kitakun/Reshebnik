@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Reshebnik.Handlers.Department;
 using Reshebnik.Domain.Models;
 using Reshebnik.Domain.Models.Department;
-using Reshebnik.Domain.Extensions;
 using Reshebnik.Domain.Enums;
 
 namespace Reshebnik.Web.Api.Client;

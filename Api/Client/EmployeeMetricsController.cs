@@ -7,7 +7,6 @@ using Reshebnik.Domain.Enums;
 using Reshebnik.Handlers.Metric;
 using Reshebnik.Domain.Models.Employee;
 using Reshebnik.Handlers.Employee;
-using Reshebnik.Domain.Extensions;
 
 
 namespace Reshebnik.Web.Api.Client;

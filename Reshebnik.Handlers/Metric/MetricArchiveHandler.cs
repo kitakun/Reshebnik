@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 
-using System;
 using ClickHouse.Client.ADO;
 using Microsoft.Extensions.Options;
 using Reshebnik.Clickhouse;

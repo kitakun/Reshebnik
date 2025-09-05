@@ -6,8 +6,6 @@ using Reshebnik.Domain.Models.Indicator;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
 using Reshebnik.Clickhouse.Handlers;
-using System.Linq;
-using System.Collections.Generic;
 
 namespace Reshebnik.Handlers.IndicatorCategory;
 

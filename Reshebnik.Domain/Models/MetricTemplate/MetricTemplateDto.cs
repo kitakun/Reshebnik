@@ -1,5 +1,3 @@
-using Reshebnik.Domain.Enums;
-
 namespace Reshebnik.Domain.Models.MetricTemplate;
 
 public class MetricTemplateDto

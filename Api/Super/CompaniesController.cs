@@ -7,7 +7,6 @@ using Reshebnik.Domain.Models.Company;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Auth;
 using Reshebnik.Handlers.Company;
-using Reshebnik.Web.Api.Client;
 using Reshebnik.Web.DTO.Auth;
 
 using System.Security.Claims;

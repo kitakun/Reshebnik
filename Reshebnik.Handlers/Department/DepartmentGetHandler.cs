@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 
-using Reshebnik.Domain.Entities;
 using Reshebnik.Domain.Models.Department;
 using Reshebnik.Domain.Enums;
 using Reshebnik.EntityFramework;

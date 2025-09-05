@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-using Reshebnik.Domain.Entities;
 using Reshebnik.EntityFramework;
 
 namespace Reshebnik.Web.Api.Client;

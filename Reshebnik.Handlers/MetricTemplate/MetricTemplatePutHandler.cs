@@ -3,7 +3,6 @@ using Reshebnik.Domain.Entities;
 using Reshebnik.Domain.Models.MetricTemplate;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
-using Reshebnik.Domain.Extensions;
 
 namespace Reshebnik.Handlers.MetricTemplate;
 

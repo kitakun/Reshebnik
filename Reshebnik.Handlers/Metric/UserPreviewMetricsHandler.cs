@@ -6,7 +6,6 @@ using Reshebnik.Handlers.Company;
 using Reshebnik.Clickhouse.Handlers;
 using Reshebnik.Domain.Enums;
 using System.Collections.Concurrent;
-using System.Linq;
 
 namespace Reshebnik.Handlers.Metric;
 

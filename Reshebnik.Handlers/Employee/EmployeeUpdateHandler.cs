@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 using Reshebnik.Domain.Models.Employee;
 using Reshebnik.EntityFramework;
-using Reshebnik.Domain.Extensions;
 using Reshebnik.Domain.Enums;
 
 namespace Reshebnik.Handlers.Employee;

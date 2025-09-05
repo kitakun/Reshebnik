@@ -3,8 +3,6 @@ using Reshebnik.Domain.Models.Indicator;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
 using Reshebnik.Clickhouse.Handlers;
-using System.Linq;
-using System.Collections.Generic;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Company;
 

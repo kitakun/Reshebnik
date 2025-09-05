@@ -1,5 +1,3 @@
-using System;
-
 namespace Reshebnik.Domain.Entities;
 
 public class ArchivedUserEntity

@@ -6,8 +6,6 @@ using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models;
 using Reshebnik.EntityFramework;
 
-using System.Security.Claims;
-
 namespace Reshebnik.Handlers.Company;
 
 public class SuTypeaheadCompaniesHandler(

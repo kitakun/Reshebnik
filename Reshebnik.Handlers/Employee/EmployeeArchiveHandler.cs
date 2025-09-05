@@ -3,7 +3,6 @@ using Reshebnik.Domain.Entities;
 using Reshebnik.EntityFramework;
 using Reshebnik.Handlers.Auth;
 using Reshebnik.Handlers.Company;
-using System;
 
 namespace Reshebnik.Handlers.Employee;
 

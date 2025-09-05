@@ -1,4 +1,3 @@
-using System;
 using Reshebnik.Domain.Enums;
 using Reshebnik.Domain.Models.Indicator;
 
