@@ -26,26 +26,19 @@ public static class MetricExtensions
             planValue = planArray.Length > 0 ? planArray[^1] : metric.Plan;
         }
 
-        return CalcPercent(factValue, planValue, metric.Min, metric.Max, metric.Type);
+        return CalcPercent(factValue, planValue, metric.Plan, metric.Max, metric.Type);
     }
 
-    public static double CalcPercent(decimal fact, decimal? plan, decimal? min, decimal? max, MetricTypeEnum type)
+    public static double CalcPercent(decimal fact, decimal? plan, decimal? metricPlan, decimal? max, MetricTypeEnum type)
     {
-        var planFilled = plan.HasValue && plan.Value != 0m;
         var maxFilled = max.HasValue && max.Value != 0m;
-        var planVal = planFilled ? plan!.Value : 0m;
+        var planVal = plan is > 0 ? plan.Value : metricPlan ?? 0m;
 
         if (type == MetricTypeEnum.FactOnly)
         {
             if (maxFilled)
             {
                 return (double) (fact / max!.Value * 100m);
-            }
-
-            if (planFilled)
-            {
-                if (fact > 0.5m)
-                    return 100d;
             }
 
             if (planVal > 0)
