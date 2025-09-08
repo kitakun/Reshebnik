@@ -76,24 +76,21 @@ public class UserPreviewMetricsHandler(
             .GroupBy(x => x.EmployeeId)
             .ToDictionary(g => g.Key, g => g.Select(x => x.Metric).ToList());
 
-        // 3) Уникальный набор метрик (по Id) для кэширования результатов fetch
-        var distinctMetrics = links
-            .Select(x => x.Metric)
-            .GroupBy(m => m.Id)
-            .Select(g => g.First())
+        // 3) Кэш расчётов по паре "пользователь-метрика"
+        var metricCalcCache = new ConcurrentDictionary<(int userId, int metricId), MetricCalcResult>();
+
+        // 3.1) Считаем данные для каждой пары (с ограничением параллелизма)
+        var userMetricPairs = userToMetrics
+            .SelectMany(kvp => kvp.Value.Select(m => (userId: kvp.Key, metric: m)))
             .ToList();
-
-        // 4) Кэш расчётов по метрике: last12, total, growth и вспомогательные средние
-        var metricCalcCache = new ConcurrentDictionary<int, MetricCalcResult>();
-
-        // 4.1) Считаем для каждой метрики один раз (с ограничением параллелизма)
         using (var sem = new SemaphoreSlim(MAX_CONCURRENCY))
         {
-            var tasks = distinctMetrics.Select(async metric =>
+            var tasks = userMetricPairs.Select(async pair =>
             {
                 await sem.WaitAsync(ct);
                 try
                 {
+                    var metric = pair.metric;
                     var needExpand = ComparePeriods(metric.PeriodType, periodType) > 0;
                     var expected = needExpand ? metric.PeriodType : periodType;
                     var last12Range = BuildLast12Range(periodType, metric.PeriodType, range);
@@ -101,6 +98,8 @@ public class UserPreviewMetricsHandler(
                     var last12Data = await fetchHandler.HandleAsync(
                         last12Range,
                         metric.Id,
+                        pair.userId,
+                        companyId,
                         expected,
                         metric.PeriodType,
                         ct);
@@ -143,11 +142,13 @@ public class UserPreviewMetricsHandler(
                     var totalData = await fetchHandler.HandleAsync(
                         yearRange,
                         metric.Id,
+                        pair.userId,
+                        companyId,
                         PeriodTypeEnum.Month,
                         metric.PeriodType,
                         ct);
 
-                    metricCalcCache[metric.Id] = new MetricCalcResult(
+                    metricCalcCache[(pair.userId, metric.Id)] = new MetricCalcResult(
                         plan,
                         fact,
                         totalData.PlanData,
@@ -164,7 +165,7 @@ public class UserPreviewMetricsHandler(
             await Task.WhenAll(tasks);
         }
 
-        // 5) Собираем DTO по каждому пользователю из кэша
+        // 4) Собираем DTO по каждому пользователю из кэша
         var result = new Dictionary<int, UserPreviewMetricsDto>(existingUserIds.Count);
         foreach (var e in employees)
         {
@@ -182,7 +183,7 @@ public class UserPreviewMetricsHandler(
 
             foreach (var m in metrics)
             {
-                if (!metricCalcCache.TryGetValue(m.Id, out var calc))
+                if (!metricCalcCache.TryGetValue((e.Id, m.Id), out var calc))
                     continue;
 
                 dto.Metrics.Add(new UserPreviewMetricItemDto

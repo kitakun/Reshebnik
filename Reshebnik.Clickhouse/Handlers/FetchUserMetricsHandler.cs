@@ -17,6 +17,8 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
     public async Task<MetricsDataResponse> HandleAsync(
         DateRange range,
         int metricId,
+        int employeeId,
+        int companyId,
         PeriodTypeEnum expectedValues,
         PeriodTypeEnum sourcePeriod,
         CancellationToken cancellationToken)
@@ -43,15 +45,19 @@ public class FetchUserMetricsHandler(IOptions<ClickhouseOptions> optionsAccessor
         await connection.OpenAsync(cancellationToken);
 
         var table = $"{_options.Prefix}_user_metrics";
+        var conditions = $"metric_key = '{key}' AND period_type = '{sourcePeriod}' AND upsert_date BETWEEN toDate('{unionFrom:yyyy-MM-dd}') AND toDate('{range.To:yyyy-MM-dd}')";
+        if (employeeId > 0)
+            conditions += $" AND has(employee_ids, {employeeId})";
+        if (companyId > 0)
+            conditions += $" AND has(company_ids, {companyId})";
+
         var sql = $"""
             SELECT
                 upsert_date,
                 value,
                 value_type
             FROM {table}
-            WHERE metric_key = '{key}'
-              AND period_type = '{sourcePeriod}'
-              AND upsert_date BETWEEN toDate('{unionFrom:yyyy-MM-dd}') AND toDate('{range.To:yyyy-MM-dd}')
+            WHERE {conditions}
             ORDER BY upsert_date, value_type
         """;
 

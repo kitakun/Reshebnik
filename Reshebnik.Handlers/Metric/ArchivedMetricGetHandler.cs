@@ -57,6 +57,8 @@ public class ArchivedMetricGetHandler(
                 var dataEmployee = await userMetricsHandler.HandleAsync(
                     last12Range,
                     metric.Id,
+                    0,
+                    companyId,
                     metric.PeriodType,
                     metric.PeriodType,
                     ct);
