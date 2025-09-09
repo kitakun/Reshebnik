@@ -7,7 +7,10 @@ using System.Text.RegularExpressions;
 
 namespace Reshebnik.Clickhouse.Handlers;
 
-public class MigrateClickhouseDatabase(IOptions<ClickhouseOptions> optionsAccessor, ILogger<MigrateClickhouseDatabase> logger)
+public class MigrateClickhouseDatabase(
+    IOptions<ClickhouseOptions> optionsAccessor,
+    ILogger<MigrateClickhouseDatabase> logger,
+    CopyUserMetricsToRelatedUsersMigration copyUserMetricsMigration)
 {
     public async ValueTask HandleAsync()
     {
@@ -92,6 +95,8 @@ public class MigrateClickhouseDatabase(IOptions<ClickhouseOptions> optionsAccess
                 await insertCmd.ExecuteNonQueryAsync();
             }
         }
+
+        await copyUserMetricsMigration.ApplyAsync(connection, applied);
 
         logger.LogDebug("✅ All migrations applied");
     }

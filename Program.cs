@@ -214,6 +214,7 @@ builder.Services.AddScoped<UserPreviewMetricsHandler>();
 builder.Services.AddScoped<UserPreviewMetricsPutHandler>();
 builder.Services.AddScoped<CompanyPreviewMetricsHandler>();
 builder.Services.AddScoped<CompanyPreviewMetricsPutHandler>();
+builder.Services.AddScoped<CopyUserMetricsToRelatedUsersMigration>();
 builder.Services.AddScoped<MigrateClickhouseDatabase>();
 builder.Services.AddScoped<DashboardGetHandler>();
 builder.Services.AddScoped<BugHuntCreateHandler>();

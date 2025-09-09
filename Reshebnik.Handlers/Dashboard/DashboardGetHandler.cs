@@ -32,7 +32,7 @@ public class DashboardGetHandler(
         // ---------------------------
         var indicators = await db.Indicators
             .AsNoTracking()
-            .Where(i => i.CreatedBy == companyId && i.ShowOnKeyIndicators)
+            .Where(i => i.CreatedBy == companyId && i.ShowOnKeyIndicators && !i.IsArchived)
             .Select(i => new { i.Id, i.Name, i.FillmentPeriod, i.ShowOnMainScreen })
             .ToListAsync(ct);
 
