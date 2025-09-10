@@ -18,6 +18,7 @@ using Reshebnik.Handlers.Dashboard;
 using Reshebnik.Clickhouse;
 using Reshebnik.Clickhouse.Handlers;
 using Reshebnik.Handlers;
+using Reshebnik.Handlers.Cache;
 using Reshebnik.Handlers.Email;
 using Reshebnik.Handlers.SpecialInvitation;
 using Reshebnik.Handlers.BugHunt;
@@ -53,6 +54,9 @@ builder.Services.ConfigureHttpJsonOptions(_ => { });
 // DB
 builder.Services.AddDbContext<ReshebnikContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
 
 // AuthTokens
 var secretKey = builder.Configuration["Jwt:Key"] ?? "YourSuperSecretKey123!";

@@ -17,5 +17,6 @@ public class UserPreviewMetricItemDto
     public int[] Last12PointsPlan { get; set; } = [];
     public int[] Last12PointsFact { get; set; } = [];
     public double?[] GrowthPercent { get; set; } = [];
+    public bool? ShowGrowthPercent { get; set; } = false;
     public ArchiveMetricTypeEnum MetricType { get; set; }
 }

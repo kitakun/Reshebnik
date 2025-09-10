@@ -9,6 +9,7 @@ using Reshebnik.Domain.Models.Metric;
 using Reshebnik.Handlers.Company;
 using Reshebnik.Handlers.Metric;
 using Reshebnik.Domain.Extensions;
+using Reshebnik.Handlers.Cache;
 
 namespace Reshebnik.Handlers.Dashboard;
 
@@ -16,7 +17,8 @@ public class DashboardGetHandler(
     ReshebnikContext db,
     CompanyContextHandler companyContext,
     FetchCompanyMetricsHandler companyMetricsHandler,
-    UserPreviewMetricsHandler userMetricsHandler)
+    UserPreviewMetricsHandler userMetricsHandler,
+    ICacheService cache)
 {
     public async ValueTask<DashboardDto> HandleAsync(
         DateRange range,
@@ -24,6 +26,11 @@ public class DashboardGetHandler(
         CancellationToken ct = default)
     {
         var companyId = await companyContext.CurrentCompanyIdAsync;
+        var cacheKey = $"dashboard:{companyId}:{range.From:yyyyMMdd}:{range.To:yyyyMMdd}:{periodType}";
+        var cached = await cache.GetAsync<DashboardDto>(cacheKey, ct);
+        if (cached is not null)
+            return cached;
+
         var dto = new DashboardDto();
         var indicatorAverages = new List<double>();
 
@@ -41,7 +48,7 @@ public class DashboardGetHandler(
             var metricInfos = indicators
                 .Select(ind =>
                 {
-                    var source = (PeriodTypeEnum) (FillmentPeriodWrapper) ind.FillmentPeriod;
+                    var source = (PeriodTypeEnum)(FillmentPeriodWrapper)ind.FillmentPeriod;
                     var expected = ComparePeriods(source, periodType) > 0 ? source : periodType;
                     var request = new FetchCompanyMetricsHandler.MetricRequest(
                         ind.Id,
@@ -306,6 +313,7 @@ public class DashboardGetHandler(
             });
         }
 
+        await cache.SetAsync(cacheKey, dto, TimeSpan.FromMinutes(5), ct);
         return dto;
     }
 
@@ -373,7 +381,7 @@ public class DashboardGetHandler(
         if (to == PeriodTypeEnum.Custom)
         {
             var start = NormalizeStart(rangeStart, from);
-            var offset = (int) (rangeStart.Date - start.Date).TotalDays;
+            var offset = (int)(rangeStart.Date - start.Date).TotalDays;
             var list = new List<int>();
 
             foreach (var value in data)
@@ -446,8 +454,8 @@ public class DashboardGetHandler(
         to = NormalizeStart(to, period);
         return period switch
         {
-            PeriodTypeEnum.Day or PeriodTypeEnum.Custom => (int) (to - from).TotalDays + 1,
-            PeriodTypeEnum.Week => (int) ((to - from).TotalDays / 7) + 1,
+            PeriodTypeEnum.Day or PeriodTypeEnum.Custom => (int)(to - from).TotalDays + 1,
+            PeriodTypeEnum.Week => (int)((to - from).TotalDays / 7) + 1,
             PeriodTypeEnum.Month => (to.Year - from.Year) * 12 + to.Month - from.Month + 1,
             PeriodTypeEnum.Quartal => ((to.Year - from.Year) * 12 + to.Month - from.Month) / 3 + 1,
             PeriodTypeEnum.Year => to.Year - from.Year + 1,

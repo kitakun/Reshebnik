@@ -6,16 +6,17 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-  <ItemGroup>
+    <ItemGroup>
       <ProjectReference Include="..\Reshebnik.Domain\Reshebnik.Domain.csproj" />
       <ProjectReference Include="..\Reshebnik.EntityFramework\Reshebnik.EntityFramework.csproj" />
       <ProjectReference Include="..\Reshebnik.Clickhouse\Reshebnik.Clickhouse.csproj" />
-  </ItemGroup>
+    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="MailKit" Version="4.13.0" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.6" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.6" />
+      <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.6" />
       <PackageReference Include="Polly" Version="8.6.1" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
     </ItemGroup>
