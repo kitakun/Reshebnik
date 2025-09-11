@@ -120,53 +120,6 @@ public class UserPreviewMetricsHandler(
                         if (fact.Length != 12) Array.Resize(ref fact, 12);
                     }
 
-                    double?[] growth = [];
-                    if (metric.ShowGrowthPercent)
-                    {
-                        DateRange compareRange;
-
-                        if (metric.PeriodType == PeriodTypeEnum.Week &&
-                            metric.WeekType == WeekTypeEnum.Sliding &&
-                            metric.WeekStartDate.HasValue)
-                        {
-                            var offset = metric.WeekStartDate.Value;
-                            compareRange = new DateRange(
-                                last12Range.From.AddDays(-offset),
-                                last12Range.To.AddDays(-offset));
-                        }
-                        else
-                        {
-                            compareRange = new DateRange(
-                                AddPeriod(last12Range.From, expected, -12),
-                                AddPeriod(last12Range.To, expected, -12));
-                        }
-
-                        var compareData = await fetchHandler.HandleAsync(
-                            compareRange,
-                            metric.Id,
-                            pair.userId,
-                            companyId,
-                            expected,
-                            metric.PeriodType,
-                            ct);
-
-                        var compareFact = compareData.FactData;
-
-                        if (needExpand)
-                        {
-                            compareFact = ExpandTo(compareFact, compareRange.From, compareRange.To, expected, periodType);
-                        }
-                        else if (periodType != PeriodTypeEnum.Custom)
-                        {
-                            if (compareFact.Length != fact.Length)
-                                Array.Resize(ref compareFact, fact.Length);
-                        }
-
-                        growth = new double?[fact.Length];
-                        for (var i = 0; i < fact.Length && i < compareFact.Length; i++)
-                            growth[i] = compareFact[i];
-                    }
-
                     var yearRange = new DateRange(
                         new DateTime(range.To.Year, 1, 1),
                         new DateTime(range.To.Year, 12, 31));
@@ -184,8 +137,7 @@ public class UserPreviewMetricsHandler(
                         plan,
                         fact,
                         totalData.PlanData,
-                        totalData.FactData,
-                        growth
+                        totalData.FactData
                     );
                 }
                 finally
@@ -230,8 +182,7 @@ public class UserPreviewMetricsHandler(
                     Last12PointsFact = calc.Last12Fact,
                     TotalPlanData = calc.TotalPlan,
                     TotalFactData = calc.TotalFact,
-                    GrowthPercent = calc.Growth,
-                    ShowGrowthPercent = calc.Growth is { Length : > 0 },
+                    ShowGrowthPercent = m.ShowGrowthPercent,
                     Period = m.PeriodType,
                     Type = m.Type,
                     MetricType = ArchiveMetricTypeEnum.Employee
@@ -318,7 +269,7 @@ public class UserPreviewMetricsHandler(
         if (to == PeriodTypeEnum.Custom)
         {
             var start = NormalizeStart(rangeStart, from);
-            var offset = (int) (rangeStart.Date - start.Date).TotalDays;
+            var offset = (int)(rangeStart.Date - start.Date).TotalDays;
             var endCount = CountPeriods(start, rangeEnd, to);
             var list = new List<int>(endCount);
 
@@ -406,8 +357,8 @@ public class UserPreviewMetricsHandler(
         to = NormalizeStart(to, period);
         return period switch
         {
-            PeriodTypeEnum.Day or PeriodTypeEnum.Custom => (int) (to - from).TotalDays + 1,
-            PeriodTypeEnum.Week => (int) ((to - from).TotalDays / 7) + 1,
+            PeriodTypeEnum.Day or PeriodTypeEnum.Custom => (int)(to - from).TotalDays + 1,
+            PeriodTypeEnum.Week => (int)((to - from).TotalDays / 7) + 1,
             PeriodTypeEnum.Month => (to.Year - from.Year) * 12 + to.Month - from.Month + 1,
             PeriodTypeEnum.Quartal => ((to.Year - from.Year) * 12 + to.Month - from.Month) / 3 + 1,
             PeriodTypeEnum.Year => to.Year - from.Year + 1,
@@ -434,6 +385,5 @@ public class UserPreviewMetricsHandler(
         int[] Last12Plan,
         int[] Last12Fact,
         int[] TotalPlan,
-        int[] TotalFact,
-        double?[] Growth);
+        int[] TotalFact);
 }
