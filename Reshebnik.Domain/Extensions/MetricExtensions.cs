@@ -12,8 +12,8 @@ public static class MetricExtensions
 
         if (metric.Period == PeriodTypeEnum.Year)
         {
-            factValue = metric.TotalFactData.Sum(x => (decimal) x);
-            planValue = metric.TotalPlanData.Sum(x => (decimal) x);
+            factValue = metric.TotalFactData.Sum(x => (decimal)x);
+            planValue = metric.TotalPlanData.Sum(x => (decimal)x);
             if ((planValue == null || planValue == 0) && metric.Plan.HasValue)
                 planValue = metric.Plan;
         }
@@ -22,7 +22,7 @@ public static class MetricExtensions
             var factArray = metric.Last12PointsFact;
             var planArray = metric.Last12PointsPlan;
 
-            factValue = factArray.Length > 0 ? (decimal) factArray[^1] : 0m;
+            factValue = factArray.Length > 0 ? (decimal)factArray[^1] : 0m;
             planValue = planArray.Length > 0 ? planArray[^1] : metric.Plan;
         }
 
@@ -38,12 +38,12 @@ public static class MetricExtensions
         {
             if (maxFilled)
             {
-                return (double) (fact / max!.Value * 100m);
+                return (double)(fact / max!.Value * 100m);
             }
 
             if (planVal > 0)
             {
-                return (double) (fact / planVal) * 100;
+                return (double)(fact / planVal) * 100;
             }
 
             return fact > 0 ? 100 : 0;
@@ -51,9 +51,9 @@ public static class MetricExtensions
 
         if (maxFilled)
         {
-            return (double) (fact / max!.Value * 100m);
+            return (double)(fact / max!.Value * 100m);
         }
 
-        return (double) (fact / Math.Max(1, planVal) * 100m);
+        return (double)(fact / Math.Max(1, planVal) * 100m);
     }
 }

@@ -41,7 +41,7 @@ public class EmployeeDepartmentLinkEntityConfiguration : IEntityTypeConfiguratio
             .WithMany(m => m.LinkEntities)
             .HasForeignKey(e => e.DepartmentId)
             .OnDelete(DeleteBehavior.Cascade);
-        
+
         builder.HasQueryFilter(e => !e.Employee.IsArchived);
     }
 }
