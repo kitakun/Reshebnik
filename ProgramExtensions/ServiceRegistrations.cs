@@ -17,6 +17,7 @@ using Reshebnik.Handlers.Cache;
 using Reshebnik.Handlers.Email;
 using Reshebnik.Handlers.SpecialInvitation;
 using Reshebnik.Handlers.BugHunt;
+using Reshebnik.GPT.Services;
 
 namespace Reshebnik.Web.ProgramExtensions;
 
@@ -130,6 +131,9 @@ public static class ServiceRegistrations
         services.AddScoped<IEmailQueue, EfEmailQueue>();
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
         services.AddHostedService<EmailSenderService>();
+
+        // GPT Services
+        services.AddScoped<GptService>();
 
         return services;
     }

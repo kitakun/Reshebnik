@@ -9,6 +9,7 @@
         <PublishAot>false</PublishAot>
         <EnableNativeAOT>false</EnableNativeAOT>
         <IsAotCompatible>false</IsAotCompatible>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 
         <!-- For Blazor/Android/WASM setups -->
         <RunAOTCompilation>false</RunAOTCompilation>
@@ -19,6 +20,7 @@
       <Compile Remove="Reshebnik.Domain\**" />
       <Compile Remove="Reshebnik.Handlers\**" />
       <Compile Remove="Reshebnik.Clickhouse\**" />
+      <Compile Remove="Reshebnik.GPT\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -26,6 +28,7 @@
       <EmbeddedResource Remove="Reshebnik.Domain\**" />
       <EmbeddedResource Remove="Reshebnik.Handlers\**" />
       <EmbeddedResource Remove="Reshebnik.Clickhouse\**" />
+      <EmbeddedResource Remove="Reshebnik.GPT\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -36,6 +39,7 @@
       <Content Update="appsettings.Production.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <Content Remove="Reshebnik.GPT\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -43,6 +47,7 @@
       <None Remove="Reshebnik.Domain\**" />
       <None Remove="Reshebnik.Handlers\**" />
       <None Remove="Reshebnik.Clickhouse\**" />
+      <None Remove="Reshebnik.GPT\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -58,20 +63,26 @@
       <_ContentIncludedByDefault Remove="Reshebnik.Clickhouse\obj\project.assets.json" />
       <_ContentIncludedByDefault Remove="Reshebnik.Clickhouse\obj\project.packagespec.json" />
       <_ContentIncludedByDefault Remove="Reshebnik.Clickhouse\obj\Reshebnik.Clickhouse.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.GPT\obj\Debug\net9.0\Reshebnik.GPT.sourcelink.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.GPT\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.GPT\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="Reshebnik.GPT\obj\Reshebnik.GPT.csproj.nuget.dgspec.json" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.6" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.6" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-      <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.1" />
-      <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="9.0.1" />
-      <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.1" />
-      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+      <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="9.0.4" />
+      <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.4" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+      <PackageReference Include="ZLogger" Version="2.5.10" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="Reshebnik.EntityFramework\Reshebnik.EntityFramework.csproj" />
+      <ProjectReference Include="Reshebnik.GPT\Reshebnik.GPT.csproj" />
       <ProjectReference Include="Reshebnik.Handlers\Reshebnik.Handlers.csproj" />
     </ItemGroup>
 

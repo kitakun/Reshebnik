@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Reshebnik.EntityFramework;
-using Reshebnik.Clickhouse;
 
 namespace Reshebnik.Clickhouse.Handlers;
 

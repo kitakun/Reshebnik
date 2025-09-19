@@ -1,8 +1,5 @@
 namespace Reshebnik.Domain.Exceptions;
 
-public class EmailAlreadyExistsException : Exception
+public class EmailAlreadyExistsException() : Exception("E-Mail уже занят")
 {
-    public EmailAlreadyExistsException() : base("E-Mail уже занят")
-    {
-    }
 }

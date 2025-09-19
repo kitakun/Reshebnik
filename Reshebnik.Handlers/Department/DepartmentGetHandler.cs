@@ -69,7 +69,7 @@ public class DepartmentGetHandler(
                 Id = user.EmployeeId,
                 Fio = user.Employee.FIO,
                 JobTitle = user.Employee.JobTitle,
-                Email = user.Employee.Email,
+                Email = user.Employee.Email ?? string.Empty,
                 Phone = user.Employee.Phone,
                 Comment = user.Employee.Comment,
                 IsActive = user.Employee.IsActive,

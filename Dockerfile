@@ -32,5 +32,10 @@ ARG CONNECTION_STRING
 ENV ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
 ARG JWT_SECRET_KEY
 ENV JwtSettings__SecretKey=${JWT_SECRET_KEY}
+ARG CLICKHOUSE_PASSWORD
+ENV Clickhouse__password=${CLICKHOUSE_PASSWORD}
+ARG EMAIL_PASSWORD
+ENV Email__password=${EMAIL_PASSWORD}
+ENV Email__onetimepass=${EMAIL_PASSWORD}
 
 ENTRYPOINT ["dotnet", "Reshebnik.Web.dll"]

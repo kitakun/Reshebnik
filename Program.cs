@@ -1,8 +1,14 @@
 using Reshebnik.Web.ProgramExtensions;
 using Reshebnik.Web;
 using Reshebnik.Web.Middleware;
+using ZLogger;
 
 var builder = WebApplication.CreateSlimBuilder(args);
+
+// Configure ZLogger with proper formatters
+builder.Logging.ClearProviders();
+builder.Logging.AddZLoggerConsole();
+// builder.Logging.AddZLoggerFile("logs/app.log");
 
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)

@@ -26,7 +26,7 @@ public class ArchivedMetricTypeaheadHandler(
         if (!string.IsNullOrEmpty(request.Query))
         {
             var q = request.Query.ToLower();
-            query = query.Where(a => a.Metric.Name.ToLower().Contains(q) || a.Indicator.Name.ToLower().Contains(q));
+            query = query.Where(a => (a.Metric.Name ?? string.Empty).ToLower().Contains(q) || (a.Indicator.Name ?? string.Empty).ToLower().Contains(q));
         }
 
         var page = Math.Max(request.Page, 1);
@@ -42,8 +42,8 @@ public class ArchivedMetricTypeaheadHandler(
                 a.FirstDate,
                 a.LastDate,
                 a.MetricType,
-                entityId = a.MetricType == ArchiveMetricTypeEnum.Employee ? a.MetricId.Value : a.IndicatorId.Value,
-                Name = a.MetricType == ArchiveMetricTypeEnum.Employee ? a.Metric.Name : a.Indicator.Name
+                entityId = a.MetricType == ArchiveMetricTypeEnum.Employee ? a.MetricId ?? 0 : a.IndicatorId ?? 0,
+                Name = a.MetricType == ArchiveMetricTypeEnum.Employee ? a.Metric.Name ?? string.Empty : a.Indicator.Name ?? string.Empty
             })
             .ToListAsync(ct);
         var count = await query.CountAsync(ct);

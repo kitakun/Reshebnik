@@ -9,8 +9,7 @@ namespace Reshebnik.Handlers.Company;
 
 public class SuCompanySettingsUpdateHandler(
     ReshebnikContext db,
-    UserContextHandler userContextHandler,
-    CompanyContextHandler companyContext)
+    UserContextHandler userContextHandler)
 {
     public async Task HandleAsync(int companyId, CompanySettingsDto dto, CancellationToken ct = default)
     {

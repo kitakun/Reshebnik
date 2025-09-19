@@ -17,8 +17,11 @@ public class MetricUnarchiveHandler(
             .Include(a => a.Metric)
             .FirstAsync(a => a.CompanyId == companyId && a.Id == id, ct);
 
-        archived.Metric.IsArchived = false;
-        archived.Metric.ArchivedMetric = null;
+        if (archived.Metric != null)
+        {
+            archived.Metric.IsArchived = false;
+            archived.Metric.ArchivedMetric = null;
+        }
 
         db.ArchivedMetrics.Remove(archived);
         await db.SaveChangesAsync(ct);

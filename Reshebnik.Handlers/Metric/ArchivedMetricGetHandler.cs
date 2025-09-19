@@ -24,9 +24,9 @@ public class ArchivedMetricGetHandler(
             .AsNoTracking()
             .Where(a => a.CompanyId == companyId && a.Id == id)
             .Include(a => a.Metric)
-            .ThenInclude(m => m.DepartmentLinks)
+            .ThenInclude(m => m!.DepartmentLinks)
             .Include(a => a.Metric)
-            .ThenInclude(m => m.EmployeeLinks)
+            .ThenInclude(m => m!.EmployeeLinks)
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(ct);
 

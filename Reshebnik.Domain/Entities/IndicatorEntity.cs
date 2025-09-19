@@ -33,7 +33,7 @@ public class IndicatorEntity
     public DateTime CreatedAt { get; set; }
 
     public int CreatedBy { get; set; }
-    public CompanyEntity CreatedByCompany { get; set; }
+    public CompanyEntity CreatedByCompany { get; set; } = null!;
 
     public bool IsArchived { get; set; }
     public int? ArchiveMetricId { get; set; }

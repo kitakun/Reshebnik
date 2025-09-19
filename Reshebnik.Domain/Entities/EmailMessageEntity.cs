@@ -25,7 +25,7 @@ public class EmailMessageEntity
     public EmployeeEntity SentByUser { get; set; } = default!;
 
     public required int SentByCompanyId { get; set; }
-    public CompanyEntity SentByCompany { get; set; }
+    public CompanyEntity SentByCompany { get; set; } = null!;
 }
 
 public class EmailAttachment

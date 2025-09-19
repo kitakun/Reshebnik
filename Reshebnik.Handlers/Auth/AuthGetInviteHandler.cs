@@ -17,6 +17,6 @@ public class AuthGetInviteHandler(ReshebnikContext context)
         existingUser.LastLoginAt = DateTime.UtcNow;
         await context.SaveChangesAsync(cancellationToken);
 
-        return new InviteInfoRecord(existingUser.FIO, existingUser.Email);
+        return new InviteInfoRecord(existingUser.FIO, existingUser.Email ?? string.Empty);
     }
 }

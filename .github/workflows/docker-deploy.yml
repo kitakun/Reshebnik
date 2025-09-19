@@ -25,9 +25,15 @@ jobs:
       run: cp /home/b.tabligo.ru.pfx ./certificate.pfx
       
     - name: Create appsettings.Production.json from secrets
+      env:
+        CONNECTION_STRING: ${{ secrets.CONNECTION_STRING }}
+        JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+        CLICKHOUSE_PASSWORD: ${{ secrets.CLICKHOUSE_PASSWORD }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        GPT_API_KEY: ${{ secrets.GPT_API_KEY || 'your-openai-api-key-here' }}
       run: |
-        cat > appsettings.Production.json << EOF
-        {
+        # Create the JSON file using printf to avoid shell expansion issues
+        printf '{
           "Logging": {
             "LogLevel": {
               "Default": "Information",
@@ -36,10 +42,10 @@ jobs:
           },
           "AllowedHosts": "*",
           "ConnectionStrings": {
-            "DefaultConnection": "${{ secrets.CONNECTION_STRING }}"
+            "DefaultConnection": "%s"
           },
           "Jwt": {
-            "Key": "${{ secrets.JWT_SECRET_KEY }}",
+            "Key": "%s",
             "Issuer": "tabli.go new.tabli.go tabli.su tabli.ru tabli.rf tabli.com gogogo"
           },
           "Clickhouse": {
@@ -47,20 +53,40 @@ jobs:
             "host": "147.45.254.159",
             "port": "8123",
             "username": "gen_user",
-            "password": "${{ secrets.CLICKHOUSE_PASSWORD }}",
+            "password": "%s",
             "dbName": "default_db"
           },
           "Email": {
             "login": "noreply@tabligo.ru",
-            "password": "${{ secrets.EMAIL_PASSWORD }}",
-            "onetimepass": "${{ secrets.EMAIL_PASSWORD }}",
+            "password": "%s",
+            "onetimepass": "%s",
             "name": "Tabligo"
+          },
+          "Gpt": {
+            "ApiKey": "%s",
+            "ProxyUrl": null,
+            "BaseUrl": "https://api.openai.com/v1"
           }
-        }
-        EOF
+        }' "$CONNECTION_STRING" "$JWT_SECRET_KEY" "$CLICKHOUSE_PASSWORD" "$EMAIL_PASSWORD" "$EMAIL_PASSWORD" "$GPT_API_KEY" > appsettings.Production.json
+        
+        # Validate the JSON file
+        python3 -m json.tool appsettings.Production.json > /dev/null
+        echo "✅ appsettings.Production.json created and validated successfully"
+        
+        # Show the first few lines for debugging (without sensitive data)
+        echo "📄 Generated appsettings.Production.json structure:"
+        head -20 appsettings.Production.json
+        
+        # Verify the file exists and has content
+        if [ ! -s appsettings.Production.json ]; then
+          echo "❌ appsettings.Production.json is empty or missing!"
+          exit 1
+        fi
+        
+        echo "✅ appsettings.Production.json is ready for Docker build"
       
     - name: Build Docker image
-      run: docker build --build-arg DATETIME_NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ") --build-arg CONNECTION_STRING="${{ secrets.CONNECTION_STRING }}" --build-arg JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}" -t ${{ env.IMAGE_NAME }} .
+      run: docker build --build-arg DATETIME_NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ") --build-arg CONNECTION_STRING="${{ secrets.CONNECTION_STRING }}" --build-arg JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}" --build-arg CLICKHOUSE_PASSWORD="${{ secrets.CLICKHOUSE_PASSWORD }}" --build-arg EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}" -t ${{ env.IMAGE_NAME }} .
       
     - name: Stop existing container
       run: |
@@ -104,6 +130,10 @@ jobs:
         fi
         
     - name: Show container logs
+      if: always()
       run: |
         echo "Container logs (last 50 lines):"
-        docker logs ${{ env.CONTAINER_NAME }} --tail 50
+        docker logs ${{ env.CONTAINER_NAME }} --tail 50 || echo "No logs available"
+        
+        echo "Container status:"
+        docker ps -a | grep ${{ env.CONTAINER_NAME }} || echo "Container not found"
