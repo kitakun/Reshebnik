@@ -25,4 +25,11 @@ public class LogsController : ControllerBase
 
         return Ok(emails);
     }
+
+    [HttpGet("deployDate")]
+    public IActionResult GetDeployDate()
+    {
+        var deployDate = Environment.GetEnvironmentVariable("DATETIME_NOW");
+        return Ok(new { DeployDate = deployDate });
+    }
 }
