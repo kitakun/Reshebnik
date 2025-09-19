@@ -1,0 +1,1 @@
+[![Docker Build and Deploy](https://github.com/kitakun/Reshebnik/actions/workflows/docker-deploy.yml/badge.svg?branch=main&event=workflow_run)](https://github.com/kitakun/Reshebnik/actions/workflows/docker-deploy.yml)
