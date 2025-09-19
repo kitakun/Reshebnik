@@ -1,0 +1,71 @@
+name: Docker Build and Deploy
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  CONTAINER_NAME: tabli-container
+  IMAGE_NAME: tabli
+  PORT: 443
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image
+      run: docker build -t ${{ env.IMAGE_NAME }} .
+      
+    - name: Stop existing container
+      run: |
+        if docker ps -q -f name=${{ env.CONTAINER_NAME }} | grep -q .; then
+          echo "Stopping existing container..."
+          docker stop ${{ env.CONTAINER_NAME }}
+        else
+          echo "No running container found with name ${{ env.CONTAINER_NAME }}"
+        fi
+        
+    - name: Remove existing container
+      run: |
+        if docker ps -aq -f name=${{ env.CONTAINER_NAME }} | grep -q .; then
+          echo "Removing existing container..."
+          docker rm ${{ env.CONTAINER_NAME }}
+        else
+          echo "No container found with name ${{ env.CONTAINER_NAME }}"
+        fi
+        
+    - name: Run new container
+      run: |
+        docker run -d \
+          --restart=always \
+          --name ${{ env.CONTAINER_NAME }} \
+          -p ${{ env.PORT }}:${{ env.PORT }} \
+          ${{ env.IMAGE_NAME }}
+          
+    - name: Verify container is running
+      run: |
+        echo "Waiting for container to start..."
+        sleep 10
+        
+        echo "Checking container status..."
+        if docker ps | grep -q ${{ env.CONTAINER_NAME }}; then
+          echo "✅ Container is running successfully!"
+          docker ps | grep ${{ env.CONTAINER_NAME }}
+        else
+          echo "❌ Container failed to start!"
+          docker ps -a | grep ${{ env.CONTAINER_NAME }}
+          exit 1
+        fi
+        
+    - name: Show container logs
+      run: |
+        echo "Container logs (last 50 lines):"
+        docker logs ${{ env.CONTAINER_NAME }} --tail 50
