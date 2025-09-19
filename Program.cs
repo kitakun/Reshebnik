@@ -101,6 +101,10 @@ builder.Services.AddCors(options =>
             .WithOrigins("https://tabligo.ru")
             .AllowAnyHeader()
             .AllowAnyMethod();
+        policy
+            .WithOrigins("https://new.tabligo.ru")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
 #else
         policy
             .WithOrigins("https://tabligo.ru")
