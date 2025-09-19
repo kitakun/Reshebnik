@@ -27,6 +27,10 @@ public static class CorsRegistrations
                     .WithOrigins("https://tabligo.ru")
                     .AllowAnyHeader()
                     .AllowAnyMethod();
+                policy
+                    .WithOrigins("https://new.tabligo.ru")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
 #endif
             });
         });
