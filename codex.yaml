@@ -1,6 +1,0 @@
-version: 1
-checks:
-  - name: format
-    run: dotnet format --no-restore
-  - name: build
-    run: dotnet build Reshebnik.Web.sln

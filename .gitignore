@@ -12,3 +12,4 @@
 *.dll
 *.exe
 *.pdb
+appsettings.Production.json

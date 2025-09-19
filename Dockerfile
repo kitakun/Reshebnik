@@ -22,10 +22,15 @@ COPY certificate.pfx .
 COPY Reshebnik.Clickhouse/Migrations Reshebnik.Clickhouse/Migrations
 COPY appsettings.Production.json ./appsettings.Production.json
 
-RUN export DATETIME_NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS="https://+:443"
-ENV DATETIME_NOW=$DATETIME_NOW
+ARG DATETIME_NOW
+ENV DATETIME_NOW=${DATETIME_NOW}
+
+# Environment variables for configuration
+ARG CONNECTION_STRING
+ENV ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
+ARG JWT_SECRET_KEY
+ENV JwtSettings__SecretKey=${JWT_SECRET_KEY}
 
 ENTRYPOINT ["dotnet", "Reshebnik.Web.dll"]
