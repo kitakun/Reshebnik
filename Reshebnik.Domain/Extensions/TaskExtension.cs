@@ -2,7 +2,7 @@
 
 public static class TaskExtensions
 {
-    public static async Task OneByOne(this IEnumerable<Func<Task>> tasks)
+    public static async Task OneByOne(params Func<Task>[] tasks)
     {
         foreach (var taskFactory in tasks)
         {
@@ -10,7 +10,7 @@ public static class TaskExtensions
         }
     }
 
-    public static async Task OneByOne<T>(this IEnumerable<Func<T, Task>> tasks, T input)
+    public static async Task OneByOne<T>(T input, params Func<T, Task>[] tasks)
     {
         foreach (var taskFactory in tasks)
         {

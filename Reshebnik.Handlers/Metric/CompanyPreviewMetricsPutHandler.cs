@@ -27,28 +27,35 @@ public class CompanyPreviewMetricsPutHandler(
             var iCopy = i;
             tasks.Add(Task.Run(async () =>
             {
+                var putTasks = new List<Task>();
+                
                 if (iCopy < item.PlanData.Length)
                 {
-                    await putHandler.PutAsync(
+                    putTasks.Add(putHandler.PutAsync(
                         request.Metrics.Id,
                         MetricValueTypeEnum.Plan,
                         companyId,
                         request.PeriodType,
                         date,
                         item.PlanData[iCopy],
-                        ct);
+                        ct));
                 }
 
                 if (iCopy < item.FactData.Length)
                 {
-                    await putHandler.PutAsync(
+                    putTasks.Add(putHandler.PutAsync(
                         request.Metrics.Id,
                         MetricValueTypeEnum.Fact,
                         companyId,
                         request.PeriodType,
                         date,
                         item.FactData[iCopy],
-                        ct);
+                        ct));
+                }
+                
+                if (putTasks.Count > 0)
+                {
+                    await Task.WhenAll(putTasks);
                 }
             }, ct));
         }

@@ -14,7 +14,7 @@ public class SuSpecialInvitationTypeaheadHandler(IHttpContextAccessor accessor, 
     {
         if (accessor.HttpContext == null) return null;
         var role = accessor.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "user-role")?.Value;
-        if (role != RootRolesEnum.SuperAdmin.ToString()) return null;
+        if (role != nameof(RootRolesEnum.SuperAdmin)) return null;
 
         const int COUNT = 25;
         var query = db.SpecialInvitations.AsNoTracking();

@@ -4,17 +4,17 @@ namespace Reshebnik.Domain.Models.Employee;
 
 public class EmployeeCreateDto
 {
-    public int CompanyId { get; set; }
-    public string Fio { get; set; } = null!;
-    public string JobTitle { get; set; } = null!;
+    public required int CompanyId { get; set; }
+    public required string Fio { get; set; }
+    public required string JobTitle { get; set; }
     public string? Email { get; set; }
-    public string Phone { get; set; } = null!;
+    public required string Phone { get; set; }
     public string Comment { get; set; } = string.Empty;
-    public bool IsActive { get; set; }
+    public bool IsActive { get; set; } = true;
     public bool IsSupervisor { get; set; }
     public string? EmailInvitationCode { get; set; }
     public string Salt { get; set; } = string.Empty;
-    public RootRolesEnum Role { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime LastLoginAt { get; set; }
+    public required RootRolesEnum Role { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime LastLoginAt { get; set; } = DateTime.UtcNow;
 }
