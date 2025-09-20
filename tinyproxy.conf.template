@@ -1,0 +1,57 @@
+# Tinyproxy Configuration Template
+# Copy this file to /etc/tinyproxy/tinyproxy.conf and update with your values
+
+# User and group to run as
+User tinyproxy
+Group tinyproxy
+
+# Port to listen on
+Port 1080
+
+# Interface to listen on (0.0.0.0 = all interfaces)
+Listen 0.0.0.0
+
+# Interface to bind outbound connections to
+# Use WireGuard interface IP if routing through VPN
+# Use 0.0.0.0 for direct internet access
+Bind 10.8.0.14
+
+# Connection timeout
+Timeout 600
+
+# Log file location
+Logfile "/var/log/tinyproxy/tinyproxy.log"
+
+# Log level (Critical, Error, Warning, Notice, Connect, Info)
+LogLevel Info
+
+# PID file location
+PidFile "/var/run/tinyproxy/tinyproxy.pid"
+
+# Allow connections from these IPs/networks
+Allow 127.0.0.1
+Allow 10.8.0.0/24
+Allow 0.0.0.0/0
+
+# HTTPS support - ports that can be connected to
+ConnectPort 443
+ConnectPort 563
+ConnectPort 80
+ConnectPort 21
+ConnectPort 70
+ConnectPort 210
+
+# Additional configuration options (uncomment if needed)
+
+# Filter configuration
+# FilterDefaultDeny Yes
+# Filter "/etc/tinyproxy/filter"
+
+# Authentication (uncomment if needed)
+# BasicAuth username password
+
+# Upstream proxy (uncomment if needed)
+# Upstream proxy.example.com:8080
+
+# Disable via header
+ViaProxyName "tinyproxy"
