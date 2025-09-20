@@ -19,11 +19,39 @@ public sealed class GptService : IDisposable
     {
         _apiKey = configuration["Gpt:ApiKey"] ?? throw new InvalidOperationException("Gpt:ApiKey not found in configuration");
         _baseUrl = configuration["Gpt:BaseUrl"] ?? "https://api.openai.com/v1";
-        var proxyUrl = configuration["Gpt:ProxyUrl"];
-        _httpConnector = new HttpConnector(proxyUrl);
+        
+        // Configure proxy settings
+        var proxyConfig = CreateProxyConfiguration(configuration);
+        _httpConnector = new HttpConnector(proxyConfig);
         _logger = logger;
         
-        _logger.GptServiceInitialized(_baseUrl, proxyUrl);
+        _logger.GptServiceInitialized(_baseUrl, proxyConfig?.ProxyUrl);
+    }
+
+    private ProxyConfiguration? CreateProxyConfiguration(IConfiguration configuration)
+    {
+        var proxyUrl = configuration["Gpt:ProxyUrl"];
+        if (string.IsNullOrEmpty(proxyUrl))
+        {
+            return null;
+        }
+
+        var proxyTypeStr = configuration["Gpt:ProxyType"] ?? "Http";
+        if (!Enum.TryParse<ProxyType>(proxyTypeStr, true, out var proxyType))
+        {
+            proxyType = ProxyType.Http;
+        }
+
+        return new ProxyConfiguration
+        {
+            ProxyUrl = proxyUrl,
+            ProxyType = proxyType,
+            Username = configuration["Gpt:ProxyUsername"],
+            Password = configuration["Gpt:ProxyPassword"],
+            BypassProxyOnLocal = bool.Parse(configuration["Gpt:ProxyBypassOnLocal"] ?? "true"),
+            ProxyAllowList = configuration.GetSection("Gpt:ProxyAllowList").GetChildren().Select(x => x.Value).Where(x => x != null).ToArray()!,
+            UseAllowList = bool.Parse(configuration["Gpt:UseAllowList"] ?? "false")
+        };
     }
 
     public async Task<GptResponse?> HelloWorldAsync(CancellationToken cancellationToken = default)

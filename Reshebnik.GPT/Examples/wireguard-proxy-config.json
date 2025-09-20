@@ -1,0 +1,16 @@
+{
+  "Gpt": {
+    "ApiKey": "your-openai-api-key-here",
+    "BaseUrl": "https://api.openai.com/v1",
+    "ProxyUrl": "socks5://127.0.0.1:1080",
+    "ProxyType": "Socks5",
+    "ProxyUsername": "your-proxy-username",
+    "ProxyPassword": "your-proxy-password",
+    "ProxyBypassOnLocal": true,
+    "ProxyBypassList": [
+      "localhost",
+      "127.0.0.1",
+      "*.local"
+    ]
+  }
+}

@@ -31,6 +31,12 @@ jobs:
         CLICKHOUSE_PASSWORD: ${{ secrets.CLICKHOUSE_PASSWORD }}
         EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         GPT_API_KEY: ${{ secrets.GPT_API_KEY || 'your-openai-api-key-here' }}
+        PROXY_URL: ${{ secrets.PROXY_URL || 'null' }}
+        PROXY_TYPE: ${{ secrets.PROXY_TYPE || 'Http' }}
+        PROXY_USERNAME: ${{ secrets.PROXY_USERNAME || 'null' }}
+        PROXY_PASSWORD: ${{ secrets.PROXY_PASSWORD || 'null' }}
+        USE_ALLOWLIST: ${{ secrets.USE_ALLOWLIST || 'true' }}
+        PROXY_ALLOWLIST: ${{ secrets.PROXY_ALLOWLIST || '["api.openai.com", "*.openai.com"]' }}
       run: |
         # Create the JSON file using printf to avoid shell expansion issues
         printf '{
@@ -64,10 +70,16 @@ jobs:
           },
           "Gpt": {
             "ApiKey": "%s",
-            "ProxyUrl": null,
-            "BaseUrl": "https://api.openai.com/v1"
+            "BaseUrl": "https://api.openai.com/v1",
+            "ProxyUrl": "%s",
+            "ProxyType": "%s",
+            "ProxyUsername": "%s",
+            "ProxyPassword": "%s",
+            "ProxyBypassOnLocal": true,
+            "UseAllowList": %s,
+            "ProxyAllowList": %s
           }
-        }' "$CONNECTION_STRING" "$JWT_SECRET_KEY" "$CLICKHOUSE_PASSWORD" "$EMAIL_PASSWORD" "$EMAIL_PASSWORD" "$GPT_API_KEY" > appsettings.Production.json
+        }' "$CONNECTION_STRING" "$JWT_SECRET_KEY" "$CLICKHOUSE_PASSWORD" "$EMAIL_PASSWORD" "$EMAIL_PASSWORD" "$GPT_API_KEY" "$PROXY_URL" "$PROXY_TYPE" "$PROXY_USERNAME" "$PROXY_PASSWORD" "$USE_ALLOWLIST" "$PROXY_ALLOWLIST" > appsettings.Production.json
         
         # Validate the JSON file
         python3 -m json.tool appsettings.Production.json > /dev/null

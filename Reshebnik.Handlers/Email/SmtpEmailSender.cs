@@ -104,9 +104,7 @@ public class SmtpEmailSender(IConfiguration configuration, ILogger<SmtpEmailSend
         {
             return text[..maxLength] + "...";
         }
-        else
-        {
-            return text;
-        }
+
+        return text;
     }
 }
