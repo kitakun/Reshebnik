@@ -26,15 +26,57 @@ builder.Services.AddReshebnikAuthentication(builder.Configuration);
 builder.Services.AddReshebnikCors();
 builder.Services.AddReshebnikSwagger();
 
-#if RELEASE
-builder.WebHost.ConfigureKestrel(options =>
+// Configure Kestrel based on environment
+if (builder.Environment.IsProduction())
 {
-    options.ListenAnyIP(443, listenOptions =>
+    // Production: Try to use custom certificate, fall back to development certificate
+    builder.WebHost.ConfigureKestrel(options =>
     {
-        listenOptions.UseHttps("certificate.pfx", "f5432yx5o");
+        if (File.Exists("certificate.pfx"))
+        {
+            var certificatePassword = Environment.GetEnvironmentVariable("CERTIFICATE_PASSWORD");
+            if (string.IsNullOrEmpty(certificatePassword))
+            {
+                throw new InvalidOperationException("CERTIFICATE_PASSWORD environment variable is required for production deployment");
+            }
+            
+            options.ListenAnyIP(443, listenOptions =>
+            {
+                listenOptions.UseHttps("certificate.pfx", certificatePassword);
+            });
+        }
+        else
+        {
+            // Fall back to development certificate or HTTP
+            Console.WriteLine("Warning: certificate.pfx not found, using development certificate");
+            options.ListenAnyIP(443, listenOptions =>
+            {
+                listenOptions.UseHttps();
+            });
+        }
     });
-});
-#endif
+}
+else
+{
+    // Development: Use development certificate or HTTP only
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ListenAnyIP(5000); // HTTP
+        // Try to use development certificate, fall back to HTTP only if it fails
+        try
+        {
+            options.ListenAnyIP(5001, listenOptions =>
+            {
+                listenOptions.UseHttps(); // Development certificate
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not configure HTTPS: {ex.Message}");
+            Console.WriteLine("Running in HTTP-only mode for development");
+        }
+    });
+}
 
 var app = builder.Build();
 
@@ -58,9 +100,11 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-#if RELEASE
-app.UseHttpsRedirection();
-#endif
+// Enable HTTPS redirection in production
+if (app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 
 app.MapGet("/", () => "❤️");
 

@@ -98,7 +98,7 @@ jobs:
         echo "✅ appsettings.Production.json is ready for Docker build"
       
     - name: Build Docker image
-      run: docker build --build-arg DATETIME_NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ") --build-arg CONNECTION_STRING="${{ secrets.CONNECTION_STRING }}" --build-arg JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}" --build-arg CLICKHOUSE_PASSWORD="${{ secrets.CLICKHOUSE_PASSWORD }}" --build-arg EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}" -t ${{ env.IMAGE_NAME }} .
+      run: docker build --build-arg DATETIME_NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ") --build-arg CONNECTION_STRING="${{ secrets.CONNECTION_STRING }}" --build-arg JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}" --build-arg CLICKHOUSE_PASSWORD="${{ secrets.CLICKHOUSE_PASSWORD }}" --build-arg EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}" --build-arg CERTIFICATE_PASSWORD="${{ secrets.CERTIFICATE_PASSWORD }}" -t ${{ env.IMAGE_NAME }} .
       
     - name: Stop existing container
       run: |
