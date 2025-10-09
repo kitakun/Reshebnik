@@ -25,7 +25,14 @@ public class EmailSenderService(
                 await using var scope = serviceProvider.CreateAsyncScope();
                 var queue = scope.ServiceProvider.GetRequiredService<IEmailQueue>();
                 email = await queue.DequeueAsync(stoppingToken);
-                if (email == null) continue;
+                
+                if (email == null)
+                {
+                    // No emails in queue, wait a bit before checking again
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    continue;
+                }
+                
                 await emailSender.SendEmailAsync(email, stoppingToken);
 
                 var db = scope.ServiceProvider.GetRequiredService<ReshebnikContext>();

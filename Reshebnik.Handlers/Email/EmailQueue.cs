@@ -37,6 +37,7 @@ public class EfEmailQueue(ReshebnikContext db) : IEmailQueue
 
         if (next == null)
         {
+            // Wait for either a new email to be enqueued or timeout
             var delayTask = Task.Delay(10 * 1000, cancellationToken);
             var tcsTask = _delayTcs.Task;
 
@@ -44,8 +45,12 @@ public class EfEmailQueue(ReshebnikContext db) : IEmailQueue
 
             if (completedTask == tcsTask)
             {
+                // New email was enqueued, reset the TCS and try again
                 _delayTcs = CreateDelayTcs();
+                // Recursively call to get the new email
+                return await DequeueAsync(cancellationToken);
             }
+            // Timeout reached, return null
         }
 
         return next;
