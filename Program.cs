@@ -26,6 +26,10 @@ builder.Services.AddReshebnikAuthentication(builder.Configuration);
 builder.Services.AddReshebnikCors();
 builder.Services.AddReshebnikSwagger();
 
+// Configure health checks
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(), tags: new[] { "self" });
+
 // Configure Kestrel based on environment
 if (builder.Environment.IsProduction())
 {
@@ -99,6 +103,39 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Configure health check endpoints
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var response = new
+        {
+            Status = report.Status.ToString(),
+            Checks = report.Entries.Select(entry => new
+            {
+                Name = entry.Key,
+                Status = entry.Value.Status.ToString(),
+                Duration = entry.Value.Duration.TotalMilliseconds,
+                Exception = entry.Value.Exception?.Message,
+                Data = entry.Value.Data
+            }),
+            Duration = report.TotalDuration.TotalMilliseconds
+        };
+        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response));
+    }
+});
+
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("self") || check.Tags.Contains("database")
+});
+
+app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false // Only check if the application is running
+});
 
 // Enable HTTPS redirection in production
 if (app.Environment.IsProduction())

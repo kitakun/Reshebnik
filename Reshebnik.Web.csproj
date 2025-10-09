@@ -22,6 +22,8 @@
       <Compile Remove="Reshebnik.Handlers\**" />
       <Compile Remove="Reshebnik.Clickhouse\**" />
       <Compile Remove="Reshebnik.GPT\**" />
+      <Compile Remove="Reshebnik.SberGPT\**" />
+      <Compile Remove="Reshebnik.Neural\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -30,6 +32,8 @@
       <EmbeddedResource Remove="Reshebnik.Handlers\**" />
       <EmbeddedResource Remove="Reshebnik.Clickhouse\**" />
       <EmbeddedResource Remove="Reshebnik.GPT\**" />
+      <EmbeddedResource Remove="Reshebnik.SberGPT\**" />
+      <EmbeddedResource Remove="Reshebnik.Neural\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -41,6 +45,8 @@
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
       <Content Remove="Reshebnik.GPT\**" />
+      <Content Remove="Reshebnik.SberGPT\**" />
+      <Content Remove="Reshebnik.Neural\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -49,6 +55,8 @@
       <None Remove="Reshebnik.Handlers\**" />
       <None Remove="Reshebnik.Clickhouse\**" />
       <None Remove="Reshebnik.GPT\**" />
+      <None Remove="Reshebnik.SberGPT\**" />
+      <None Remove="Reshebnik.Neural\**" />
     </ItemGroup>
 
     <ItemGroup>
