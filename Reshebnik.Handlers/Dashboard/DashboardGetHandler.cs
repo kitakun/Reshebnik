@@ -118,7 +118,7 @@ public class DashboardGetHandler(
                 }
             }
 
-            dto.DepartmentsAverage = indicatorAverages.Count > 0
+            dto.KeyIndicatorAverage = indicatorAverages.Count > 0
                 ? Math.Round(indicatorAverages.Average(), 0, MidpointRounding.ToZero)
                 : 0;
         }
@@ -312,6 +312,11 @@ public class DashboardGetHandler(
                 Average = avg
             });
         }
+
+        // Calculate DepartmentsAverage as the average of all department averages
+        dto.DepartmentsAverage = dto.Departments.Count > 0
+            ? Math.Round(dto.Departments.Average(d => d.Average), 0, MidpointRounding.ToZero)
+            : 0;
 
         await cache.SetAsync(cacheKey, dto, TimeSpan.FromMinutes(5), ct);
         return dto;
