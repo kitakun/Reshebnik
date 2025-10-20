@@ -92,5 +92,13 @@ public class IndicatorEntityConfiguration : IEntityTypeConfiguration<IndicatorEn
             .WithOne(o => o.Indicator)
             .HasForeignKey<IndicatorEntity>(a => a.ArchiveMetricId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Property(i => i.ExternalId)
+            .HasColumnName("external_id")
+            .HasMaxLength(256);
+
+        builder.HasIndex(i => new { i.ExternalId, i.CreatedBy })
+            .IsUnique()
+            .HasFilter("external_id IS NOT NULL");
     }
 }

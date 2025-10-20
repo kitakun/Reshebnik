@@ -36,6 +36,7 @@ public class IndicatorEntity
     public CompanyEntity CreatedByCompany { get; set; } = null!;
 
     public bool IsArchived { get; set; }
+    public string? ExternalId { get; set; }
     public int? ArchiveMetricId { get; set; }
     public ArchivedMetricEntity? ArchivedMetric { get; set; }
 }

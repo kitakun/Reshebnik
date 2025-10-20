@@ -21,6 +21,15 @@ EXPOSE 443
 
 # Install curl for health checks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Install certificates for SberGPT gRPC connections
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Copy Russian Trusted Root CA certificate
+COPY certificates/russian_trusted_root_ca_pem.crt /usr/local/share/ca-certificates/
+RUN update-ca-certificates
+
+# Set environment variable for gRPC SSL roots
+ENV GRPC_DEFAULT_SSL_ROOTS_FILE_PATH="/usr/local/share/ca-certificates/russian_trusted_root_ca_pem.crt"
 
 COPY --from=build /app/publish .
 COPY Reshebnik.Clickhouse/Migrations Reshebnik.Clickhouse/Migrations
@@ -31,6 +40,7 @@ COPY certificate.pfx* ./
 
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS="http://+:5000;https://+:443"
+ENV ASPNETCORE_URLS="https://+:443"
 ARG DATETIME_NOW
 ENV DATETIME_NOW=${DATETIME_NOW}
 

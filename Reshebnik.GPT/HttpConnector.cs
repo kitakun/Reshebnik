@@ -110,7 +110,7 @@ public sealed class HttpConnector : IDisposable
             handler.SetCredentials(proxyConfig.Username, proxyConfig.Password);
         }
         
-        _logger.LogInformation("Using proxy allowlist approach. Proxy will be used only for: {AllowList}", string.Join(", ", proxyConfig.ProxyAllowList ?? Array.Empty<string>()));
+        _logger.LogInformation("Using proxy allowlist approach. Proxy will be used only for: {AllowList}", string.Join(", ", proxyConfig.ProxyAllowList ?? []));
         
         return handler;
     }

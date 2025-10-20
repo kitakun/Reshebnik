@@ -18,6 +18,10 @@ using Reshebnik.Handlers.Email;
 using Reshebnik.Handlers.SpecialInvitation;
 using Reshebnik.Handlers.BugHunt;
 using Reshebnik.GPT.Services;
+using Reshebnik.Handlers.Integration;
+using Reshebnik.SberGPT.Extensions;
+using Reshebnik.Neural.Interfaces;
+using Reshebnik.Neural.Handlers;
 
 namespace Reshebnik.Web.ProgramExtensions;
 
@@ -134,6 +138,13 @@ public static class ServiceRegistrations
 
         // GPT Services
         services.AddScoped<GptService>();
+
+        // SberGPT Services
+        services.AddSberGpt(configuration);
+
+        // Neural Services
+        services.AddScoped<ITabligoNeuralAgent, SberGptNeuralAgentHandler>();
+        services.AddScoped<IntegrationImportHandler>();
 
         return services;
     }

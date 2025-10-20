@@ -6,7 +6,7 @@
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger/index.html",
-      "applicationUrl": "http://192.168.0.105:5254",
+      "applicationUrl": "http://192.168.0.105:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -16,7 +16,7 @@
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger/index.html",
-      "applicationUrl": "http://192.168.0.201:5254",
+      "applicationUrl": "http://192.168.0.201:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Production"
       }

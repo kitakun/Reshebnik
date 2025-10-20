@@ -1,6 +1,8 @@
 using Reshebnik.Web.ProgramExtensions;
 using Reshebnik.Web;
 using Reshebnik.Web.Middleware;
+using Reshebnik.Web.Reshebnik.Web;
+
 using ZLogger;
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -28,7 +30,7 @@ builder.Services.AddReshebnikSwagger();
 
 // Configure health checks
 builder.Services.AddHealthChecks()
-    .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(), tags: new[] { "self" });
+    .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(), tags: ["self"]);
 
 // Configure Kestrel based on environment
 if (builder.Environment.IsProduction())

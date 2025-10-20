@@ -17,7 +17,7 @@ namespace Reshebnik.EntityFramework.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.6")
+                .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -227,6 +227,11 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.Property<bool>("EnableNotificationsInApp")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("external_id");
+
                     b.Property<string>("Industry")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
@@ -274,6 +279,10 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
+                    b.HasIndex("ExternalId", "Id")
+                        .IsUnique()
+                        .HasFilter("external_id IS NOT NULL");
+
                     b.ToTable("companies", (string)null);
                 });
 
@@ -294,6 +303,11 @@ namespace Reshebnik.EntityFramework.Migrations
 
                     b.Property<int>("CompanyId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("external_id");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -316,6 +330,10 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
+
+                    b.HasIndex("ExternalId", "CompanyId")
+                        .IsUnique()
+                        .HasFilter("external_id IS NOT NULL");
 
                     b.ToTable("departments", (string)null);
                 });
@@ -497,6 +515,11 @@ namespace Reshebnik.EntityFramework.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("email_invitation_code");
 
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("external_id");
+
                     b.Property<string>("FIO")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -551,6 +574,10 @@ namespace Reshebnik.EntityFramework.Migrations
 
                     b.HasIndex("Email");
 
+                    b.HasIndex("ExternalId", "CompanyId")
+                        .IsUnique()
+                        .HasFilter("external_id IS NOT NULL");
+
                     b.ToTable("employees", (string)null);
                 });
 
@@ -593,6 +620,11 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.Property<int?>("EmployeeId")
                         .HasColumnType("integer")
                         .HasColumnName("employee_id");
+
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("external_id");
 
                     b.Property<string>("FillmentPeriod")
                         .IsRequired()
@@ -660,6 +692,10 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.HasIndex("DepartmentId");
 
                     b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ExternalId", "CreatedBy")
+                        .IsUnique()
+                        .HasFilter("external_id IS NOT NULL");
 
                     b.ToTable("indicators", (string)null);
                 });
@@ -776,6 +812,11 @@ namespace Reshebnik.EntityFramework.Migrations
                         .HasColumnType("character varying(1024)")
                         .HasColumnName("description");
 
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("external_id");
+
                     b.Property<bool>("IsArchived")
                         .HasColumnType("boolean")
                         .HasColumnName("is_archived");
@@ -837,6 +878,10 @@ namespace Reshebnik.EntityFramework.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
+
+                    b.HasIndex("ExternalId", "CompanyId")
+                        .IsUnique()
+                        .HasFilter("external_id IS NOT NULL");
 
                     b.ToTable("metrics", (string)null);
                 });

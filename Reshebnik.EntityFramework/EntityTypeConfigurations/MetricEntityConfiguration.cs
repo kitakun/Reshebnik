@@ -93,5 +93,13 @@ public class MetricEntityConfiguration : IEntityTypeConfiguration<MetricEntity>
         builder.HasMany(m => m.DepartmentLinks)
             .WithOne(o => o.Metric)
             .HasForeignKey(k => k.MetricId);
+
+        builder.Property(m => m.ExternalId)
+            .HasColumnName("external_id")
+            .HasMaxLength(256);
+
+        builder.HasIndex(m => new { m.ExternalId, m.CompanyId })
+            .IsUnique()
+            .HasFilter("external_id IS NOT NULL");
     }
 }

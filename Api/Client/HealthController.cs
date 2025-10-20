@@ -8,17 +8,8 @@ namespace Reshebnik.Web.Api.Client;
 [ApiController]
 [ApiExplorerSettings(GroupName = "Client")]
 [Route("api/[controller]")]
-public class HealthController : ControllerBase
+public class HealthController(ReshebnikContext context, ILogger<HealthController> logger) : ControllerBase
 {
-    private readonly ReshebnikContext _context;
-    private readonly ILogger<HealthController> _logger;
-
-    public HealthController(ReshebnikContext context, ILogger<HealthController> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
-
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> Get()
@@ -26,10 +17,10 @@ public class HealthController : ControllerBase
         try
         {
             // Check database connectivity
-            await _context.Database.CanConnectAsync();
+            await context.Database.CanConnectAsync();
             
             // Check if we can execute a simple query
-            await _context.Database.ExecuteSqlRawAsync("SELECT 1");
+            await context.Database.ExecuteSqlRawAsync("SELECT 1");
             
             return Ok(new
             {
@@ -41,7 +32,7 @@ public class HealthController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Health check failed");
+            logger.LogError(ex, "Health check failed");
             return StatusCode(503, new
             {
                 Status = "Unhealthy",
@@ -59,7 +50,7 @@ public class HealthController : ControllerBase
         try
         {
             // Check if the application is ready to accept requests
-            await _context.Database.CanConnectAsync();
+            await context.Database.CanConnectAsync();
             
             return Ok(new
             {
@@ -69,7 +60,7 @@ public class HealthController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Readiness check failed");
+            logger.LogError(ex, "Readiness check failed");
             return StatusCode(503, new
             {
                 Status = "Not Ready",

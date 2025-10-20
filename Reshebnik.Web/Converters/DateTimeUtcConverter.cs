@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Reshebnik.Web.Converters;
+namespace Reshebnik.Web.Reshebnik.Web.Converters;
 
 public class DateTimeUtcConverter : JsonConverter<DateTime>
 {

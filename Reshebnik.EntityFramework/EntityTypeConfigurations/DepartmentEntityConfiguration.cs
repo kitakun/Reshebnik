@@ -62,5 +62,13 @@ public class DepartmentEntityConfiguration : IEntityTypeConfiguration<Department
         // ignore calced properties
         builder.Ignore(d => d.SupervisorsCalculatedLink);
         builder.Ignore(d => d.EmployeesCalculatedLink);
+
+        builder.Property(d => d.ExternalId)
+            .HasColumnName("external_id")
+            .HasMaxLength(256);
+
+        builder.HasIndex(d => new { d.ExternalId, d.CompanyId })
+            .IsUnique()
+            .HasFilter("external_id IS NOT NULL");
     }
 }

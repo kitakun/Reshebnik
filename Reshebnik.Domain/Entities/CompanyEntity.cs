@@ -13,6 +13,7 @@ public class CompanyEntity
     public required CompanyTypeEnum Type { get; set; }
     public string Email { get; set; } = null!;
     public string? Phone { get; set; }
+    public string? ExternalId { get; set; }
 
     // settings
     public bool NotifyAboutLoweringMetrics { get; set; }

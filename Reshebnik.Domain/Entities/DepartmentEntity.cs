@@ -17,6 +17,7 @@ public class DepartmentEntity
     public bool IsActive { get; set; }
     public bool IsFundamental { get; set; }
     public bool IsDeleted { get; set; }
+    public string? ExternalId { get; set; }
 
     public List<EmployeeDepartmentLinkEntity> LinkEntities { get; set; } = new();
     public List<DepartmentSchemeEntity> OwnerSchemas { get; set; } = new();

@@ -85,5 +85,13 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
             .HasForeignKey<ArchivedUserEntity>(a => a.EmployeeId);
 
         builder.HasQueryFilter(e => !e.IsArchived);
+
+        builder.Property(e => e.ExternalId)
+            .HasColumnName("external_id")
+            .HasMaxLength(256);
+
+        builder.HasIndex(e => new { e.ExternalId, e.CompanyId })
+            .IsUnique()
+            .HasFilter("external_id IS NOT NULL");
     }
 }

@@ -59,8 +59,8 @@ public class TestProgram
             var response = new GptResponse(
                 Id: "test-id",
                 Model: "gpt-5-nano",
-                Choices: new GptChoice[]
-                {
+                Choices:
+                [
                     new GptChoice(
                         Index: 0,
                         Message: new GptMessage(
@@ -68,7 +68,7 @@ public class TestProgram
                             Content: "Test response"
                         )
                     )
-                }
+                ]
             );
             
             logger.ZLogInformation($"Test response created (using record struct):");

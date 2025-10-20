@@ -37,6 +37,7 @@ jobs:
         PROXY_PASSWORD: ${{ secrets.PROXY_PASSWORD || 'null' }}
         USE_ALLOWLIST: ${{ secrets.USE_ALLOWLIST || 'true' }}
         PROXY_ALLOWLIST: ${{ secrets.PROXY_ALLOWLIST || '["api.openai.com", "*.openai.com"]' }}
+        SBERGPT_AUTH_DATA: ${{ secrets.SBERGPT_AUTH_DATA }}
       run: |
         # Create the JSON file using printf to avoid shell expansion issues
         printf '{
@@ -78,8 +79,17 @@ jobs:
             "ProxyBypassOnLocal": true,
             "UseAllowList": %s,
             "ProxyAllowList": %s
+          },
+          "SberGpt": {
+            "AuthData": "%s",
+            "BaseUrl": "https://gigachat.devices.sberbank.ru/api/v1",
+            "OAuthUrl": "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
+            "Model": "GigaChat:latest",
+            "MaxTokens": 10000,
+            "Temperature": 0.7,
+            "TopP": 0.9
           }
-        }' "$CONNECTION_STRING" "$JWT_SECRET_KEY" "$CLICKHOUSE_PASSWORD" "$EMAIL_PASSWORD" "$EMAIL_PASSWORD" "$GPT_API_KEY" "$PROXY_URL" "$PROXY_TYPE" "$PROXY_USERNAME" "$PROXY_PASSWORD" "$USE_ALLOWLIST" "$PROXY_ALLOWLIST" > appsettings.Production.json
+        }' "$CONNECTION_STRING" "$JWT_SECRET_KEY" "$CLICKHOUSE_PASSWORD" "$EMAIL_PASSWORD" "$EMAIL_PASSWORD" "$GPT_API_KEY" "$PROXY_URL" "$PROXY_TYPE" "$PROXY_USERNAME" "$PROXY_PASSWORD" "$USE_ALLOWLIST" "$PROXY_ALLOWLIST" "$SBERGPT_AUTH_DATA" > appsettings.Production.json
         
         # Validate the JSON file
         python3 -m json.tool appsettings.Production.json > /dev/null

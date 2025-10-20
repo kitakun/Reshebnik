@@ -31,5 +31,6 @@ public class MetricEntity
     public bool Visible { get; set; }
 
     public bool IsArchived { get; set; }
+    public string? ExternalId { get; set; }
     public ArchivedMetricEntity? ArchivedMetric { get; set; }
 }

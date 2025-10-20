@@ -53,5 +53,13 @@ public class CompanyEntityConfiguration : IEntityTypeConfiguration<CompanyEntity
             .HasColumnName("language_code")
             .IsRequired()
             .HasMaxLength(10);
+
+        builder.Property(e => e.ExternalId)
+            .HasColumnName("external_id")
+            .HasMaxLength(256);
+
+        builder.HasIndex(e => new { e.ExternalId, e.Id })
+            .IsUnique()
+            .HasFilter("external_id IS NOT NULL");
     }
 }

@@ -1,4 +1,4 @@
-namespace Reshebnik.Web;
+namespace Reshebnik.Web.Reshebnik.Web;
 
 public static class TimeZoneHelper
 {
