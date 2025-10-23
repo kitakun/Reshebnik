@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Domain.Models;
-using Reshebnik.Handlers.Auth;
-using Reshebnik.Web.DTO.Auth;
+using Tabligo.Domain.Models;
+using Tabligo.Handlers.Auth;
 
 using System.Text.Json;
 
-namespace Reshebnik.Web.Api.Client;
+using Tabligo.Web.DTO.Auth;
+
+namespace Tabligo.Web.Api.Client;
 
 [AllowAnonymous]
 [ApiController]

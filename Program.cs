@@ -1,7 +1,6 @@
-using Reshebnik.Web.ProgramExtensions;
-using Reshebnik.Web;
-using Reshebnik.Web.Middleware;
-using Reshebnik.Web.Reshebnik.Web;
+using Tabligo.Web.ProgramExtensions;
+using Tabligo.Web;
+using Tabligo.Web.Middleware;
 
 using ZLogger;
 
@@ -22,11 +21,11 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 // Configure services
-builder.Services.AddReshebnikHttpConfigurations();
-builder.Services.AddReshebnikServices(builder.Configuration);
-builder.Services.AddReshebnikAuthentication(builder.Configuration);
-builder.Services.AddReshebnikCors();
-builder.Services.AddReshebnikSwagger();
+builder.Services.AddTabligoHttpConfigurations();
+builder.Services.AddTabligoServices(builder.Configuration);
+builder.Services.AddTabligoAuthentication(builder.Configuration);
+builder.Services.AddTabligoCors();
+builder.Services.AddTabligoSwagger();
 
 // Configure health checks
 builder.Services.AddHealthChecks()

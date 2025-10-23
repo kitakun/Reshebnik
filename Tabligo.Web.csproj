@@ -1,0 +1,102 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>13</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <PublishAot>false</PublishAot>
+        <EnableNativeAOT>false</EnableNativeAOT>
+        <IsAotCompatible>false</IsAotCompatible>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
+        <!-- For Blazor/Android/WASM setups -->
+        <RunAOTCompilation>false</RunAOTCompilation>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Remove="Tabligo.EntityFramework\**" />
+      <Compile Remove="Tabligo.Domain\**" />
+      <Compile Remove="Tabligo.Handlers\**" />
+      <Compile Remove="Tabligo.Clickhouse\**" />
+      <Compile Remove="Tabligo.GPT\**" />
+      <Compile Remove="Tabligo.SberGPT\**" />
+      <Compile Remove="Tabligo.Neural\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Tabligo.EntityFramework\**" />
+      <EmbeddedResource Remove="Tabligo.Domain\**" />
+      <EmbeddedResource Remove="Tabligo.Handlers\**" />
+      <EmbeddedResource Remove="Tabligo.Clickhouse\**" />
+      <EmbeddedResource Remove="Tabligo.GPT\**" />
+      <EmbeddedResource Remove="Tabligo.SberGPT\**" />
+      <EmbeddedResource Remove="Tabligo.Neural\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="Tabligo.EntityFramework\**" />
+      <Content Remove="Tabligo.Domain\**" />
+      <Content Remove="Tabligo.Handlers\**" />
+      <Content Remove="Tabligo.Clickhouse\**" />
+      <Content Update="appsettings.Production.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Remove="Tabligo.GPT\**" />
+      <Content Remove="Tabligo.SberGPT\**" />
+      <Content Remove="Tabligo.Neural\**" /> 
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Tabligo.EntityFramework\**" />
+      <None Remove="Tabligo.Domain\**" />
+      <None Remove="Tabligo.Handlers\**" />
+      <None Remove="Tabligo.Clickhouse\**" />
+      <None Remove="Tabligo.GPT\**" />
+      <None Remove="Tabligo.SberGPT\**" />
+      <None Remove="Tabligo.Neural\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Tabligo.EntityFramework\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.EntityFramework\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.EntityFramework\obj\Tabligo.EntityFramework.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.Domain\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.Domain\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.Domain\obj\Tabligo.Domain.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.Handlers\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.Handlers\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.Handlers\obj\Tabligo.Handlers.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.Clickhouse\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.Clickhouse\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.Clickhouse\obj\Tabligo.Clickhouse.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.GPT\obj\Debug\net9.0\Tabligo.GPT.sourcelink.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.GPT\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.GPT\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.GPT\obj\Tabligo.GPT.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.Neural\obj\project.packagespec.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+      <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="9.0.6" />
+      <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.6" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+      <PackageReference Include="System.Text.Json" Version="9.0.9" />
+      <PackageReference Include="ZLogger" Version="2.5.10" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="Tabligo.EntityFramework\Tabligo.EntityFramework.csproj" />
+      <ProjectReference Include="Tabligo.GPT\Tabligo.GPT.csproj" />
+      <ProjectReference Include="Tabligo.Handlers\Tabligo.Handlers.csproj" />
+      <ProjectReference Include="Tabligo.SberGPT\Tabligo.SberGPT.csproj" />
+      <ProjectReference Include="Tabligo.Neural\Tabligo.Neural.csproj" />
+    </ItemGroup>
+
+</Project>

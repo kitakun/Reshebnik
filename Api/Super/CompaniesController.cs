@@ -2,16 +2,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-using Reshebnik.Domain.Models;
-using Reshebnik.Domain.Models.Company;
-using Reshebnik.EntityFramework;
-using Reshebnik.Handlers.Auth;
-using Reshebnik.Handlers.Company;
-using Reshebnik.Web.DTO.Auth;
+using Tabligo.Domain.Models;
+using Tabligo.Domain.Models.Company;
+using Tabligo.EntityFramework;
+using Tabligo.Handlers.Auth;
+using Tabligo.Handlers.Company;
 
 using System.Security.Claims;
 
-namespace Reshebnik.Web.Api.Super;
+using Tabligo.Web.DTO.Auth;
+
+namespace Tabligo.Web.Api.Super;
 
 [Authorize]
 [ApiController]
@@ -55,7 +56,7 @@ public class CompaniesController : ControllerBase
         [FromQuery] int? companyId,
         [FromServices] CreateJwtHandler handler,
         [FromServices] IHttpContextAccessor httpContextAccessor,
-        [FromServices] ReshebnikContext dbContext,
+        [FromServices] TabligoContext dbContext,
         CancellationToken cancellationToken
     )
     {

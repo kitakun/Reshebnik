@@ -1,36 +1,37 @@
 using Microsoft.EntityFrameworkCore;
-using Reshebnik.EntityFramework;
-using Reshebnik.Handlers.Auth;
-using Reshebnik.Handlers.Company;
-using Reshebnik.Handlers.Department;
-using Reshebnik.Handlers.Employee;
-using Reshebnik.Handlers.Structure;
-using Reshebnik.Handlers.Metric;
-using Reshebnik.Handlers.Indicator;
-using Reshebnik.Handlers.KeyIndicator;
-using Reshebnik.Handlers.IndicatorCategory;
-using Reshebnik.Handlers.Dashboard;
-using Reshebnik.Clickhouse;
-using Reshebnik.Clickhouse.Handlers;
-using Reshebnik.Handlers;
-using Reshebnik.Handlers.Cache;
-using Reshebnik.Handlers.Email;
-using Reshebnik.Handlers.SpecialInvitation;
-using Reshebnik.Handlers.BugHunt;
-using Reshebnik.GPT.Services;
-using Reshebnik.Handlers.Integration;
-using Reshebnik.SberGPT.Extensions;
-using Reshebnik.Neural.Interfaces;
-using Reshebnik.Neural.Handlers;
+using Tabligo.EntityFramework;
+using Tabligo.Handlers.Auth;
+using Tabligo.Handlers.Company;
+using Tabligo.Handlers.Department;
+using Tabligo.Handlers.Employee;
+using Tabligo.Handlers.Structure;
+using Tabligo.Handlers.Metric;
+using Tabligo.Handlers.Indicator;
+using Tabligo.Handlers.KeyIndicator;
+using Tabligo.Handlers.IndicatorCategory;
+using Tabligo.Handlers.Dashboard;
+using Tabligo.Clickhouse;
+using Tabligo.Clickhouse.Handlers;
+using Tabligo.Handlers;
+using Tabligo.Handlers.Cache;
+using Tabligo.Handlers.Email;
+using Tabligo.Handlers.SpecialInvitation;
+using Tabligo.Handlers.BugHunt;
+using Tabligo.GPT.Services;
+using Tabligo.Handlers.Integration;
+using Tabligo.Handlers.JobOperation;
+using Tabligo.SberGPT.Extensions;
+using Tabligo.Neural.Interfaces;
+using Tabligo.Neural.Handlers;
 
-namespace Reshebnik.Web.ProgramExtensions;
+namespace Tabligo.Web.ProgramExtensions;
 
 public static class ServiceRegistrations
 {
-    public static IServiceCollection AddReshebnikServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddTabligoServices(this IServiceCollection services, IConfiguration configuration)
     {
         // Database
-        services.AddDbContext<ReshebnikContext>(options =>
+        services.AddDbContext<TabligoContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         // Cache
@@ -145,6 +146,11 @@ public static class ServiceRegistrations
         // Neural Services
         services.AddScoped<ITabligoNeuralAgent, SberGptNeuralAgentHandler>();
         services.AddScoped<IntegrationImportHandler>();
+
+        // Job Operation Services
+        services.AddScoped<Tabligo.Handlers.JobOperation.IJobOperationQueue, Tabligo.Handlers.JobOperation.JobOperationQueue>();
+        services.AddScoped<Tabligo.Handlers.JobOperation.JobOperationGetHandler>();
+        services.AddHostedService<Tabligo.Handlers.JobOperation.JobOperationProcessorService>();
 
         return services;
     }

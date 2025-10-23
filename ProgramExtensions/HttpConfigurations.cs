@@ -1,13 +1,13 @@
-using Reshebnik.Web.Reshebnik.Web.Converters;
-
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Reshebnik.Web.ProgramExtensions;
+using Tabligo.Web.Converters;
+
+namespace Tabligo.Web.ProgramExtensions;
 
 public static class HttpConfigurations
 {
-    public static IServiceCollection AddReshebnikHttpConfigurations(this IServiceCollection services)
+    public static IServiceCollection AddTabligoHttpConfigurations(this IServiceCollection services)
     {
         services.AddControllers().AddJsonOptions(options =>
         {

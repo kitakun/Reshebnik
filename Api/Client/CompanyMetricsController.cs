@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Domain.Models;
-using Reshebnik.Domain.Models.Metric;
-using Reshebnik.Handlers.Metric;
-using Reshebnik.Domain.Enums;
+using Tabligo.Domain.Models;
+using Tabligo.Domain.Models.Metric;
+using Tabligo.Handlers.Metric;
+using Tabligo.Domain.Enums;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [Authorize]
 [ApiController]
@@ -40,3 +40,4 @@ public class CompanyMetricsController : ControllerBase
         return Ok();
     }
 }
+

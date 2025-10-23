@@ -1,15 +1,21 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Neural.Interfaces;
+using Tabligo.Handlers.JobOperation;
+using Tabligo.Domain.Models.JobOperation;
+using Tabligo.Handlers.Company;
+using Tabligo.Neural.Interfaces;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [Authorize]
 [ApiController]
 [ApiExplorerSettings(GroupName = "Client")]
 [Route("api/admin/[controller]")]
-public class NeuralController(ITabligoNeuralAgent neuralAgent) : ControllerBase
+public class NeuralController(
+    IJobOperationQueue jobQueue,
+    Tabligo.Handlers.Company.CompanyContextHandler companyContext,
+    JobOperationGetHandler jobGetHandler) : ControllerBase
 {
     /// <summary>
     /// Process a file and get AI suggestions for entities to create
@@ -34,16 +40,37 @@ public class NeuralController(ITabligoNeuralAgent neuralAgent) : ControllerBase
 
         try
         {
+            var currentCompany = await companyContext.CurrentCompanyAsync;
+            if (currentCompany == null)
+            {
+                return BadRequest("No company context found");
+            }
+
             using var reader = new StreamReader(file.OpenReadStream());
             var fileContent = await reader.ReadToEndAsync(cancellationToken);
 
-            var result = await neuralAgent.ProcessFileAsync(fileContent, file.FileName, cancellationToken);
-            
-            return Ok(result);
+            var inputData = new
+            {
+                FileContent = fileContent,
+                FileName = file.FileName
+            };
+
+            var jobId = await jobQueue.EnqueueAsync(
+                currentCompany.Id,
+                "neural-file-process",
+                file.FileName,
+                inputData,
+                cancellationToken);
+
+            return Ok(new JobOperationEnqueueResponse
+            {
+                JobId = jobId,
+                Message = "File processing job created successfully"
+            });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = "Error processing file", details = ex.Message });
+            return StatusCode(500, new { error = "Error creating processing job", details = ex.Message });
         }
     }
 
@@ -65,13 +92,66 @@ public class NeuralController(ITabligoNeuralAgent neuralAgent) : ControllerBase
 
         try
         {
-            var result = await neuralAgent.ProcessFileAsync(request.Content, request.FileName ?? "text.txt", cancellationToken);
-            
-            return Ok(result);
+            var currentCompany = await companyContext.CurrentCompanyAsync;
+            if (currentCompany == null)
+            {
+                return BadRequest("No company context found");
+            }
+
+            var inputData = new
+            {
+                FileContent = request.Content,
+                FileName = request.FileName ?? "text.txt"
+            };
+
+            var jobId = await jobQueue.EnqueueAsync(
+                currentCompany.Id,
+                "neural-file-process",
+                request.FileName ?? "text.txt",
+                inputData,
+                cancellationToken);
+
+            return Ok(new JobOperationEnqueueResponse
+            {
+                JobId = jobId,
+                Message = "Text processing job created successfully"
+            });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = "Error processing text", details = ex.Message });
+            return StatusCode(500, new { error = "Error creating processing job", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get the status of a job operation
+    /// </summary>
+    /// <param name="jobId">The ID of the job to check</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Job status information</returns>
+    [HttpGet("job-status/{jobId}")]
+    public async Task<IActionResult> GetJobStatusAsync(
+        int jobId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var currentCompany = await companyContext.CurrentCompanyAsync;
+            if (currentCompany == null)
+            {
+                return BadRequest("No company context found");
+            }
+
+            var status = await jobGetHandler.GetJobStatusAsync(jobId, currentCompany.Id, cancellationToken);
+            return Ok(status);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error getting job status", details = ex.Message });
         }
     }
 }

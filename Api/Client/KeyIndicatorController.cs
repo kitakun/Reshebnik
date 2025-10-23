@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Domain.Models.Indicator;
-using Reshebnik.Domain.Enums;
-using Reshebnik.Handlers.KeyIndicator;
+using Tabligo.Domain.Models.Indicator;
+using Tabligo.Domain.Enums;
+using Tabligo.Handlers.KeyIndicator;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [Authorize]
 [ApiController]
@@ -26,3 +26,4 @@ public class KeyIndicatorController : ControllerBase
         return Ok(result);
     }
 }
+

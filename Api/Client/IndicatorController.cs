@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Handlers.Indicator;
-using Reshebnik.Domain.Models;
-using Reshebnik.Domain.Models.Indicator;
+using Tabligo.Handlers.Indicator;
+using Tabligo.Domain.Models;
+using Tabligo.Domain.Models.Indicator;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [Authorize]
 [ApiController]
@@ -52,3 +52,4 @@ public class IndicatorController : ControllerBase
         return Ok(new { id });
     }
 }
+

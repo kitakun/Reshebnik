@@ -1,10 +1,10 @@
 using Microsoft.OpenApi.Models;
 
-namespace Reshebnik.Web.ProgramExtensions;
+namespace Tabligo.Web.ProgramExtensions;
 
 public static class SwaggerConfigurations
 {
-    public static IServiceCollection AddReshebnikSwagger(this IServiceCollection services)
+    public static IServiceCollection AddTabligoSwagger(this IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>

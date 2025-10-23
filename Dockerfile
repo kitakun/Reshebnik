@@ -2,17 +2,17 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY Reshebnik.Web.csproj ./
-COPY Reshebnik.Handlers/Reshebnik.Handlers.csproj Reshebnik.Handlers/
-COPY Reshebnik.Domain/Reshebnik.Domain.csproj Reshebnik.Domain/
-COPY Reshebnik.EntityFramework/Reshebnik.EntityFramework.csproj Reshebnik.EntityFramework/
-COPY Reshebnik.Clickhouse/Reshebnik.Clickhouse.csproj Reshebnik.Clickhouse/
-COPY Reshebnik.Clickhouse/Migrations Reshebnik.Clickhouse/Migrations/
+COPY Tabligo.Web.csproj ./
+COPY Tabligo.Handlers/Tabligo.Handlers.csproj Tabligo.Handlers/
+COPY Tabligo.Domain/Tabligo.Domain.csproj Tabligo.Domain/
+COPY Tabligo.EntityFramework/Tabligo.EntityFramework.csproj Tabligo.EntityFramework/
+COPY Tabligo.Clickhouse/Tabligo.Clickhouse.csproj Tabligo.Clickhouse/
+COPY Tabligo.Clickhouse/Migrations Tabligo.Clickhouse/Migrations/
 COPY . .
 
-RUN dotnet restore "Reshebnik.Web.csproj"
+RUN dotnet restore "Tabligo.Web.csproj"
 
-RUN dotnet publish "Reshebnik.Web.csproj" -c Release -o /app/publish && ls -la /app/publish
+RUN dotnet publish "Tabligo.Web.csproj" -c Release -o /app/publish && ls -la /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
@@ -32,7 +32,7 @@ RUN update-ca-certificates
 ENV GRPC_DEFAULT_SSL_ROOTS_FILE_PATH="/usr/local/share/ca-certificates/russian_trusted_root_ca_pem.crt"
 
 COPY --from=build /app/publish .
-COPY Reshebnik.Clickhouse/Migrations Reshebnik.Clickhouse/Migrations
+COPY Tabligo.Clickhouse/Migrations Tabligo.Clickhouse/Migrations
 COPY appsettings.Production.json ./appsettings.Production.json
 
 # Copy certificate if it exists (optional for testing)
@@ -61,4 +61,4 @@ ENV CERTIFICATE_PASSWORD=${CERTIFICATE_PASSWORD}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:5000/health/live || exit 1
 
-ENTRYPOINT ["dotnet", "Reshebnik.Web.dll"]
+ENTRYPOINT ["dotnet", "Tabligo.Web.dll"]

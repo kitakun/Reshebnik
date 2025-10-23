@@ -3,14 +3,14 @@ using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace Reshebnik.Web.ProgramExtensions;
+namespace Tabligo.Web.ProgramExtensions;
 
 public static class AuthConfigurations
 {
-    public static IServiceCollection AddReshebnikAuthentication(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddTabligoAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var secretKey = configuration["Jwt:Key"] ?? "YourSuperSecretKey123!";
-        var jwtIssuer = configuration["Jwt:Issuer"] ?? "ReshebnikApp";
+        var jwtIssuer = configuration["Jwt:Issuer"] ?? "TabligoApp";
         var key = Encoding.UTF8.GetBytes(secretKey);
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

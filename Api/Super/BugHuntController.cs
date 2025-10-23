@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Handlers.BugHunt;
-using Reshebnik.Domain.Models;
+using Tabligo.Handlers.BugHunt;
+using Tabligo.Domain.Models;
 
-namespace Reshebnik.Web.Api.Super;
+namespace Tabligo.Web.Api.Super;
 
 [Authorize]
 [ApiController]
@@ -23,3 +23,4 @@ public class BugHuntController : ControllerBase
         return Ok(result);
     }
 }
+

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Reshebnik.SberGPT.Services;
+using Tabligo.SberGPT.Services;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [AllowAnonymous]
 [ApiController]

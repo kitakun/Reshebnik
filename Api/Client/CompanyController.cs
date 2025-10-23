@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Domain.Enums;
-using Reshebnik.Domain.Models.Company;
-using Reshebnik.Handlers.Auth;
-using Reshebnik.Handlers.Company;
+using Tabligo.Domain.Enums;
+using Tabligo.Domain.Models.Company;
+using Tabligo.Handlers.Auth;
+using Tabligo.Handlers.Company;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [Authorize]
 [ApiController]

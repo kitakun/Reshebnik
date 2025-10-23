@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.GPT.Logging;
-using Reshebnik.GPT.Models;
-using Reshebnik.GPT.Services;
+using Tabligo.GPT.Logging;
+using Tabligo.GPT.Models;
+using Tabligo.GPT.Services;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [AllowAnonymous]
 [ApiController]

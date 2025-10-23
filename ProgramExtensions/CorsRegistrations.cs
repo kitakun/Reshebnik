@@ -1,8 +1,8 @@
-namespace Reshebnik.Web.ProgramExtensions;
+namespace Tabligo.Web.ProgramExtensions;
 
 public static class CorsRegistrations
 {
-    public static IServiceCollection AddReshebnikCors(this IServiceCollection services)
+    public static IServiceCollection AddTabligoCors(this IServiceCollection services)
     {
         services.AddCors(options =>
         {

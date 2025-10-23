@@ -1,7 +1,7 @@
-﻿using Reshebnik.Domain.Entities;
-using Reshebnik.Domain.Enums;
+﻿using Tabligo.Domain.Entities;
+using Tabligo.Domain.Enums;
 
-namespace Reshebnik.Web.DTO.Auth;
+namespace Tabligo.Web.DTO.Auth;
 
 public class AdminLoginResponse(EmployeeEntity User, string Jwt, int? currentCompanyId)
 {

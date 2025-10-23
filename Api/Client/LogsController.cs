@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-using Reshebnik.EntityFramework;
+using Tabligo.EntityFramework;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [AllowAnonymous]
 [ApiController]
@@ -14,7 +14,7 @@ public class LogsController : ControllerBase
 {
     [HttpGet("emailsQueue")]
     public async Task<IActionResult> GetEmailsQueueAsync(
-        [FromServices] ReshebnikContext db,
+        [FromServices] TabligoContext db,
         CancellationToken cancellationToken)
     {
         var emails = await db.EmailQueue
@@ -33,3 +33,4 @@ public class LogsController : ControllerBase
         return Ok(new { DeployDate = deployDate });
     }
 }
+

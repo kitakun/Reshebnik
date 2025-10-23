@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Domain.Models.Integration;
-using Reshebnik.Handlers.Integration;
+using Tabligo.Domain.Models.Integration;
+using Tabligo.Handlers.Integration;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [ApiController]
 [Authorize]

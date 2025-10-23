@@ -1,12 +1,12 @@
-using Reshebnik.EntityFramework;
-using Reshebnik.Domain.Entities;
-using Reshebnik.Handlers.Auth;
-using Reshebnik.Handlers.Company;
+using Tabligo.EntityFramework;
+using Tabligo.Domain.Entities;
+using Tabligo.Handlers.Auth;
+using Tabligo.Handlers.Company;
 
 using System.Diagnostics;
 using System.Text.Json;
 
-namespace Reshebnik.Web.Middleware;
+namespace Tabligo.Web.Middleware;
 
 public class ExceptionLoggingMiddleware(RequestDelegate next, ILogger<ExceptionLoggingMiddleware> logger, IConfiguration configuration)
 {
@@ -14,7 +14,7 @@ public class ExceptionLoggingMiddleware(RequestDelegate next, ILogger<ExceptionL
     private readonly bool _includeInnerException = configuration.GetValue<bool>("ErrorHandling:IncludeInnerException", true);
 
     [DebuggerHidden]
-    public async Task InvokeAsync(HttpContext context, ReshebnikContext db, UserContextHandler userContext, CompanyContextHandler companyContext)
+    public async Task InvokeAsync(HttpContext context, TabligoContext db, UserContextHandler userContext, CompanyContextHandler companyContext)
     {
         try
         {
@@ -27,7 +27,7 @@ public class ExceptionLoggingMiddleware(RequestDelegate next, ILogger<ExceptionL
         }
     }
 
-    private async Task LogExceptionAsync(Exception ex, HttpContext context, ReshebnikContext db, UserContextHandler userContext, CompanyContextHandler companyContext)
+    private async Task LogExceptionAsync(Exception ex, HttpContext context, TabligoContext db, UserContextHandler userContext, CompanyContextHandler companyContext)
     {
         string? email = null;
         int? companyId = null;

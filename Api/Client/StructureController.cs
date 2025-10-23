@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Domain.Models.Structure;
-using Reshebnik.Handlers.Structure;
+using Tabligo.Domain.Models.Structure;
+using Tabligo.Handlers.Structure;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [Authorize]
 [ApiController]
@@ -32,3 +32,4 @@ public class StructureController : ControllerBase
         return Ok();
     }
 }
+

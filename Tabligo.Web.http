@@ -1,0 +1,441 @@
+@Tabligo.Web_HostAddress = https://localhost:443
+@JWT_TOKEN = your_jwt_token_here
+
+### Authentication Endpoints
+
+# Get invite information
+GET {{Tabligo.Web_HostAddress}}/api/admin/auth/invite?code=invite_code_here
+Accept: application/json
+
+###
+
+# Accept invite and create admin user
+POST {{Tabligo.Web_HostAddress}}/api/admin/auth/invite?code=invite_code_here
+Content-Type: application/json
+
+{
+  "password": "your_password_here"
+}
+
+###
+
+# Login
+POST {{Tabligo.Web_HostAddress}}/api/admin/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "your_password_here"
+}
+
+###
+
+# Reset password
+POST {{Tabligo.Web_HostAddress}}/api/admin/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "admin@example.com"
+}
+
+###
+
+### Company Management
+
+# Get company information
+GET {{Tabligo.Web_HostAddress}}/api/admin/company
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Get company by ID (SuperAdmin only)
+GET {{Tabligo.Web_HostAddress}}/api/admin/company?companyId=1
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Update company settings
+PUT {{Tabligo.Web_HostAddress}}/api/admin/company/settings
+Authorization: Bearer {{JWT_TOKEN}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="Name"
+
+Company Name
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="Description"
+
+Company Description
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### Employee Management
+
+# Get employee by ID
+GET {{Tabligo.Web_HostAddress}}/api/admin/employee?id=1
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Create or update employee
+PUT {{Tabligo.Web_HostAddress}}/api/admin/employee
+Authorization: Bearer {{JWT_TOKEN}}
+Content-Type: application/json
+
+{
+  "id": 0,
+  "fio": "John Doe",
+  "email": "john.doe@example.com",
+  "departmentIds": [1, 2]
+}
+
+###
+
+# Delete employee
+DELETE {{Tabligo.Web_HostAddress}}/api/admin/employee/1
+Authorization: Bearer {{JWT_TOKEN}}
+
+###
+
+# Delete multiple employees
+DELETE {{Tabligo.Web_HostAddress}}/api/admin/employee?ids=1&ids=2&ids=3
+Authorization: Bearer {{JWT_TOKEN}}
+
+###
+
+### Employees (List/Search)
+
+# Get employees list
+GET {{Tabligo.Web_HostAddress}}/api/admin/employees?query=search_term&limit=10
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Get employees typeahead
+GET {{Tabligo.Web_HostAddress}}/api/admin/employees/typeahead?query=search_term&limit=10
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+### Department Management
+
+# Get departments tree
+GET {{Tabligo.Web_HostAddress}}/api/admin/departments
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Get department by ID
+GET {{Tabligo.Web_HostAddress}}/api/admin/departments/1
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Get department preview
+GET {{Tabligo.Web_HostAddress}}/api/admin/departments/1/preview?from=2024-01-01T00:00:00Z&to=2024-12-31T23:59:59Z&periodType=Month
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Get departments typeahead
+GET {{Tabligo.Web_HostAddress}}/api/admin/departments/typeahead?query=search_term&limit=10
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Create or update department
+PUT {{Tabligo.Web_HostAddress}}/api/admin/departments
+Authorization: Bearer {{JWT_TOKEN}}
+Content-Type: application/json
+
+{
+  "id": 0,
+  "name": "Department Name",
+  "parentId": 1,
+  "description": "Department Description"
+}
+
+###
+
+# Delete department
+DELETE {{Tabligo.Web_HostAddress}}/api/admin/departments/1
+Authorization: Bearer {{JWT_TOKEN}}
+
+###
+
+# Delete multiple departments
+DELETE {{Tabligo.Web_HostAddress}}/api/admin/departments?ids=1&ids=2&ids=3
+Authorization: Bearer {{JWT_TOKEN}}
+
+###
+
+# Get department form data
+GET {{Tabligo.Web_HostAddress}}/api/admin/departments/form?id=1
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Update department form
+PUT {{Tabligo.Web_HostAddress}}/api/admin/departments/form?id=1
+Authorization: Bearer {{JWT_TOKEN}}
+Content-Type: application/json
+
+{
+  "name": "Updated Department Name",
+  "parentId": 1,
+  "description": "Updated Description"
+}
+
+###
+
+# Upsert employees to department
+PUT {{Tabligo.Web_HostAddress}}/api/admin/departments/upsert-employees-to-department
+Authorization: Bearer {{JWT_TOKEN}}
+Content-Type: application/json
+
+{
+  "departmentId": 1,
+  "employeeIds": [1, 2, 3]
+}
+
+###
+
+### Dashboard
+
+# Get dashboard data
+GET {{Tabligo.Web_HostAddress}}/api/admin/dashboard?from=2024-01-01T00:00:00Z&to=2024-12-31T23:59:59Z&periodType=Month
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+### Indicators
+
+# Get all indicators
+GET {{Tabligo.Web_HostAddress}}/api/admin/indicator
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Get indicator by ID
+GET {{Tabligo.Web_HostAddress}}/api/admin/indicator/1
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Get indicators typeahead
+GET {{Tabligo.Web_HostAddress}}/api/admin/indicator/typeahead?query=search_term&limit=10
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Create or update indicator
+PUT {{Tabligo.Web_HostAddress}}/api/admin/indicator
+Authorization: Bearer {{JWT_TOKEN}}
+Content-Type: application/json
+
+{
+  "id": 0,
+  "name": "Indicator Name",
+  "description": "Indicator Description",
+  "categoryId": 1
+}
+
+###
+
+### Indicator Categories
+
+# Get indicator categories
+GET {{Tabligo.Web_HostAddress}}/api/admin/indicatorcategory
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Get indicator category by ID
+GET {{Tabligo.Web_HostAddress}}/api/admin/indicatorcategory/1
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Create or update indicator category
+PUT {{Tabligo.Web_HostAddress}}/api/admin/indicatorcategory
+Authorization: Bearer {{JWT_TOKEN}}
+Content-Type: application/json
+
+{
+  "id": 0,
+  "name": "Category Name",
+  "description": "Category Description"
+}
+
+###
+
+### Key Indicators
+
+# Get key indicators
+GET {{Tabligo.Web_HostAddress}}/api/admin/keyindicator
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+### Metrics
+
+# Get company metrics
+GET {{Tabligo.Web_HostAddress}}/api/admin/companymetrics
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Get employee metrics
+GET {{Tabligo.Web_HostAddress}}/api/admin/employeemetrics
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+### Metric Templates
+
+# Get metric templates
+GET {{Tabligo.Web_HostAddress}}/api/admin/metrictemplates
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Get metric template by ID
+GET {{Tabligo.Web_HostAddress}}/api/admin/metrictemplates/1
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Create or update metric template
+PUT {{Tabligo.Web_HostAddress}}/api/admin/metrictemplates
+Authorization: Bearer {{JWT_TOKEN}}
+Content-Type: application/json
+
+{
+  "id": 0,
+  "name": "Template Name",
+  "description": "Template Description"
+}
+
+###
+
+### Archive
+
+# Get archived data
+GET {{Tabligo.Web_HostAddress}}/api/admin/archive
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+### Bug Hunt
+
+# Get bug hunt data
+GET {{Tabligo.Web_HostAddress}}/api/admin/bughunt
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+### Special Invitations
+
+# Get special invitations
+GET {{Tabligo.Web_HostAddress}}/api/admin/specialinvitation
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Create special invitation
+POST {{Tabligo.Web_HostAddress}}/api/admin/specialinvitation
+Authorization: Bearer {{JWT_TOKEN}}
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "role": "Admin"
+}
+
+###
+
+### Structure
+
+# Get structure data
+GET {{Tabligo.Web_HostAddress}}/api/admin/structure
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+### Welcome
+
+# Get welcome status
+GET {{Tabligo.Web_HostAddress}}/api/admin/welcome
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Set welcome as seen
+PUT {{Tabligo.Web_HostAddress}}/api/admin/welcome
+Authorization: Bearer {{JWT_TOKEN}}
+
+###
+
+### Logs (Admin Only)
+
+# Get email queue logs
+GET {{Tabligo.Web_HostAddress}}/api/admin/logs/emailsQueue
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+# Get deployment date
+GET {{Tabligo.Web_HostAddress}}/api/admin/logs/deployDate
+Authorization: Bearer {{JWT_TOKEN}}
+Accept: application/json
+
+###
+
+### GPT Endpoints
+
+# Hello World GPT request
+POST {{Tabligo.Web_HostAddress}}/api/admin/gpt/hello-world
+Content-Type: application/json
+
+###
+
+# Send custom GPT request
+POST {{Tabligo.Web_HostAddress}}/api/admin/gpt/send-request
+Content-Type: application/json
+
+{
+  "model": "gpt-4",
+  "input": "Hello, how are you?",
+  "store": false
+}
+
+###

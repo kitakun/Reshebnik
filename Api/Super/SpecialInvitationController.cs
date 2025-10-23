@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Domain.Models;
-using Reshebnik.Handlers.SpecialInvitation;
+using Tabligo.Domain.Models;
+using Tabligo.Handlers.SpecialInvitation;
 
-namespace Reshebnik.Web.Api.Super;
+namespace Tabligo.Web.Api.Super;
 
 [Authorize]
 [ApiController]
@@ -43,3 +43,4 @@ public class SpecialInvitationController : ControllerBase
         return Ok();
     }
 }
+

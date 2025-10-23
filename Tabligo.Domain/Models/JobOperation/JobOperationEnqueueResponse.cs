@@ -1,0 +1,7 @@
+namespace Tabligo.Domain.Models.JobOperation;
+
+public class JobOperationEnqueueResponse
+{
+    public int JobId { get; set; }
+    public string Message { get; set; } = string.Empty;
+}

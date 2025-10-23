@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Domain.Models.Employee;
-using Reshebnik.Handlers.Employee;
-using Reshebnik.Domain.Exceptions;
+using Tabligo.Domain.Models.Employee;
+using Tabligo.Handlers.Employee;
+using Tabligo.Domain.Exceptions;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [Authorize]
 [ApiController]
@@ -62,3 +62,4 @@ public class EmployeeController : ControllerBase
         return Ok();
     }
 }
+

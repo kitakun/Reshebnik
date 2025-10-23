@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Reshebnik.Domain.Models.MetricTemplate;
-using Reshebnik.Handlers.MetricTemplate;
+using Tabligo.Domain.Models.MetricTemplate;
+using Tabligo.Handlers.MetricTemplate;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [Authorize]
 [ApiController]
@@ -40,3 +40,4 @@ public class MetricTemplatesController : ControllerBase
         return Ok();
     }
 }
+

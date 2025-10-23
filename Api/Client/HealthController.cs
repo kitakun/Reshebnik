@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Reshebnik.EntityFramework;
+using Tabligo.EntityFramework;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [ApiController]
 [ApiExplorerSettings(GroupName = "Client")]
 [Route("api/[controller]")]
-public class HealthController(ReshebnikContext context, ILogger<HealthController> logger) : ControllerBase
+public class HealthController(TabligoContext context, ILogger<HealthController> logger) : ControllerBase
 {
     [HttpGet]
     [AllowAnonymous]
@@ -82,3 +82,4 @@ public class HealthController(ReshebnikContext context, ILogger<HealthController
         });
     }
 }
+

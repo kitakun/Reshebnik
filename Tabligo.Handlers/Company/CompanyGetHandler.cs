@@ -1,0 +1,42 @@
+using Microsoft.EntityFrameworkCore;
+
+using Tabligo.Domain.Models.Company;
+using Tabligo.EntityFramework;
+
+namespace Tabligo.Handlers.Company;
+
+public class CompanyGetHandler(
+    TabligoContext db,
+    CompanyContextHandler companyContext)
+{
+    public async ValueTask<CompanySettingsDto?> HandleAsync(CancellationToken ct = default)
+    {
+        var companyId = await companyContext.CurrentCompanyIdAsync;
+        if (companyId <= 0)
+            return null;
+
+        var entity = await db.Companies.AsNoTracking().FirstOrDefaultAsync(c => c.Id == companyId, ct);
+        if (entity == null)
+            return null;
+
+        return new CompanySettingsDto
+        {
+            CompanyName = entity.Name,
+            Industry = entity.Industry ?? string.Empty,
+            Size = entity.EmployeesCount.ToString(),
+            LegalType = entity.Type,
+            CompanyEmail = entity.Email,
+            CompanyPhone = entity.Phone ?? string.Empty,
+            NotifEmail = entity.NotifyAboutLoweringMetrics,
+            NotifFrequency = entity.NotificationType,
+            UiLanguage = entity.LanguageCode,
+            //
+            Period = entity.Period,
+            AutoUpdateFromAPI = entity.AutoUpdateByApi,
+            DefaultMetric = entity.DefaultMetrics,
+            AllowForEmployeesEditMetrics = entity.AllowForEmployeesEditMetrics,
+            NotifInApp = entity.EnableNotificationsInApp,
+            ShowNewMetrics = entity.ShowNewMetrics,
+        };
+    }
+}

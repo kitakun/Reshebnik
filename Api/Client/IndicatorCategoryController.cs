@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Domain.Enums;
-using Reshebnik.Domain.Models;
-using Reshebnik.Domain.Models.Indicator;
-using Reshebnik.Handlers.IndicatorCategory;
+using Tabligo.Domain.Enums;
+using Tabligo.Domain.Models;
+using Tabligo.Domain.Models.Indicator;
+using Tabligo.Handlers.IndicatorCategory;
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [Authorize]
 [ApiController]
@@ -41,3 +41,4 @@ public class IndicatorCategoryController : ControllerBase
         return Ok();
     }
 }
+

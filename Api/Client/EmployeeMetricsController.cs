@@ -1,15 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Reshebnik.Domain.Models.Metric;
-using Reshebnik.Domain.Models;
-using Reshebnik.Domain.Enums;
-using Reshebnik.Handlers.Metric;
-using Reshebnik.Domain.Models.Employee;
-using Reshebnik.Handlers.Employee;
+using Tabligo.Domain.Models.Metric;
+using Tabligo.Domain.Models;
+using Tabligo.Domain.Enums;
+using Tabligo.Handlers.Metric;
+using Tabligo.Domain.Models.Employee;
+using Tabligo.Handlers.Employee;
 
 
-namespace Reshebnik.Web.Api.Client;
+namespace Tabligo.Web.Api.Client;
 
 [Authorize]
 [ApiController]
@@ -86,4 +86,5 @@ public class EmployeeMetricsController : ControllerBase
         return Ok();
     }
 }
+
 

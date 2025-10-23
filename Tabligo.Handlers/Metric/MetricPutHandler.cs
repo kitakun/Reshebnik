@@ -1,0 +1,78 @@
+using Microsoft.EntityFrameworkCore;
+
+using Tabligo.Domain.Entities;
+using Tabligo.Domain.Models.Metric;
+using Tabligo.EntityFramework;
+using Tabligo.Handlers.Company;
+
+namespace Tabligo.Handlers.Metric;
+
+public class MetricPutHandler(
+    TabligoContext db,
+    CompanyContextHandler companyContext)
+{
+    public async ValueTask<int> HandleAsync(MetricPutDto dto, CancellationToken ct = default)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var companyId = await companyContext.CurrentCompanyIdAsync;
+            MetricEntity entity;
+            if (dto.Id != 0)
+            {
+                entity = await db.Metrics.FirstOrDefaultAsync(m => m.Id == dto.Id && m.CompanyId == companyId, ct) ?? new MetricEntity { CompanyId = companyId };
+                if (entity.Id == 0) db.Metrics.Add(entity);
+            }
+            else
+            {
+                entity = new MetricEntity { CompanyId = companyId };
+                db.Metrics.Add(entity);
+            }
+
+            entity.Name = dto.Name;
+            entity.Description = dto.Description;
+            entity.Unit = dto.Unit;
+            entity.Type = dto.Type;
+            entity.PeriodType = dto.PeriodType;
+            entity.WeekType = dto.WeekType;
+            entity.WeekStartDate = dto.WeekStartDate.HasValue
+                ? (int?)(DateTime.UtcNow.Date - dto.WeekStartDate.Value.Date).TotalDays
+                : null;
+            entity.ShowGrowthPercent = dto.ShowGrowthPercent;
+            entity.Plan = dto.Plan;
+            entity.Min = dto.Min;
+            entity.Max = dto.Max;
+            entity.Visible = dto.Visible;
+            await db.SaveChangesAsync(ct);
+
+            var existingDeptLinks = await db.MetricDepartmentLinks
+                .Where(l => l.MetricId == entity.Id)
+                .ToListAsync(ct);
+            db.MetricDepartmentLinks.RemoveRange(existingDeptLinks.Where(l => !dto.DepartmentIds.Contains(l.DepartmentId)));
+            foreach (var depId in dto.DepartmentIds)
+            {
+                if (existingDeptLinks.All(l => l.DepartmentId != depId))
+                    db.MetricDepartmentLinks.Add(new MetricDepartmentLinkEntity { MetricId = entity.Id, DepartmentId = depId });
+            }
+
+            var existingEmpLinks = await db.MetricEmployeeLinks
+                .Where(l => l.MetricId == entity.Id)
+                .ToListAsync(ct);
+            db.MetricEmployeeLinks.RemoveRange(existingEmpLinks.Where(l => !dto.EmployeeIds.Contains(l.EmployeeId)));
+            foreach (var empId in dto.EmployeeIds)
+            {
+                if (existingEmpLinks.All(l => l.EmployeeId != empId))
+                    db.MetricEmployeeLinks.Add(new MetricEmployeeLinkEntity { MetricId = entity.Id, EmployeeId = empId });
+            }
+
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+            return entity.Id;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            throw;
+        }
+    }
+}

@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>13</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ClickHouse.Client" Version="7.14.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.9" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.9" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.9" />
+        <PackageReference Include="System.Text.Json" Version="9.0.9" />
+        <PackageReference Include="ZLogger" Version="2.5.10" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Tabligo.Domain\Tabligo.Domain.csproj" />
+        <ProjectReference Include="..\Tabligo.EntityFramework\Tabligo.EntityFramework.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="Migrations\0001_create_user_metrics.sql" />
+        <Content Include="Migrations\0001_create_user_metrics.sql">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <None Remove="Migrations\0002_create_company_metrics.sql" />
+        <Content Include="Migrations\0002_create_company_metrics.sql">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <None Remove="Migrations\0003_update_company_metrics.sql" />
+        <Content Include="Migrations\0003_update_company_metrics.sql">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+</Project>
