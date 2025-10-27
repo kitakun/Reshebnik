@@ -14,7 +14,9 @@ public class CompanyEntityConfiguration : IEntityTypeConfiguration<CompanyEntity
         builder.HasKey(e => e.Id);
         builder.HasIndex(e => e.Email).IsUnique();
 
-        builder.Property(p => p.Id).HasDefaultValueSql("nextval('\"companies_id_seq\"')");
+        builder.Property(p => p.Id)
+            .HasColumnName("id")
+            .HasDefaultValueSql("nextval('\"companies_id_seq\"')");
 
         builder.Property(e => e.Name)
             .HasColumnName("name")
@@ -54,12 +56,14 @@ public class CompanyEntityConfiguration : IEntityTypeConfiguration<CompanyEntity
             .IsRequired()
             .HasMaxLength(10);
 
-        builder.Property(e => e.ExternalId)
-            .HasColumnName("external_id")
-            .HasMaxLength(256);
-
-        builder.HasIndex(e => new { e.ExternalId, e.Id })
-            .IsUnique()
-            .HasFilter("external_id IS NOT NULL");
+        builder.HasMany(c => c.ExternalIdLinks)
+            .WithOne(e => e.Company)
+            .HasForeignKey(e => e.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasMany(c => c.Integrations)
+            .WithOne(i => i.Company)
+            .HasForeignKey(i => i.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

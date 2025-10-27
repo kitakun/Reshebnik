@@ -142,7 +142,7 @@ public sealed class HttpConnector : IDisposable
             return handler;
         }
 
-        throw new NotSupportedException($"SOCKS4 proxy is not supported in this implementation");
+        throw new NotSupportedException("SOCKS4 proxy is not supported in this implementation");
     }
 
     public async Task<TResponse?> PostAsync<TRequest, TResponse>(

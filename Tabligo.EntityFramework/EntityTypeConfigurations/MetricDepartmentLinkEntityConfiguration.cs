@@ -34,6 +34,7 @@ public class MetricDepartmentLinkEntityConfiguration : IEntityTypeConfiguration<
         builder.HasOne(e => e.Department)
             .WithMany(d => d.MetricLinks)
             .HasForeignKey(e => e.DepartmentId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
     }
 }

@@ -240,8 +240,8 @@ public class SberGptNeuralAgentHandler(
 
 ## Сущности:
 - **Company**: Name, Industry, EmployeesCount, Type (LegalEntity/Individual/SelfEmployed), Email, Phone, **ExternalId** (уникальный идентификатор из документа)
-- **Employee**: FIO (обязательно), JobTitle, Email, Phone, DefaultRole (Supervisor/Employee), CompanyId, DepartmentId, **ExternalId** (уникальный идентификатор из документа)
-- **Department**: Name (обязательно), Comment, CompanyId, **ExternalId** (уникальный идентификатор из документа), **ParentDepartmentId** (если есть родительский департамент)
+- **Employee**: **ФИО (ОБЯЗАТЕЛЬНО - извлекайте полное имя: Фамилия Имя Отчество из текста документа)**, JobTitle, Email, Phone, DefaultRole (Supervisor/Employee), CompanyId, DepartmentId, **ExternalId** (уникальный идентификатор из документа)
+- **Department**: Name (обязательно), Description, Comment, CompanyId, **ExternalId** (уникальный идентификатор из документа), **ParentDepartmentId** (если есть родительский департамент)
 - **Metric**: Name (обязательно), Description, Unit (Count/Percent), Type (PlanFact/FactOnly/Cumulative), PeriodType (Day/Week/Month/Quartal/Year), CompanyId, DepartmentId?, EmployeeId?, **ExternalId** (уникальный идентификатор из документа)
 - **Indicator**: Name (обязательно), Category, Description, UnitType, FillmentPeriod, ValueType, CompanyId, DepartmentId?, EmployeeId?, **ExternalId** (уникальный идентификатор из документа)
 
@@ -252,21 +252,28 @@ public class SberGptNeuralAgentHandler(
 - MetricId: ""temp-metric-[8]-[4]-[4]-[4]-[12]""
 
 ## КРИТИЧЕСКИ ВАЖНО:
-1. ВСЕГДА включайте ВСЕ найденные свойства в поле ""properties"" - НЕ ИГНОРИРУЙТЕ дополнительные данные!
-2. Если в тексте есть дополнительные поля (например, адрес, дата создания, статус, и т.д.) - ОБЯЗАТЕЛЬНО включите их в properties
-3. **ОБЯЗАТЕЛЬНО** извлекайте или генерируйте ExternalId для каждой сущности:
+1. **ДЛЯ СОТРУДНИКОВ (Employee) ВСЕГДА извлекайте полное ФИО (Фамилия Имя Отчество) из текста документа** - используйте его как свойство ""FIO"" в properties. НЕ ПРИДУМЫВАЙТЕ имена, берете только то, что есть в документе!
+2. **ДЛЯ КАЖДОЙ СУЩНОСТИ ЗАПОЛНЯЙТЕ ВСЕ УКАЗАННЫЕ СВОЙСТВА**:
+   - **Company**: ВСЕГДА включайте Name, Industry, EmployeesCount, Type, Email, Phone, ExternalId, CompanyId
+   - **Employee**: ВСЕГДА включайте FIO, JobTitle, Email, Phone, DefaultRole, CompanyId, DepartmentId, ExternalId
+   - **Department**: ВСЕГДА включайте Name, Description, Comment, CompanyId, ExternalId, ParentDepartmentId (если есть)
+   - **Metric**: ВСЕГДА включайте Name, Description, Unit, Type, PeriodType, CompanyId, DepartmentId (если есть), EmployeeId (если есть), ExternalId
+   - **Indicator**: ВСЕГДА включайте Name, Category, Description, UnitType, FillmentPeriod, ValueType, CompanyId, DepartmentId (если есть), EmployeeId (если есть), ExternalId
+   - Если какое-то значение из документа отсутствует - используйте пустую строку """" или 0, но НЕ пропускайте свойство!
+3. Если в тексте есть дополнительные поля (например, адрес, дата создания, статус, и т.д.) - ОБЯЗАТЕЛЬНО включите их в properties
+4. **ОБЯЗАТЕЛЬНО** извлекайте или генерируйте ExternalId для каждой сущности:
    - СНАЧАЛА ищите в документе существующие ID (employee_id, metric_code, department_id, company_id) - используйте их как ExternalId
    - Если существующий ID не найден - создайте временный GUID в формате ""temp-[тип]-[8 символов]-[4 символа]-[4 символа]-[4 символа]-[12 символов]""
    - ExternalId должен быть уникальным в рамках компании
    - НЕ используйте одинаковые ExternalId для разных сущностей
 
-4. **СВЯЗЫВАЙТЕ ДЕПАРТАМЕНТЫ** если в документе есть иерархия:
+5. **СВЯЗЫВАЙТЕ ДЕПАРТАМЕНТЫ** если в документе есть иерархия:
    - Если департамент имеет родительский департамент - укажите ParentDepartmentId
    - ParentDepartmentId должен ссылаться на ExternalId родительского департамента
    - Анализируйте структуру организации и создавайте правильную иерархию
-5. Используйте точные значения из текста, не придумывайте
-6. JSON без комментариев, только валидный JSON
-7. Все на русском языке
+6. Используйте точные значения из текста, не придумывайте
+7. JSON без комментариев, только валидный JSON
+8. Все на русском языке
 
 Формат ответа:
 {
@@ -285,6 +292,25 @@ public class SberGptNeuralAgentHandler(
     }
   ],
   ""analysisSummary"": ""Сводка""
+}
+
+Пример для Employee:
+{
+  ""entityType"": ""Employee"",
+  ""name"": ""Иван Петров Сидорович"",
+  ""description"": """",
+  ""properties"": {
+    ""FIO"": ""Иван Петров Сидорович"",
+    ""JobTitle"": ""Разработчик"",
+    ""Email"": ""ivan.petrov@company.com"",
+    ""Phone"": """",
+    ""DefaultRole"": ""Employee"",
+    ""CompanyId"": ""temp-company-12345678-1234-1234-1234-123456789abc"",
+    ""DepartmentId"": ""temp-dept-87654321-4321-4321-4321-cba987654321"",
+    ""ExternalId"": ""temp-emp-11223344-5566-7788-99aa-bbccddeeff00""
+  },
+  ""confidence"": 0.95,
+  ""reasoning"": ""Сотрудник упомянут в документе""
 }";
     }
 

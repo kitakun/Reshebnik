@@ -2,9 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Tabligo.Domain.Enums;
-using Tabligo.Neural.Interfaces;
-
-using System.Text.Json;
+using Tabligo.Domain.Models.JobOperation;
+using Tabligo.Domain.Services;
 
 namespace Tabligo.Handlers.JobOperation;
 
@@ -48,22 +47,30 @@ public class JobOperationProcessorService(
         logger.LogInformation("Job operation processor service is stopping");
     }
 
-    private async Task ProcessJobAsync(Tabligo.Domain.Entities.JobOperationEntity job, IJobOperationQueue queue, IServiceProvider serviceProvider, CancellationToken ct)
+    private async Task ProcessJobAsync(Domain.Entities.JobOperationEntity job, IJobOperationQueue queue, IServiceProvider serviceProvider, CancellationToken ct)
     {
         try
         {
             logger.LogInformation("Processing job {JobId} of type {JobType}", job.Id, job.Type);
 
-            switch (job.Type)
+            // Get all processors from the scoped service provider
+            var processors = serviceProvider.GetServices<IJobOperationProcessor>();
+            var processorMap = processors.ToDictionary(p => p.JobType, p => p);
+
+            if (!processorMap.TryGetValue(job.Type, out var processor))
             {
-                case "neural-file-process":
-                    await ProcessNeuralFileJobAsync(job, queue, serviceProvider, ct);
-                    break;
-                default:
-                    logger.LogWarning("Unknown job type: {JobType}", job.Type);
-                    await queue.UpdateStatusAsync(job.Id, JobOperationStatusEnum.Failed, null, ct);
-                    break;
+                logger.LogWarning("Unknown job type: {JobType}", job.Type);
+                await queue.UpdateStatusAsync(job.Id, JobOperationStatusEnum.Failed, null, ct);
+                var notifier1 = serviceProvider.GetRequiredService<INotifier>();
+                await notifier1.NotifyJobStatusChangedAsync(job.Id, job.CompanyId, JobOperationStatusEnum.Failed.ToString(), ct);
+                return;
             }
+
+            var result = await processor.ProcessAsync(job, serviceProvider, ct);
+            await queue.UpdateStatusAsync(job.Id, JobOperationStatusEnum.Finished, result, ct);
+            var notifier = serviceProvider.GetRequiredService<INotifier>();
+            await notifier.NotifyJobStatusChangedAsync(job.Id, job.CompanyId, JobOperationStatusEnum.Finished.ToString(), ct);
+            logger.LogInformation("Job {JobId} completed successfully", job.Id);
         }
         catch (Exception ex)
         {
@@ -73,40 +80,17 @@ public class JobOperationProcessorService(
             {
                 job.RetryCount++;
                 await queue.UpdateStatusAsync(job.Id, JobOperationStatusEnum.InQueue, null, ct);
+                var notifier2 = serviceProvider.GetRequiredService<INotifier>();
+                await notifier2.NotifyJobStatusChangedAsync(job.Id, job.CompanyId, JobOperationStatusEnum.InQueue.ToString(), ct);
                 logger.LogInformation("Job {JobId} will be retried (attempt {RetryCount}/{MaxRetries})", job.Id, job.RetryCount, MaxRetries);
             }
             else
             {
                 await queue.UpdateStatusAsync(job.Id, JobOperationStatusEnum.Failed, null, ct);
+                var notifier3 = serviceProvider.GetRequiredService<INotifier>();
+                await notifier3.NotifyJobStatusChangedAsync(job.Id, job.CompanyId, JobOperationStatusEnum.Failed.ToString(), ct);
                 logger.LogError("Job {JobId} failed after {MaxRetries} retries", job.Id, MaxRetries);
             }
         }
-    }
-
-    private async Task ProcessNeuralFileJobAsync(Tabligo.Domain.Entities.JobOperationEntity job, IJobOperationQueue queue, IServiceProvider serviceProvider, CancellationToken ct)
-    {
-        var neuralAgent = serviceProvider.GetRequiredService<ITabligoNeuralAgent>();
-        
-        if (job.InputData == null)
-        {
-            throw new InvalidOperationException("Job does not contain input data");
-        }
-
-        var inputData = JsonSerializer.Deserialize<NeuralFileInputData>(job.InputData.RootElement.GetRawText());
-        if (inputData == null)
-        {
-            throw new InvalidOperationException("Failed to deserialize input data");
-        }
-
-        var result = await neuralAgent.ProcessFileAsync(inputData.FileContent, inputData.FileName, ct);
-        
-        await queue.UpdateStatusAsync(job.Id, JobOperationStatusEnum.Finished, result, ct);
-        logger.LogInformation("Job {JobId} completed successfully", job.Id);
-    }
-
-    private class NeuralFileInputData
-    {
-        public string FileContent { get; set; } = string.Empty;
-        public string FileName { get; set; } = string.Empty;
     }
 }

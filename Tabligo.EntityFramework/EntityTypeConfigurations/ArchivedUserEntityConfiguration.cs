@@ -45,6 +45,7 @@ public class ArchivedUserEntityConfiguration : IEntityTypeConfiguration<Archived
         builder.HasOne(a => a.ArchivedByUser)
             .WithMany()
             .HasForeignKey(a => a.ArchivedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
     }
 }

@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Tabligo.Handlers.JobOperation;
 using Tabligo.Domain.Models.JobOperation;
 using Tabligo.Handlers.Company;
-using Tabligo.Neural.Interfaces;
+
+using static Tabligo.Domain.Models.JobOperation.JobOperationTypes;
 
 namespace Tabligo.Web.Api.Client;
 
@@ -14,7 +15,7 @@ namespace Tabligo.Web.Api.Client;
 [Route("api/admin/[controller]")]
 public class NeuralController(
     IJobOperationQueue jobQueue,
-    Tabligo.Handlers.Company.CompanyContextHandler companyContext,
+    CompanyContextHandler companyContext,
     JobOperationGetHandler jobGetHandler) : ControllerBase
 {
     /// <summary>
@@ -57,7 +58,7 @@ public class NeuralController(
 
             var jobId = await jobQueue.EnqueueAsync(
                 currentCompany.Id,
-                "neural-file-process",
+                NeuralFileProcess,
                 file.FileName,
                 inputData,
                 cancellationToken);
@@ -106,7 +107,7 @@ public class NeuralController(
 
             var jobId = await jobQueue.EnqueueAsync(
                 currentCompany.Id,
-                "neural-file-process",
+                NeuralFileProcess,
                 request.FileName ?? "text.txt",
                 inputData,
                 cancellationToken);

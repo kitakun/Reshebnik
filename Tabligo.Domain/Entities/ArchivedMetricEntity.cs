@@ -6,6 +6,7 @@ public class ArchivedMetricEntity
 {
     public int Id { get; set; }
     public int CompanyId { get; set; }
+    public CompanyEntity Company { get; set; } = null!;
 
     public int? MetricId { get; set; }
     public MetricEntity? Metric { get; set; } = null!;

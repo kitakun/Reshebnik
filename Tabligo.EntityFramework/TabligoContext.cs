@@ -38,6 +38,10 @@ public class TabligoContext(DbContextOptions<TabligoContext> options) : DbContex
 
     public DbSet<JobOperationEntity> JobOperations { get; set; }
 
+    public DbSet<IntegrationEntity> Integrations { get; set; }
+    
+    public DbSet<ExternalIdLinkEntity> ExternalIdLinks { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasSequence<int>("employee_id_seq");

@@ -43,9 +43,9 @@ public class CompanyController : ControllerBase
         CancellationToken cancellationToken)
     {
         // TODO to SuController
-        if (companyId.HasValue && userContextHandler.Role == RootRolesEnum.SuperAdmin)
+        if (((request.IsNew.HasValue && request.IsNew.Value) || companyId.HasValue) && userContextHandler.Role == RootRolesEnum.SuperAdmin)
         {
-            await suHandler.HandleAsync(companyId.Value, request, cancellationToken);
+            await suHandler.HandleAsync(companyId ?? 0, request, cancellationToken);
             return Ok();
         }
 

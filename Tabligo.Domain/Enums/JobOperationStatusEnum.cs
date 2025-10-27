@@ -5,5 +5,6 @@ public enum JobOperationStatusEnum
     InQueue = 1,
     Processing = 2,
     Failed = 3,
-    Finished = 4
+    Finished = 4,
+    Cancelled = 5
 }

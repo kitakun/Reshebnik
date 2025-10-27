@@ -24,6 +24,8 @@
       <Compile Remove="Tabligo.GPT\**" />
       <Compile Remove="Tabligo.SberGPT\**" />
       <Compile Remove="Tabligo.Neural\**" />
+      <Compile Remove="Tabligo.Integrations\**" />
+      <Compile Remove="Tabligo.SignalR\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -34,6 +36,8 @@
       <EmbeddedResource Remove="Tabligo.GPT\**" />
       <EmbeddedResource Remove="Tabligo.SberGPT\**" />
       <EmbeddedResource Remove="Tabligo.Neural\**" />
+      <EmbeddedResource Remove="Tabligo.Integrations\**" />
+      <EmbeddedResource Remove="Tabligo.SignalR\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -46,7 +50,9 @@
       </Content>
       <Content Remove="Tabligo.GPT\**" />
       <Content Remove="Tabligo.SberGPT\**" />
-      <Content Remove="Tabligo.Neural\**" /> 
+      <Content Remove="Tabligo.Neural\**" />
+      <Content Remove="Tabligo.Integrations\**" />
+      <Content Remove="Tabligo.SignalR\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -57,6 +63,8 @@
       <None Remove="Tabligo.GPT\**" />
       <None Remove="Tabligo.SberGPT\**" />
       <None Remove="Tabligo.Neural\**" />
+      <None Remove="Tabligo.Integrations\**" />
+      <None Remove="Tabligo.SignalR\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -77,17 +85,25 @@
       <_ContentIncludedByDefault Remove="Tabligo.GPT\obj\project.packagespec.json" />
       <_ContentIncludedByDefault Remove="Tabligo.GPT\obj\Tabligo.GPT.csproj.nuget.dgspec.json" />
       <_ContentIncludedByDefault Remove="Tabligo.Neural\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.SignalR\bin\Debug\net9.0\Tabligo.SignalR.deps.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.SignalR\obj\Debug\net9.0\Tabligo.SignalR.sourcelink.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.SignalR\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Tabligo.SignalR\obj\Tabligo.SignalR.csproj.nuget.dgspec.json" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.10">
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+      </PackageReference>
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
       <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="9.0.6" />
       <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.6" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
-      <PackageReference Include="System.Text.Json" Version="9.0.9" />
+      <PackageReference Include="System.Text.Json" Version="9.0.10" />
       <PackageReference Include="ZLogger" Version="2.5.10" />
     </ItemGroup>
 
@@ -95,8 +111,9 @@
       <ProjectReference Include="Tabligo.EntityFramework\Tabligo.EntityFramework.csproj" />
       <ProjectReference Include="Tabligo.GPT\Tabligo.GPT.csproj" />
       <ProjectReference Include="Tabligo.Handlers\Tabligo.Handlers.csproj" />
-      <ProjectReference Include="Tabligo.SberGPT\Tabligo.SberGPT.csproj" />
+      <ProjectReference Include="Tabligo.Integrations\Tabligo.Integrations.csproj" />
       <ProjectReference Include="Tabligo.Neural\Tabligo.Neural.csproj" />
+      <ProjectReference Include="Tabligo.SignalR\Tabligo.SignalR.csproj" />
     </ItemGroup>
 
 </Project>

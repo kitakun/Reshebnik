@@ -1,6 +1,5 @@
 using Tabligo.Domain.Enums;
 using System.Text.Json;
-using Tabligo.Domain.Entities;
 
 namespace Tabligo.Domain.Entities;
 
@@ -12,6 +11,7 @@ public class JobOperationEntity
     public int Hash { get; set; }
     public required string Name { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? CompletedAt { get; set; }
     public JobOperationStatusEnum Status { get; set; }
     public int RetryCount { get; set; }
     public JsonDocument? InputData { get; set; }

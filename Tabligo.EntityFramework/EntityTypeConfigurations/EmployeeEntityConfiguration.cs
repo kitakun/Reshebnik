@@ -14,7 +14,9 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
         builder.HasKey(e => e.Id);
         builder.HasIndex(e => e.Email);
 
-        builder.Property(p => p.Id).HasDefaultValueSql("nextval('\"employee_id_seq\"')");
+        builder.Property(p => p.Id)
+            .HasColumnName("id")
+            .HasDefaultValueSql("nextval('\"employee_id_seq\"')");
 
         builder.Property(e => e.CompanyId)
             .HasColumnName("company_id")
@@ -77,21 +79,23 @@ public class EmployeeEntityConfiguration : IEntityTypeConfiguration<EmployeeEnti
         builder.Property(e => e.WelcomeWasSeen)
             .HasColumnName("welcome_was_seen");
 
-        builder.Property(p => p.Salt).IsRequired();
-        builder.Property(p => p.Password).IsRequired();
+        builder.Property(p => p.Salt)
+            .HasColumnName("salt")
+            .IsRequired();
+        builder.Property(p => p.Password)
+            .HasColumnName("password")
+            .IsRequired();
 
         builder.HasOne(e => e.ArchivedUser)
             .WithOne(a => a.Employee)
             .HasForeignKey<ArchivedUserEntity>(a => a.EmployeeId);
 
         builder.HasQueryFilter(e => !e.IsArchived);
-
-        builder.Property(e => e.ExternalId)
-            .HasColumnName("external_id")
-            .HasMaxLength(256);
-
-        builder.HasIndex(e => new { e.ExternalId, e.CompanyId })
-            .IsUnique()
-            .HasFilter("external_id IS NOT NULL");
+        
+        // Configure ExternalIdLinks navigation
+        builder.HasMany(e => e.ExternalIdLinks)
+            .WithOne(x => x.Employee)
+            .HasForeignKey(x => x.EmployeeId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

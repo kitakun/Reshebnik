@@ -21,4 +21,16 @@ public class IntegrationImportRequest
 
     [JsonPropertyName("reasoning")]
     public string Reasoning { get; set; } = string.Empty;
+
+    [JsonPropertyName("sourceSystem")]
+    public string? SourceSystem { get; set; }
+
+    [JsonPropertyName("sourceId")]
+    public string? SourceId { get; set; }
+
+    [JsonPropertyName("sourceCreatedAt")]
+    public DateTime? SourceCreatedAt { get; set; }
+
+    [JsonPropertyName("frontendTag")]
+    public string? FrontendTag { get; set; }
 }

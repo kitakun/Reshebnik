@@ -23,7 +23,7 @@ public class JobOperationEntityConfiguration : IEntityTypeConfiguration<JobOpera
         builder.Property(e => e.Type)
             .HasColumnName("type")
             .IsRequired()
-            .HasMaxLength(16);
+            .HasMaxLength(64);
 
         builder.Property(e => e.Hash)
             .HasColumnName("hash")
@@ -32,11 +32,15 @@ public class JobOperationEntityConfiguration : IEntityTypeConfiguration<JobOpera
         builder.Property(e => e.Name)
             .HasColumnName("name")
             .IsRequired()
-            .HasMaxLength(32);
+            .HasMaxLength(255);
 
         builder.Property(e => e.CreatedAt)
             .HasColumnName("created_at")
             .IsRequired();
+
+        builder.Property(e => e.CompletedAt)
+            .HasColumnName("completed_at")
+            .IsRequired(false);
 
         builder.Property(e => e.Status)
             .HasColumnName("status")

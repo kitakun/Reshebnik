@@ -13,7 +13,6 @@ public class CompanyEntity
     public required CompanyTypeEnum Type { get; set; }
     public string Email { get; set; } = null!;
     public string? Phone { get; set; }
-    public string? ExternalId { get; set; }
 
     // settings
     public bool NotifyAboutLoweringMetrics { get; set; }
@@ -37,4 +36,10 @@ public class CompanyEntity
     public List<ArchivedMetricEntity> ArchivedMetrics { get; set; } = new();
     [JsonIgnore]
     public List<ArchivedUserEntity> ArchivedUsers { get; set; } = new();
+    
+    [JsonIgnore]
+    public List<ExternalIdLinkEntity> ExternalIdLinks { get; set; } = new();
+    
+    [JsonIgnore]
+    public List<IntegrationEntity> Integrations { get; set; } = new();
 }

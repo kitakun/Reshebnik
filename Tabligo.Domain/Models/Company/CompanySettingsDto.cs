@@ -19,4 +19,5 @@ public class CompanySettingsDto
     public required SystemNotificationTypeEnum NotifFrequency { get; set; }
     public required string UiLanguage { get; set; } = string.Empty;
     public required bool AutoUpdateFromAPI { get; set; }
+    public bool? IsNew { get; set; }
 }

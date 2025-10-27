@@ -29,6 +29,11 @@ public class ArchivedMetricEntityConfiguration : IEntityTypeConfiguration<Archiv
             .HasColumnName("indicator_id")
             .IsRequired(false);
 
+        builder.HasOne(a => a.Company)
+            .WithMany(c => c.ArchivedMetrics)
+            .HasForeignKey(a => a.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasOne(a => a.Metric)
             .WithOne(m => m.ArchivedMetric)
             .HasForeignKey<ArchivedMetricEntity>(a => a.MetricId)
@@ -37,11 +42,6 @@ public class ArchivedMetricEntityConfiguration : IEntityTypeConfiguration<Archiv
         builder.HasOne(a => a.Indicator)
             .WithOne(m => m.ArchivedMetric)
             .HasForeignKey<ArchivedMetricEntity>(a => a.IndicatorId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne<CompanyEntity>()
-            .WithMany(c => c.ArchivedMetrics)
-            .HasForeignKey(a => a.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Property(a => a.MetricType)
@@ -69,6 +69,7 @@ public class ArchivedMetricEntityConfiguration : IEntityTypeConfiguration<Archiv
         builder.HasOne(a => a.ArchivedByUser)
             .WithMany()
             .HasForeignKey(a => a.ArchivedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
     }
 }

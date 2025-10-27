@@ -35,6 +35,10 @@
         <Content Include="Migrations\0003_update_company_metrics.sql">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
+        <None Remove="Migrations\0004_add_indicator_columns.sql" />
+        <Content Include="Migrations\0004_add_indicator_columns.sql">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
 </Project>

@@ -38,12 +38,14 @@ public class DepartmentSchemeEntityConfiguration : IEntityTypeConfiguration<Depa
         builder.HasOne(e => e.FundamentalDepartment)
             .WithMany(m => m.OwnerSchemas)
             .HasForeignKey(e => e.FundamentalDepartmentId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         builder.HasOne(e => e.AncestorDepartment)
             .WithMany()
             .HasForeignKey(e => e.AncestorDepartmentId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         builder.HasOne(e => e.Department)
             .WithMany(m => m.PartInSchemas)

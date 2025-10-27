@@ -32,6 +32,21 @@ public static class AuthConfigurations
                     {
                         Console.WriteLine($"Authentication failed: {context.Exception}");
                         return Task.CompletedTask;
+                    },
+                    OnMessageReceived = context =>
+                    {
+                        // For SignalR, the token can be in the query string
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        
+                        // Check if this is a SignalR request
+                        if (!string.IsNullOrEmpty(accessToken) && 
+                            path.StartsWithSegments("/hubs"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        
+                        return Task.CompletedTask;
                     }
                 };
             });

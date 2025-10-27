@@ -38,6 +38,10 @@ public class DepartmentEntityConfiguration : IEntityTypeConfiguration<Department
             .HasColumnName("is_deleted")
             .IsRequired();
 
+        builder.Property(d => d.CompanyId)
+            .HasColumnName("company_id")
+            .IsRequired();
+
         builder.HasQueryFilter(d => !d.IsDeleted);
 
         builder.HasOne(o => o.Company)
@@ -62,13 +66,11 @@ public class DepartmentEntityConfiguration : IEntityTypeConfiguration<Department
         // ignore calced properties
         builder.Ignore(d => d.SupervisorsCalculatedLink);
         builder.Ignore(d => d.EmployeesCalculatedLink);
-
-        builder.Property(d => d.ExternalId)
-            .HasColumnName("external_id")
-            .HasMaxLength(256);
-
-        builder.HasIndex(d => new { d.ExternalId, d.CompanyId })
-            .IsUnique()
-            .HasFilter("external_id IS NOT NULL");
+        
+        // Configure ExternalIdLinks navigation
+        builder.HasMany(d => d.ExternalIdLinks)
+            .WithOne(x => x.Department)
+            .HasForeignKey(x => x.DepartmentId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

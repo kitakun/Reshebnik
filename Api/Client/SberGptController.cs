@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using Tabligo.SberGPT.Services;
 
 namespace Tabligo.Web.Api.Client;

@@ -3,13 +3,16 @@ using Tabligo.Domain.Entities;
 using Tabligo.Domain.Enums;
 using Tabligo.Domain.Extensions;
 using Tabligo.Domain.Models.Integration;
+using Tabligo.Domain.Models.JobOperation;
 using Tabligo.EntityFramework;
 using Tabligo.Handlers.Company;
+using Tabligo.Clickhouse.Handlers;
+using Tabligo.Clickhouse.Models;
 using System.Text.Json;
 
 namespace Tabligo.Handlers.Integration;
 
-public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler companyContext)
+public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler companyContext, ExternalIdLinkHandler externalIdLinkHandler, PutIndicatorValuesHandler putIndicatorHandler)
 {
     public async Task<IntegrationImportResponse> HandleAsync(List<IntegrationImportRequest> requests, CancellationToken ct = default)
     {
@@ -32,13 +35,17 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                 return response;
             }
 
-            using var transaction = await db.Database.BeginTransactionAsync(ct);
+            await using var transaction = await db.Database.BeginTransactionAsync(ct);
             try
             {
                 var departmentRequests = requests.Where(r => r.EntityType == "Department").ToList();
                 var employeeRequests = requests.Where(r => r.EntityType == "Employee").ToList();
                 var metricRequests = requests.Where(r => r.EntityType == "Metric").ToList();
+                var indicatorRequests = requests.Where(r => r.EntityType == "Indicator").ToList();
 
+                // Sort departments by dependencies: process departments without parents first
+                departmentRequests = SortDepartmentsByDependencies(departmentRequests);
+                
                 await ProcessDepartmentsAsync(departmentRequests, currentCompany, response, ct);
                 await db.SaveChangesAsync(ct);
 
@@ -46,12 +53,13 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                 await db.SaveChangesAsync(ct);
 
                 await ProcessMetricsAsync(metricRequests, currentCompany, response, ct);
+                await ProcessIndicatorsAsync(indicatorRequests, currentCompany, response, ct);
 
                 await CreateDepartmentEmployeeLinksAsync(employeeRequests, currentCompany, response, ct);
 
                 await db.SaveChangesAsync(ct);
                 
-                await ClearTempExternalIdsAsync(currentCompany.Id, ct);
+                await externalIdLinkHandler.ClearTempLinksAsync(currentCompany.Id, ct);
                 
                 await transaction.CommitAsync(ct);
             }
@@ -70,31 +78,14 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
         return response;
     }
 
-    private async Task ClearTempExternalIdsAsync(int companyId, CancellationToken ct)
-    {
-        await db.Departments
-            .Where(d => d.CompanyId == companyId && d.ExternalId != null && d.ExternalId.StartsWith("temp-"))
-            .ExecuteUpdateAsync(d => d.SetProperty(x => x.ExternalId, (string?)null), ct);
-
-        await db.Employees
-            .Where(e => e.CompanyId == companyId && e.ExternalId != null && e.ExternalId.StartsWith("temp-"))
-            .ExecuteUpdateAsync(e => e.SetProperty(x => x.ExternalId, (string?)null), ct);
-
-        await db.Metrics
-            .Where(m => m.CompanyId == companyId && m.ExternalId != null && m.ExternalId.StartsWith("temp-"))
-            .ExecuteUpdateAsync(m => m.SetProperty(x => x.ExternalId, (string?)null), ct);
-
-        await db.Indicators
-            .Where(i => i.CreatedBy == companyId && i.ExternalId != null && i.ExternalId.StartsWith("temp-"))
-            .ExecuteUpdateAsync(i => i.SetProperty(x => x.ExternalId, (string?)null), ct);
-    }
-
     private async Task ProcessDepartmentsAsync(List<IntegrationImportRequest> requests, CompanyEntity currentCompany, IntegrationImportResponse response, CancellationToken ct)
     {
         foreach (var request in requests)
         {
             try
             {
+                var integrationType = ParseIntegrationType(request.SourceSystem);
+                
                 var externalId = GetPropertyValue<string>(request.Properties, "ExternalId");
                 
                 if (string.IsNullOrEmpty(externalId))
@@ -106,12 +97,19 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                     }
                 }
                 
-                var existingDepartment = !string.IsNullOrEmpty(externalId)
-                    ? await db.Departments.FirstOrDefaultAsync(d => d.ExternalId == externalId && d.CompanyId == currentCompany.Id, ct)
-                    : await db.Departments.FirstOrDefaultAsync(d => d.Name.Trim().ToLower() == request.Name.Trim().ToLower() && d.CompanyId == currentCompany.Id, ct);
-                if (existingDepartment == null)
+                DepartmentEntity? existingDepartment = null;
+                
+                if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
                 {
-                    existingDepartment = await db.Departments.FirstOrDefaultAsync(d => d.Name.Trim().ToLower() == request.Name.Trim().ToLower() && d.CompanyId == currentCompany.Id, ct);
+                    existingDepartment = await externalIdLinkHandler.FindEntityAsync<DepartmentEntity>(
+                        currentCompany.Id, externalId, integrationType.Value, ct);
+                }
+                
+                if (existingDepartment == null && !string.IsNullOrEmpty(request.Name))
+                {
+                    existingDepartment = await db.Departments
+                        .FirstOrDefaultAsync(d => d.Name.Trim().ToLower() == request.Name.Trim().ToLower() 
+                                                  && d.CompanyId == currentCompany.Id, ct);
                 }
 
                 var parentDepartmentId = GetPropertyValue<string>(request.Properties, "ParentDepartmentId");
@@ -120,7 +118,7 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                 DepartmentEntity? parentDepartment = null;
                 if (hasParent && !string.IsNullOrEmpty(parentDepartmentId))
                 {
-                    parentDepartment = await FindDepartmentByNameOrIdAsync(parentDepartmentId, currentCompany.Id, ct);
+                    parentDepartment = await FindDepartmentByNameOrIdAsync(parentDepartmentId, currentCompany.Id, integrationType, ct);
                 }
                 
                 if (existingDepartment == null)
@@ -132,12 +130,23 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                         Comment = request.Description,
                         IsActive = true,
                         IsFundamental = !hasParent,
-                        IsDeleted = false,
-                        ExternalId = externalId
+                        IsDeleted = false
                     };
 
                     db.Departments.Add(department);
                     await db.SaveChangesAsync(ct);
+                    
+                    // Create ExternalIdLink if externalId exists
+                    if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
+                    {
+                        await externalIdLinkHandler.LinkAsync(
+                            currentCompany.Id,
+                            externalId,
+                            integrationType.Value,
+                            nameof(DepartmentEntity),
+                            department.Id,
+                            ct);
+                    }
                     
                     if (hasParent && parentDepartment != null)
                     {
@@ -162,11 +171,31 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                     existingDepartment.Name = request.Name;
                     existingDepartment.Comment = request.Description;
                     existingDepartment.IsFundamental = !hasParent;
-                    existingDepartment.ExternalId = externalId;
                     
-                    if (wasFundamental != !hasParent)
+                    // Update ExternalIdLink if externalId exists
+                    if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
                     {
-                        await UpdateDepartmentSchemasAsync(existingDepartment.Id, parentDepartment?.Id, ct);
+                        await externalIdLinkHandler.LinkAsync(
+                            currentCompany.Id,
+                            externalId,
+                            integrationType.Value,
+                            nameof(DepartmentEntity),
+                            existingDepartment.Id,
+                            ct);
+                    }
+                    
+                    // Get current parent from department schemas
+                    var currentParentId = await db.DepartmentSchemas
+                        .Where(s => s.DepartmentId == existingDepartment.Id && s.Depth == 1 && s.AncestorDepartmentId != existingDepartment.Id)
+                        .Select(s => (int?)s.AncestorDepartmentId)
+                        .FirstOrDefaultAsync(ct);
+                    
+                    var newParentId = parentDepartment?.Id;
+                    
+                    // Update schemas if parent changed or fundamental status changed
+                    if (currentParentId != newParentId || wasFundamental != !hasParent)
+                    {
+                        await UpdateDepartmentSchemasAsync(existingDepartment.Id, newParentId, ct);
                     }
                     
                     response.UpdatedCount++;
@@ -187,14 +216,28 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
 
     private async Task ProcessEmployeesAsync(List<IntegrationImportRequest> requests, CompanyEntity currentCompany, IntegrationImportResponse response, CancellationToken ct)
     {
+        // Check if company has only one department
+        var companyDepartmentCount = await db.Departments
+            .CountAsync(d => d.CompanyId == currentCompany.Id, ct);
+        
+        DepartmentEntity? singleDepartment = null;
+        if (companyDepartmentCount == 1)
+        {
+            singleDepartment = await db.Departments
+                .FirstOrDefaultAsync(d => d.CompanyId == currentCompany.Id, ct);
+        }
+
         foreach (var request in requests)
         {
             try
             {
+                var integrationType = ParseIntegrationType(request.SourceSystem);
+                
                 var departmentId = GetPropertyValue<string>(request.Properties, "DepartmentId");
                 var fio = GetPropertyValue<string>(request.Properties, "FIO");
                 var jobTitle = GetPropertyValue<string>(request.Properties, "JobTitle");
                 var defaultRole = GetPropertyValue<string>(request.Properties, "DefaultRole");
+                var email = GetPropertyValue<string>(request.Properties, "Email");
 
                 if (string.IsNullOrEmpty(fio))
                 {
@@ -216,11 +259,13 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                 DepartmentEntity? department = null;
                 if (!string.IsNullOrEmpty(departmentId))
                 {
-                    department = await FindDepartmentByNameOrIdAsync(departmentId, currentCompany.Id, ct);
-                    if (department == null && departmentId.StartsWith("temp-"))
-                    {
-                        department = null;
-                    }
+                    department = await FindDepartmentByNameOrIdAsync(departmentId, currentCompany.Id, integrationType, ct);
+                }
+
+                // If department was not found and company has only one department, use it
+                if (department == null && singleDepartment != null)
+                {
+                    department = singleDepartment;
                 }
 
                 var externalId = GetPropertyValue<string>(request.Properties, "ExternalId");
@@ -234,12 +279,19 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                     }
                 }
                 
-                var existingEmployee = !string.IsNullOrEmpty(externalId)
-                    ? await db.Employees.FirstOrDefaultAsync(e => e.ExternalId == externalId && e.CompanyId == currentCompany.Id, ct)
-                    : await db.Employees.FirstOrDefaultAsync(e => e.FIO.Trim().ToLower() == fio.Trim().ToLower() && e.CompanyId == currentCompany.Id, ct);
-                if (existingEmployee == null)
+                EmployeeEntity? existingEmployee = null;
+                
+                if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
                 {
-                    existingEmployee = await db.Employees.FirstOrDefaultAsync(e => e.FIO.Trim().ToLower() == fio.Trim().ToLower() && e.CompanyId == currentCompany.Id, ct);
+                    existingEmployee = await externalIdLinkHandler.FindEntityAsync<EmployeeEntity>(
+                        currentCompany.Id, externalId, integrationType.Value, ct);
+                }
+                
+                if (existingEmployee == null && !string.IsNullOrEmpty(fio))
+                {
+                    existingEmployee = await db.Employees
+                        .FirstOrDefaultAsync(e => e.FIO.Trim().ToLower() == fio.Trim().ToLower() 
+                                                  && e.CompanyId == currentCompany.Id, ct);
                 }
 
                 if (existingEmployee == null)
@@ -249,7 +301,7 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                         CompanyId = currentCompany.Id,
                         FIO = fio,
                         JobTitle = jobTitle ?? "",
-                        Email = $"{fio.ToLower().Replace(" ", ".")}@company.com",
+                        Email = !string.IsNullOrEmpty(email) ? email : $"{fio.ToLower().Replace(" ", ".")}@company.com",
                         Phone = "",
                         Comment = request.Description,
                         IsActive = true,
@@ -259,12 +311,23 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                         Role = RootRolesEnum.Employee,
                         DefaultRole = ParseEmployeeType(defaultRole),
                         CreatedAt = DateTime.UtcNow,
-                        WelcomeWasSeen = false,
-                        ExternalId = externalId
+                        WelcomeWasSeen = false
                     };
 
                     db.Employees.Add(employee);
                     await db.SaveChangesAsync(ct);
+                    
+                    // Create ExternalIdLink if externalId exists
+                    if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
+                    {
+                        await externalIdLinkHandler.LinkAsync(
+                            currentCompany.Id,
+                            externalId,
+                            integrationType.Value,
+                            nameof(EmployeeEntity),
+                            employee.Id,
+                            ct);
+                    }
 
                     if (department != null)
                     {
@@ -284,6 +347,41 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                     existingEmployee.FIO = fio;
                     existingEmployee.JobTitle = jobTitle ?? existingEmployee.JobTitle;
                     existingEmployee.DefaultRole = ParseEmployeeType(defaultRole) ?? existingEmployee.DefaultRole;
+                    if (!string.IsNullOrEmpty(email))
+                    {
+                        existingEmployee.Email = email;
+                    }
+                    
+                    // Update ExternalIdLink if externalId exists
+                    if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
+                    {
+                        await externalIdLinkHandler.LinkAsync(
+                            currentCompany.Id,
+                            externalId,
+                            integrationType.Value,
+                            nameof(EmployeeEntity),
+                            existingEmployee.Id,
+                            ct);
+                    }
+
+                    // Create department link if department exists and link doesn't exist
+                    if (department != null)
+                    {
+                        var existingLink = await db.EmployeeDepartmentLinks
+                            .FirstOrDefaultAsync(l => l.EmployeeId == existingEmployee.Id && l.DepartmentId == department.Id, ct);
+
+                        if (existingLink == null)
+                        {
+                            var link = new EmployeeDepartmentLinkEntity
+                            {
+                                EmployeeId = existingEmployee.Id,
+                                DepartmentId = department.Id,
+                                Type = existingEmployee.DefaultRole == EmployeeTypeEnum.Supervisor ? EmployeeTypeEnum.Supervisor : EmployeeTypeEnum.Employee
+                            };
+                            db.EmployeeDepartmentLinks.Add(link);
+                        }
+                    }
+                    
                     response.UpdatedCount++;
                 }
             }
@@ -306,6 +404,8 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
         {
             try
             {
+                var integrationType = ParseIntegrationType(request.SourceSystem);
+                
                 var employeeId = GetPropertyValue<string>(request.Properties, "EmployeeId");
                 var unit = GetPropertyValue<string>(request.Properties, "Unit");
                 var type = GetPropertyValue<string>(request.Properties, "Type");
@@ -322,12 +422,19 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                     }
                 }
                 
-                var existingMetric = !string.IsNullOrEmpty(externalId)
-                    ? await db.Metrics.FirstOrDefaultAsync(m => m.ExternalId == externalId && m.CompanyId == currentCompany.Id, ct)
-                    : await db.Metrics.FirstOrDefaultAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.CompanyId == currentCompany.Id, ct);
-                if (existingMetric == null)
+                MetricEntity? existingMetric = null;
+                
+                if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
                 {
-                    existingMetric = await db.Metrics.FirstOrDefaultAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.CompanyId == currentCompany.Id, ct);
+                    existingMetric = await externalIdLinkHandler.FindEntityAsync<MetricEntity>(
+                        currentCompany.Id, externalId, integrationType.Value, ct);
+                }
+                
+                if (existingMetric == null && !string.IsNullOrEmpty(request.Name))
+                {
+                    existingMetric = await db.Metrics
+                        .FirstOrDefaultAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() 
+                                                  && m.CompanyId == currentCompany.Id, ct);
                 }
 
                 if (existingMetric == null)
@@ -344,16 +451,27 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                         ShowGrowthPercent = false,
                         Visible = true,
                         IsArchived = false,
-                        ClickHouseKey = request.Name.ToClickHouseKey(),
-                        ExternalId = externalId
+                        ClickHouseKey = request.Name.ToClickHouseKey()
                     };
 
                     db.Metrics.Add(metric);
                     await db.SaveChangesAsync(ct);
+                    
+                    // Create ExternalIdLink if externalId exists
+                    if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
+                    {
+                        await externalIdLinkHandler.LinkAsync(
+                            currentCompany.Id,
+                            externalId,
+                            integrationType.Value,
+                            nameof(MetricEntity),
+                            metric.Id,
+                            ct);
+                    }
 
                     if (!string.IsNullOrEmpty(employeeId))
                     {
-                        var employee = await FindEmployeeByNameOrIdAsync(employeeId, currentCompany.Id, ct);
+                        var employee = await FindEmployeeByNameOrIdAsync(employeeId, currentCompany.Id, integrationType, ct);
                         if (employee != null)
                         {
                             var link = new MetricEmployeeLinkEntity
@@ -377,6 +495,124 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
                         existingMetric.Type = ParseMetricType(type);
                     if (!string.IsNullOrEmpty(periodType))
                         existingMetric.PeriodType = ParsePeriodType(periodType);
+                    
+                    // Update ExternalIdLink if externalId exists
+                    if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
+                    {
+                        await externalIdLinkHandler.LinkAsync(
+                            currentCompany.Id,
+                            externalId,
+                            integrationType.Value,
+                            nameof(MetricEntity),
+                            existingMetric.Id,
+                            ct);
+                    }
+
+                    response.UpdatedCount++;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.ErrorCount++;
+                response.Errors.Add(new ImportError
+                {
+                    EntityType = request.EntityType,
+                    Name = request.Name,
+                    Error = ex.Message
+                });
+            }
+        }
+    }
+
+    private async Task ProcessIndicatorsAsync(List<IntegrationImportRequest> requests, CompanyEntity currentCompany, IntegrationImportResponse response, CancellationToken ct)
+    {
+        foreach (var request in requests)
+        {
+            try
+            {
+                var integrationType = ParseIntegrationType(request.SourceSystem);
+
+                var externalId = GetPropertyValue<string>(request.Properties, "ExternalId");
+                var unitType = GetPropertyValue<string>(request.Properties, "UnitType") ?? GetPropertyValue<string>(request.Properties, "Unit");
+                var fillmentPeriod = GetPropertyValue<string>(request.Properties, "FillmentPeriod");
+                var valueType = GetPropertyValue<string>(request.Properties, "ValueType");
+                var showOnMainScreen = GetPropertyValue<bool?>(request.Properties, "ShowOnMainScreen");
+                var showOnKeyIndicators = GetPropertyValue<bool?>(request.Properties, "ShowOnKeyIndicators");
+                var rejectionTreshold = GetPropertyValue<decimal?>(request.Properties, "RejectionTreshold");
+
+                IndicatorEntity? existingIndicator = null;
+
+                if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
+                {
+                    existingIndicator = await externalIdLinkHandler.FindEntityAsync<IndicatorEntity>(
+                        currentCompany.Id, externalId, integrationType.Value, ct);
+                }
+
+                if (existingIndicator == null && !string.IsNullOrEmpty(request.Name))
+                {
+                    existingIndicator = await db.Indicators
+                        .FirstOrDefaultAsync(i => i.Name.Trim().ToLower() == request.Name.Trim().ToLower()
+                                                  && i.CreatedByCompany.Id == currentCompany.Id, ct);
+                }
+
+                if (existingIndicator == null)
+                {
+                    var indicator = new IndicatorEntity
+                    {
+                        Name = request.Name,
+                        Description = request.Description,
+                        Category = GetPropertyValue<string>(request.Properties, "Category") ?? "Интеграции",
+                        UnitType = ParseIndicatorUnitType(unitType),
+                        FillmentPeriod = ParseFillmentPeriod(fillmentPeriod),
+                        ValueType = ParseIndicatorValueType(valueType),
+                        RejectionTreshold = rejectionTreshold.HasValue ? rejectionTreshold.Value : 0,
+                        ShowToEmployees = true,
+                        ShowOnMainScreen = showOnMainScreen.HasValue ? showOnMainScreen.Value : true,
+                        ShowOnKeyIndicators = showOnKeyIndicators.HasValue ? showOnKeyIndicators.Value : true,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = currentCompany.Id,
+                        IsArchived = false
+                    };
+
+                    db.Indicators.Add(indicator);
+                    await db.SaveChangesAsync(ct);
+
+                    // Create ExternalIdLink if externalId exists
+                    if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
+                    {
+                        await externalIdLinkHandler.LinkAsync(
+                            currentCompany.Id,
+                            externalId,
+                            integrationType.Value,
+                            nameof(IndicatorEntity),
+                            indicator.Id,
+                            ct);
+                    }
+
+                    // Save indicator values to ClickHouse
+                    await SaveIndicatorValuesAsync(indicator.Id, currentCompany.Id, indicator.FillmentPeriod, request, ct);
+
+                    response.CreatedCount++;
+                }
+                else
+                {
+                    existingIndicator.Name = request.Name;
+                    existingIndicator.Description = request.Description;
+
+                    // Update ExternalIdLink if externalId exists
+                    if (!string.IsNullOrEmpty(externalId) && integrationType.HasValue)
+                    {
+                        await externalIdLinkHandler.LinkAsync(
+                            currentCompany.Id,
+                            externalId,
+                            integrationType.Value,
+                            nameof(IndicatorEntity),
+                            existingIndicator.Id,
+                            ct);
+                    }
+
+                    // Save indicator values to ClickHouse
+                    await SaveIndicatorValuesAsync(existingIndicator.Id, currentCompany.Id, existingIndicator.FillmentPeriod, request, ct);
 
                     response.UpdatedCount++;
                 }
@@ -457,19 +693,23 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
         }
     }
 
-    private async Task<DepartmentEntity?> FindDepartmentByNameOrIdAsync(string departmentId, int companyId, CancellationToken ct)
+    private async Task<DepartmentEntity?> FindDepartmentByNameOrIdAsync(string departmentId, int companyId, IntegrationTypeEnum? integrationType, CancellationToken ct)
     {
-        if (departmentId.StartsWith("temp-"))
+        if (departmentId.StartsWith("temp-") && integrationType.HasValue)
         {
-            return await db.Departments
-                .FirstOrDefaultAsync(d => d.ExternalId == departmentId && d.CompanyId == companyId, ct);
+            return await externalIdLinkHandler.FindEntityAsync<DepartmentEntity>(
+                companyId, departmentId, integrationType.Value, ct);
         }
 
-        var department = await db.Departments
-            .FirstOrDefaultAsync(d => d.ExternalId == departmentId && d.CompanyId == companyId, ct);
+        if (!string.IsNullOrEmpty(departmentId) && !departmentId.StartsWith("temp-") && integrationType.HasValue)
+        {
+            var department = await externalIdLinkHandler.FindEntityAsync<DepartmentEntity>(
+                companyId, departmentId, integrationType.Value, ct);
+            
+            if (department != null)
+                return department;
+        }
         
-        if (department != null)
-            return department;
         if (int.TryParse(departmentId, out int id))
         {
             return await db.Departments.FirstOrDefaultAsync(d => d.Id == id && d.CompanyId == companyId, ct);
@@ -479,19 +719,23 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
             .FirstOrDefaultAsync(d => d.Name.Trim().ToLower() == departmentId.Trim().ToLower() && d.CompanyId == companyId, ct);
     }
 
-    private async Task<EmployeeEntity?> FindEmployeeByNameOrIdAsync(string employeeId, int companyId, CancellationToken ct)
+    private async Task<EmployeeEntity?> FindEmployeeByNameOrIdAsync(string employeeId, int companyId, IntegrationTypeEnum? integrationType, CancellationToken ct)
     {
-        if (employeeId.StartsWith("temp-"))
+        if (employeeId.StartsWith("temp-") && integrationType.HasValue)
         {
-            return await db.Employees
-                .FirstOrDefaultAsync(e => e.ExternalId == employeeId && e.CompanyId == companyId, ct);
+            return await externalIdLinkHandler.FindEntityAsync<EmployeeEntity>(
+                companyId, employeeId, integrationType.Value, ct);
         }
 
-        var employee = await db.Employees
-            .FirstOrDefaultAsync(e => e.ExternalId == employeeId && e.CompanyId == companyId, ct);
+        if (!string.IsNullOrEmpty(employeeId) && !employeeId.StartsWith("temp-") && integrationType.HasValue)
+        {
+            var employee = await externalIdLinkHandler.FindEntityAsync<EmployeeEntity>(
+                companyId, employeeId, integrationType.Value, ct);
+            
+            if (employee != null)
+                return employee;
+        }
         
-        if (employee != null)
-            return employee;
         if (int.TryParse(employeeId, out int id))
         {
             return await db.Employees.FirstOrDefaultAsync(e => e.Id == id && e.CompanyId == companyId, ct);
@@ -499,6 +743,20 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
 
         return await db.Employees
             .FirstOrDefaultAsync(e => e.FIO.Trim().ToLower() == employeeId.Trim().ToLower() && e.CompanyId == companyId, ct);
+    }
+    
+    private IntegrationTypeEnum? ParseIntegrationType(string? sourceSystem)
+    {
+        if (string.IsNullOrEmpty(sourceSystem))
+            return null;
+        
+        // Handle neural-file-process special case
+        if (sourceSystem == "neural-file-process" || sourceSystem == JobOperationTypes.NeuralFileProcess)
+        {
+            return IntegrationTypeEnum.NeuralFileProcess;
+        }
+            
+        return Enum.TryParse<IntegrationTypeEnum>(sourceSystem, true, out var type) ? type : null;
     }
 
     private T? GetPropertyValue<T>(Dictionary<string, object> properties, string key)
@@ -587,6 +845,50 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
         };
     }
 
+    private IndicatorUnitTypeEnum ParseIndicatorUnitType(string? unitType)
+    {
+        if (string.IsNullOrEmpty(unitType))
+            return IndicatorUnitTypeEnum.Pieces;
+
+        return unitType.ToLower() switch
+        {
+            "pieces" or "штуки" => IndicatorUnitTypeEnum.Pieces,
+            "rubles" or "рубли" => IndicatorUnitTypeEnum.Rubles,
+            "items" or "элементы" => IndicatorUnitTypeEnum.Items,
+            "cr" => IndicatorUnitTypeEnum.CR,
+            "percent" or "проценты" or "%" => IndicatorUnitTypeEnum.Percent,
+            _ => IndicatorUnitTypeEnum.Pieces
+        };
+    }
+
+    private FillmentPeriodEnum ParseFillmentPeriod(string? fillmentPeriod)
+    {
+        if (string.IsNullOrEmpty(fillmentPeriod))
+            return FillmentPeriodEnum.Monthly;
+
+        return fillmentPeriod.ToLower() switch
+        {
+            "daily" or "день" => FillmentPeriodEnum.Daily,
+            "weekly" or "неделя" => FillmentPeriodEnum.Weekly,
+            "monthly" or "месяц" => FillmentPeriodEnum.Monthly,
+            _ => FillmentPeriodEnum.Monthly
+        };
+    }
+
+    private IndicatorValueTypeEnum ParseIndicatorValueType(string? valueType)
+    {
+        if (string.IsNullOrEmpty(valueType))
+            return IndicatorValueTypeEnum.Integer;
+
+        return valueType.ToLower() switch
+        {
+            "fraction" or "дробное" => IndicatorValueTypeEnum.Fraction,
+            "integer" or "целое" => IndicatorValueTypeEnum.Integer,
+            "percent" or "проценты" => IndicatorValueTypeEnum.Percent,
+            _ => IndicatorValueTypeEnum.Integer
+        };
+    }
+
     private async Task AddDepartmentSchemeAsync(int departmentId, int parentId, CancellationToken ct)
     {
         var parentSchemes = await db.DepartmentSchemas
@@ -638,4 +940,156 @@ public class IntegrationImportHandler(TabligoContext db, CompanyContextHandler c
         }
     }
 
+    private async Task SaveIndicatorValuesAsync(int indicatorId, int companyId, FillmentPeriodEnum fillmentPeriod, IntegrationImportRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var values = new List<IndicatorValue>();
+
+            // Try to get Orders array
+            if (request.Properties.TryGetValue("Orders", out var ordersObj))
+            {
+                if (ordersObj is JsonElement ordersElement && ordersElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var orderElement in ordersElement.EnumerateArray())
+                    {
+                        if (orderElement.ValueKind == JsonValueKind.Object)
+                        {
+                            var dateStr = orderElement.GetProperty("Date").GetString();
+                            var status = orderElement.GetProperty("Status").GetString() ?? "";
+                            var paid = orderElement.GetProperty("Paid").GetDecimal();
+                            var totalCost = orderElement.GetProperty("TotalCost").GetDecimal();
+                            var orderExternalId = orderElement.GetProperty("ExternalId").GetString() ?? "";
+
+                            if (DateTime.TryParse(dateStr, out var date))
+                            {
+                                // Normalize date based on fillment period
+                                var normalizedDate = NormalizeDateByPeriod(date, fillmentPeriod);
+
+                                values.Add(new IndicatorValue
+                                {
+                                    Date = normalizedDate,
+                                    Status = status,
+                                    PaidAmount = Math.Round(paid, 2),
+                                    TotalAmount = Math.Round(totalCost, 2),
+                                    ExternalId = orderExternalId
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Try to get Payments array
+            if (request.Properties.TryGetValue("Payments", out var paymentsObj))
+            {
+                if (paymentsObj is JsonElement paymentsElement && paymentsElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var paymentElement in paymentsElement.EnumerateArray())
+                    {
+                        if (paymentElement.ValueKind == JsonValueKind.Object)
+                        {
+                            var dateStr = paymentElement.GetProperty("Date").GetString();
+                            var status = paymentElement.GetProperty("Status").GetString() ?? "";
+                            var amount = paymentElement.GetProperty("Amount").GetDecimal();
+
+                            if (DateTime.TryParse(dateStr, out var date))
+                            {
+                                // Normalize date based on fillment period
+                                var normalizedDate = NormalizeDateByPeriod(date, fillmentPeriod);
+
+                                values.Add(new IndicatorValue
+                                {
+                                    Date = normalizedDate,
+                                    Status = status,
+                                    PaidAmount = Math.Round(amount, 2),
+                                    TotalAmount = Math.Round(amount, 2)
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Group values by period, date, and status, sum PaidAmount and TotalAmount
+            var groupedValues = values
+                .GroupBy(v => new { v.Date, v.Status })
+                .Select(g => new IndicatorValue
+                {
+                    Date = g.Key.Date,
+                    Status = g.Key.Status,
+                    PaidAmount = Math.Round(g.Sum(v => v.PaidAmount), 2),
+                    TotalAmount = Math.Round(g.Sum(v => v.TotalAmount), 2),
+                    ExternalId = g.First().ExternalId // Keep first external ID for reference
+                })
+                .ToList();
+
+            if (groupedValues.Any())
+            {
+                await putIndicatorHandler.PutIndicatorValuesAsync(indicatorId, companyId, fillmentPeriod, groupedValues, ct);
+            }
+        }
+        catch
+        {
+            // Log error but don't fail the entire import
+            // You might want to add logging here
+        }
+    }
+
+    private List<IntegrationImportRequest> SortDepartmentsByDependencies(List<IntegrationImportRequest> departmentRequests)
+    {
+        var sorted = new List<IntegrationImportRequest>();
+        var remaining = new List<IntegrationImportRequest>(departmentRequests);
+        var processedExternalIds = new HashSet<string>();
+        var maxIterations = remaining.Count; // Prevent infinite loops
+        var iterations = 0;
+
+        while (remaining.Any() && iterations < maxIterations)
+        {
+            iterations++;
+            var addedInThisIteration = false;
+
+            for (int i = remaining.Count - 1; i >= 0; i--)
+            {
+                var request = remaining[i];
+                var parentDepartmentId = GetPropertyValue<string>(request.Properties, "ParentDepartmentId");
+                var externalId = GetPropertyValue<string>(request.Properties, "ExternalId");
+                
+                // If no parent, or parent is already processed
+                if (string.IsNullOrEmpty(parentDepartmentId) || processedExternalIds.Contains(parentDepartmentId))
+                {
+                    sorted.Add(request);
+                    remaining.RemoveAt(i);
+                    
+                    if (!string.IsNullOrEmpty(externalId))
+                    {
+                        processedExternalIds.Add(externalId);
+                    }
+                    
+                    addedInThisIteration = true;
+                }
+            }
+
+            // If no departments were added in this iteration, break to avoid infinite loop
+            if (!addedInThisIteration)
+            {
+                // Add remaining departments anyway (they might have circular dependencies)
+                sorted.AddRange(remaining);
+                break;
+            }
+        }
+
+        return sorted;
+    }
+
+    private DateTime NormalizeDateByPeriod(DateTime date, FillmentPeriodEnum period)
+    {
+        return period switch
+        {
+            FillmentPeriodEnum.Daily => date.Date,
+            FillmentPeriodEnum.Weekly => date.Date.AddDays(-(int)date.DayOfWeek), // Start of week (Sunday = 0)
+            FillmentPeriodEnum.Monthly => new DateTime(date.Year, date.Month, 1),
+            _ => date.Date
+        };
+    }
 }

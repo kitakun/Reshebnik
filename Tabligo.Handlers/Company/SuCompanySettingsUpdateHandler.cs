@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using Tabligo.Domain.Entities;
 using Tabligo.Domain.Enums;
 using Tabligo.Domain.Models.Company;
 using Tabligo.EntityFramework;
@@ -19,7 +20,13 @@ public class SuCompanySettingsUpdateHandler(
             // ! HACKER
             return;
         }
-        var entity = await db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, ct);
+        var entity = dto.IsNew.GetValueOrDefault()
+            ? db.Companies.Add(new CompanyEntity
+            {
+                Name = "",
+                Type = CompanyTypeEnum.Unset
+            }).Entity
+            : await db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, ct);
         if (entity == null) return;
 
         entity.Name = dto.CompanyName;

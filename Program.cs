@@ -1,6 +1,7 @@
 using Tabligo.Web.ProgramExtensions;
 using Tabligo.Web;
 using Tabligo.Web.Middleware;
+using Tabligo.SignalR.Hubs;
 
 using ZLogger;
 
@@ -104,6 +105,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR hubs
+app.MapHub<JobOperationHub>("/hubs/job-operations");
 
 // Configure health check endpoints
 app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions

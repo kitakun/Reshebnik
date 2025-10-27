@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Tabligo.Domain.Entities;
 using Tabligo.Domain.Enums;
+using Tabligo.Domain.Services;
 using Tabligo.EntityFramework;
 using System.Text.Json;
 
 namespace Tabligo.Handlers.JobOperation;
 
-public class JobOperationQueue(TabligoContext db) : IJobOperationQueue
+public class JobOperationQueue(TabligoContext db, INotifier notifier) : IJobOperationQueue
 {
     public async Task<int> EnqueueAsync(int companyId, string type, string name, object data, CancellationToken ct)
     {
@@ -39,6 +40,7 @@ public class JobOperationQueue(TabligoContext db) : IJobOperationQueue
         {
             job.Status = JobOperationStatusEnum.Processing;
             await db.SaveChangesAsync(ct);
+            await notifier.NotifyJobStatusChangedAsync(job.Id, job.CompanyId, job.Status.ToString(), ct);
         }
 
         return job;
@@ -51,11 +53,18 @@ public class JobOperationQueue(TabligoContext db) : IJobOperationQueue
 
         job.Status = status;
 
+        // Set CompletedAt when status changes to Finished, Failed, or Cancelled
+        if (status == JobOperationStatusEnum.Finished || status == JobOperationStatusEnum.Failed || status == JobOperationStatusEnum.Cancelled)
+        {
+            job.CompletedAt = DateTime.UtcNow;
+        }
+
         if (resultData != null)
         {
             job.Data = JsonDocument.Parse(JsonSerializer.Serialize(resultData));
         }
 
         await db.SaveChangesAsync(ct);
+        await notifier.NotifyJobStatusChangedAsync(job.Id, job.CompanyId, job.Status.ToString(), ct);
     }
 }

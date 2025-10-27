@@ -19,10 +19,16 @@ using Tabligo.Handlers.SpecialInvitation;
 using Tabligo.Handlers.BugHunt;
 using Tabligo.GPT.Services;
 using Tabligo.Handlers.Integration;
+using Tabligo.Handlers.Integration.GetCourse;
+using Tabligo.Handlers.Integration.PowerBI;
+using Tabligo.Handlers.Integration.Ozon;
 using Tabligo.Handlers.JobOperation;
 using Tabligo.SberGPT.Extensions;
 using Tabligo.Neural.Interfaces;
 using Tabligo.Neural.Handlers;
+using Tabligo.Domain.Services;
+using Tabligo.Domain.Models.JobOperation;
+using Tabligo.SignalR.Services;
 
 namespace Tabligo.Web.ProgramExtensions;
 
@@ -111,6 +117,7 @@ public static class ServiceRegistrations
         services.AddScoped<UserPreviewMetricsPutHandler>();
         services.AddScoped<CompanyPreviewMetricsHandler>();
         services.AddScoped<CompanyPreviewMetricsPutHandler>();
+        services.AddScoped<PutIndicatorValuesHandler>();
         services.AddScoped<CopyUserMetricsToRelatedUsersMigration>();
         services.AddScoped<MigrateClickhouseDatabase>();
 
@@ -145,12 +152,55 @@ public static class ServiceRegistrations
 
         // Neural Services
         services.AddScoped<ITabligoNeuralAgent, SberGptNeuralAgentHandler>();
+        services.AddScoped<ExternalIdLinkHandler>();
+        
+        // SignalR Services
+        services.AddSignalR();
+        services.AddScoped<INotifier, SignalRNotifier>();
         services.AddScoped<IntegrationImportHandler>();
+        services.AddScoped<IntegrationListHandler>();
+
+        // GetCourse Integration Services
+        services.AddScoped<Tabligo.Integrations.Integrations.GetCourse.GetCourseApiClient>();
+        services.AddScoped<Tabligo.Integrations.Integrations.GetCourse.GetCourseDataTransformer>();
+        services.AddScoped<Tabligo.Integrations.Integrations.GetCourse.GetCourseProvider>();
+        services.AddScoped<IntegrationPreviewHandler>();
+        services.AddScoped<IntegrationApprovalHandler>();
+        services.AddScoped<IntegrationSettingsHandler>();
+        
+        // Integration Settings Handlers
+        services.AddScoped<GetCourseSettingsHandler>();
+        services.AddScoped<PowerBISettingsHandler>();
+        services.AddScoped<OzonSettingsHandler>();
+        services.AddHttpClient<Tabligo.Integrations.Integrations.GetCourse.GetCourseApiClient>();
+
+        // PowerBI Integration Services
+        services.AddScoped<Tabligo.Integrations.Integrations.PowerBI.PowerBIApiClient>();
+        services.AddScoped<Tabligo.Integrations.Integrations.PowerBI.PowerBIDataTransformer>();
+        services.AddScoped<Tabligo.Integrations.Integrations.PowerBI.PowerBIProvider>();
+        services.AddHttpClient<Tabligo.Integrations.Integrations.PowerBI.PowerBIApiClient>();
+
+        // Ozon Integration Services
+        services.AddScoped<Tabligo.Integrations.Integrations.Ozon.OzonApiClient>();
+        services.AddScoped<Tabligo.Integrations.Integrations.Ozon.OzonDataTransformer>();
+        services.AddScoped<Tabligo.Integrations.Integrations.Ozon.OzonProvider>();
+        services.AddHttpClient<Tabligo.Integrations.Integrations.Ozon.OzonApiClient>();
 
         // Job Operation Services
-        services.AddScoped<Tabligo.Handlers.JobOperation.IJobOperationQueue, Tabligo.Handlers.JobOperation.JobOperationQueue>();
-        services.AddScoped<Tabligo.Handlers.JobOperation.JobOperationGetHandler>();
-        services.AddHostedService<Tabligo.Handlers.JobOperation.JobOperationProcessorService>();
+        services.AddScoped<IJobOperationQueue, JobOperationQueue>();
+        services.AddScoped<JobOperationGetHandler>();
+        services.AddScoped<JobOperationSearchHandler>();
+        services.AddScoped<JobOperationsTypeaheadHandler>();
+        
+        // Register all job operation processors
+        services.AddScoped<IJobOperationProcessor, NeuralJobProcessor>();
+        
+        // Register all integration providers as job operation processors
+        services.AddScoped<IJobOperationProcessor>(provider => provider.GetRequiredService<Tabligo.Integrations.Integrations.GetCourse.GetCourseProvider>());
+        services.AddScoped<IJobOperationProcessor>(provider => provider.GetRequiredService<Tabligo.Integrations.Integrations.PowerBI.PowerBIProvider>());
+        services.AddScoped<IJobOperationProcessor>(provider => provider.GetRequiredService<Tabligo.Integrations.Integrations.Ozon.OzonProvider>());
+        
+        services.AddHostedService<JobOperationProcessorService>();
 
         return services;
     }

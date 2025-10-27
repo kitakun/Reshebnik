@@ -27,35 +27,21 @@ public class CompanyPreviewMetricsPutHandler(
             var iCopy = i;
             tasks.Add(Task.Run(async () =>
             {
-                var putTasks = new List<Task>();
+                // Get plan and fact values if available
+                int? plan = iCopy < item.PlanData.Length ? item.PlanData[iCopy] : null;
+                int? fact = iCopy < item.FactData.Length ? item.FactData[iCopy] : null;
                 
-                if (iCopy < item.PlanData.Length)
+                // If we have at least one value to update, call PutAsync once with both values
+                if (plan.HasValue || fact.HasValue)
                 {
-                    putTasks.Add(putHandler.PutAsync(
+                    await putHandler.PutAsync(
                         request.Metrics.Id,
-                        MetricValueTypeEnum.Plan,
                         companyId,
                         request.PeriodType,
                         date,
-                        item.PlanData[iCopy],
-                        ct));
-                }
-
-                if (iCopy < item.FactData.Length)
-                {
-                    putTasks.Add(putHandler.PutAsync(
-                        request.Metrics.Id,
-                        MetricValueTypeEnum.Fact,
-                        companyId,
-                        request.PeriodType,
-                        date,
-                        item.FactData[iCopy],
-                        ct));
-                }
-                
-                if (putTasks.Count > 0)
-                {
-                    await Task.WhenAll(putTasks);
+                        plan,
+                        fact,
+                        ct);
                 }
             }, ct));
         }

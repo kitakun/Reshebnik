@@ -138,14 +138,16 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         return result;
     }
 
-    // --- PutAsync оставляем, но см. заметки ниже ---
+    /// <summary>
+    /// Updates both plan and fact values atomically in a single operation
+    /// </summary>
     public async Task PutAsync(
         int metricId,
-        MetricValueTypeEnum valueType,
         int companyId,
         PeriodTypeEnum periodType,
         DateTime upsertDate,
-        int value,
+        int? planValue = null,
+        int? factValue = null,
         CancellationToken ct = default)
     {
         var key = $"company-metric-{metricId}";
@@ -164,9 +166,10 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         var table = $"{_options.Prefix}_company_metrics";
 
         // Чтение текущего значения
+        // Используем FINAL чтобы получить актуальную (после всех мержей) версию строки
         var selectSql = $"""
-            SELECT plan_value, fact_value
-            FROM {table}
+            SELECT plan_value, fact_value, status, paid_amount, total_amount, external_id
+            FROM {table} FINAL
             WHERE metric_key = '{key}'
               AND company_id = {companyId}
               AND upsert_date = toDate('{upsertDate:yyyy-MM-dd}')
@@ -175,6 +178,11 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
         """;
 
         int planVal = 0, factVal = 0;
+        string status = string.Empty;
+        decimal paidAmount = 0;
+        decimal totalAmount = 0;
+        string externalId = string.Empty;
+        
         await using (var selectCmd = connection.CreateCommand())
         {
             selectCmd.CommandText = selectSql;
@@ -183,13 +191,18 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             {
                 planVal = reader.GetInt32(0);
                 factVal = reader.GetInt32(1);
+                status = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
+                paidAmount = reader.IsDBNull(3) ? 0 : reader.GetDecimal(3);
+                totalAmount = reader.IsDBNull(4) ? 0 : reader.GetDecimal(4);
+                externalId = reader.IsDBNull(5) ? string.Empty : reader.GetString(5);
             }
         }
 
-        if (valueType == MetricValueTypeEnum.Plan) planVal = value;
-        else factVal = value;
+        // Update only provided values, keep existing for null values
+        if (planValue.HasValue) planVal = planValue.Value;
+        if (factValue.HasValue) factVal = factValue.Value;
 
-        // delete + insert (см. заметки)
+        // Delete existing rows before inserting new ones
         var deleteSql = $"""
             ALTER TABLE {table}
             DELETE WHERE metric_key = '{key}'
@@ -203,9 +216,10 @@ public class FetchCompanyMetricsHandler(IOptions<ClickhouseOptions> optionsAcces
             await deleteCmd.ExecuteNonQueryAsync(ct);
         }
 
+        // Insert updated row
         var insertSql = $"""
-            INSERT INTO {table} (company_id, metric_key, period_type, upsert_date, plan_value, fact_value)
-            VALUES ({companyId}, '{key}', '{periodType}', toDate('{upsertDate:yyyy-MM-dd}'), {planVal}, {factVal})
+            INSERT INTO {table} (company_id, metric_key, period_type, upsert_date, plan_value, fact_value, status, paid_amount, total_amount, external_id)
+            VALUES ({companyId}, '{key}', '{periodType}', toDate('{upsertDate:yyyy-MM-dd}'), {planVal}, {factVal}, '{status}', {paidAmount:0.00}, {totalAmount:0.00}, '{externalId}')
         """;
         await using (var insertCmd = connection.CreateCommand())
         {

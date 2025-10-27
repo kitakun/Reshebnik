@@ -12,6 +12,7 @@
       <ProjectReference Include="..\Tabligo.EntityFramework\Tabligo.EntityFramework.csproj" />
       <ProjectReference Include="..\Tabligo.Clickhouse\Tabligo.Clickhouse.csproj" />
       <ProjectReference Include="..\Tabligo.Neural\Tabligo.Neural.csproj" />
+      <ProjectReference Include="..\Tabligo.Integrations\Tabligo.Integrations.csproj" />
     </ItemGroup>
 
     <ItemGroup>
