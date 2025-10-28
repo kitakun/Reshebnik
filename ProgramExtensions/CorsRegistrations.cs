@@ -17,20 +17,24 @@ public static class CorsRegistrations
                 policy
                     .WithOrigins("https://tabligo.ru")
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
                 policy
                     .WithOrigins("https://new.tabligo.ru")
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
 #else
                 policy
                     .WithOrigins("https://tabligo.ru")
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
                 policy
                     .WithOrigins("https://new.tabligo.ru")
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
 #endif
             });
         });

@@ -19,9 +19,10 @@ using Tabligo.Handlers.SpecialInvitation;
 using Tabligo.Handlers.BugHunt;
 using Tabligo.GPT.Services;
 using Tabligo.Handlers.Integration;
-using Tabligo.Handlers.Integration.GetCourse;
-using Tabligo.Handlers.Integration.PowerBI;
-using Tabligo.Handlers.Integration.Ozon;
+using Tabligo.Integrations.Integrations.GetCourse;
+using Tabligo.Integrations.Integrations.PowerBI;
+using Tabligo.Integrations.Integrations.Ozon;
+using Tabligo.Integrations.Integrations.GoogleSheets;
 using Tabligo.Handlers.JobOperation;
 using Tabligo.SberGPT.Extensions;
 using Tabligo.Neural.Interfaces;
@@ -172,6 +173,7 @@ public static class ServiceRegistrations
         services.AddScoped<GetCourseSettingsHandler>();
         services.AddScoped<PowerBISettingsHandler>();
         services.AddScoped<OzonSettingsHandler>();
+        services.AddScoped<GoogleSheetsSettingsHandler>();
         services.AddHttpClient<Tabligo.Integrations.Integrations.GetCourse.GetCourseApiClient>();
 
         // PowerBI Integration Services
@@ -186,6 +188,12 @@ public static class ServiceRegistrations
         services.AddScoped<Tabligo.Integrations.Integrations.Ozon.OzonProvider>();
         services.AddHttpClient<Tabligo.Integrations.Integrations.Ozon.OzonApiClient>();
 
+        // Google Sheets Integration Services
+        services.AddScoped<Tabligo.Integrations.Integrations.GoogleSheets.GoogleSheetsApiClient>();
+        services.AddScoped<Tabligo.Integrations.Integrations.GoogleSheets.GoogleSheetsDataTransformer>();
+        services.AddScoped<Tabligo.Integrations.Integrations.GoogleSheets.GoogleSheetsProvider>();
+        services.AddHttpClient<Tabligo.Integrations.Integrations.GoogleSheets.GoogleSheetsApiClient>();
+
         // Job Operation Services
         services.AddScoped<IJobOperationQueue, JobOperationQueue>();
         services.AddScoped<JobOperationGetHandler>();
@@ -199,6 +207,7 @@ public static class ServiceRegistrations
         services.AddScoped<IJobOperationProcessor>(provider => provider.GetRequiredService<Tabligo.Integrations.Integrations.GetCourse.GetCourseProvider>());
         services.AddScoped<IJobOperationProcessor>(provider => provider.GetRequiredService<Tabligo.Integrations.Integrations.PowerBI.PowerBIProvider>());
         services.AddScoped<IJobOperationProcessor>(provider => provider.GetRequiredService<Tabligo.Integrations.Integrations.Ozon.OzonProvider>());
+        services.AddScoped<IJobOperationProcessor>(provider => provider.GetRequiredService<Tabligo.Integrations.Integrations.GoogleSheets.GoogleSheetsProvider>());
         
         services.AddHostedService<JobOperationProcessorService>();
 

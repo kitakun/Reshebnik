@@ -3,7 +3,7 @@ using Tabligo.Domain.Entities;
 using Tabligo.Domain.Extensions;
 using Tabligo.Domain.Models.Integration;
 
-namespace Tabligo.Handlers.Integration.Ozon;
+namespace Tabligo.Integrations.Integrations.Ozon;
 
 public class OzonSettingsHandler
 {
@@ -82,3 +82,5 @@ public class OzonSettingsHandler
         return config;
     }
 }
+
+

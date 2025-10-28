@@ -22,7 +22,8 @@ public class IntegrationPreviewHandler(
     {
         { IntegrationTypeEnum.GetCourse, typeof(Tabligo.Integrations.Integrations.GetCourse.GetCourseProvider) },
         { IntegrationTypeEnum.PowerBI, typeof(Tabligo.Integrations.Integrations.PowerBI.PowerBIProvider) },
-        { IntegrationTypeEnum.Ozon, typeof(Tabligo.Integrations.Integrations.Ozon.OzonProvider) }
+        { IntegrationTypeEnum.Ozon, typeof(Tabligo.Integrations.Integrations.Ozon.OzonProvider) },
+        { IntegrationTypeEnum.GoogleSheets, typeof(Tabligo.Integrations.Integrations.GoogleSheets.GoogleSheetsProvider) }
     };
     public async Task<IntegrationPreviewResponse> CreatePreviewAsync(
         IntegrationTypeEnum integrationType,
@@ -154,9 +155,10 @@ public class IntegrationPreviewHandler(
     {
         return integrationType switch
         {
-            IntegrationTypeEnum.GetCourse => serviceProvider.GetService<GetCourse.GetCourseSettingsHandler>()?.GetDefaultConfiguration(),
-            IntegrationTypeEnum.PowerBI => serviceProvider.GetService<PowerBI.PowerBISettingsHandler>()?.GetDefaultConfiguration(),
-            IntegrationTypeEnum.Ozon => serviceProvider.GetService<Ozon.OzonSettingsHandler>()?.GetDefaultConfiguration(),
+            IntegrationTypeEnum.GetCourse => serviceProvider.GetService<Tabligo.Integrations.Integrations.GetCourse.GetCourseSettingsHandler>()?.GetDefaultConfiguration(),
+            IntegrationTypeEnum.PowerBI => serviceProvider.GetService<Tabligo.Integrations.Integrations.PowerBI.PowerBISettingsHandler>()?.GetDefaultConfiguration(),
+            IntegrationTypeEnum.Ozon => serviceProvider.GetService<Tabligo.Integrations.Integrations.Ozon.OzonSettingsHandler>()?.GetDefaultConfiguration(),
+            IntegrationTypeEnum.GoogleSheets => serviceProvider.GetService<Tabligo.Integrations.Integrations.GoogleSheets.GoogleSheetsSettingsHandler>()?.GetDefaultConfiguration(),
             _ => null
         };
     }

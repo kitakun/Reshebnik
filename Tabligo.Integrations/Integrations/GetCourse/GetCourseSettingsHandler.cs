@@ -3,7 +3,7 @@ using Tabligo.Domain.Entities;
 using Tabligo.Domain.Extensions;
 using Tabligo.Domain.Models.Integration;
 
-namespace Tabligo.Handlers.Integration.GetCourse;
+namespace Tabligo.Integrations.Integrations.GetCourse;
 
 public class GetCourseSettingsHandler
 {
@@ -81,3 +81,5 @@ public class GetCourseSettingsHandler
         return config;
     }
 }
+
+

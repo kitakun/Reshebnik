@@ -3,7 +3,7 @@ using Tabligo.Domain.Entities;
 using Tabligo.Domain.Extensions;
 using Tabligo.Domain.Models.Integration;
 
-namespace Tabligo.Handlers.Integration.PowerBI;
+namespace Tabligo.Integrations.Integrations.PowerBI;
 
 public class PowerBISettingsHandler
 {
@@ -86,3 +86,5 @@ public class PowerBISettingsHandler
         return config;
     }
 }
+
+

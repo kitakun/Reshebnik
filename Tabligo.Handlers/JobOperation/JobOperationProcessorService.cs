@@ -60,7 +60,14 @@ public class JobOperationProcessorService(
             if (!processorMap.TryGetValue(job.Type, out var processor))
             {
                 logger.LogWarning("Unknown job type: {JobType}", job.Type);
-                await queue.UpdateStatusAsync(job.Id, JobOperationStatusEnum.Failed, null, ct);
+                var errorData = new
+                {
+                    error = $"Unknown job type: {job.Type}",
+                    jobId = job.Id,
+                    jobType = job.Type,
+                    occurredAt = DateTime.UtcNow
+                };
+                await queue.UpdateStatusAsync(job.Id, JobOperationStatusEnum.Failed, errorData, ct);
                 var notifier1 = serviceProvider.GetRequiredService<INotifier>();
                 await notifier1.NotifyJobStatusChangedAsync(job.Id, job.CompanyId, JobOperationStatusEnum.Failed.ToString(), ct);
                 return;
@@ -86,7 +93,16 @@ public class JobOperationProcessorService(
             }
             else
             {
-                await queue.UpdateStatusAsync(job.Id, JobOperationStatusEnum.Failed, null, ct);
+                var errorData = new
+                {
+                    error = ex.Message,
+                    exception = ex.GetType().FullName,
+                    stackTrace = ex.ToString(),
+                    jobId = job.Id,
+                    jobType = job.Type,
+                    occurredAt = DateTime.UtcNow
+                };
+                await queue.UpdateStatusAsync(job.Id, JobOperationStatusEnum.Failed, errorData, ct);
                 var notifier3 = serviceProvider.GetRequiredService<INotifier>();
                 await notifier3.NotifyJobStatusChangedAsync(job.Id, job.CompanyId, JobOperationStatusEnum.Failed.ToString(), ct);
                 logger.LogError("Job {JobId} failed after {MaxRetries} retries", job.Id, MaxRetries);

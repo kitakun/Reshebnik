@@ -3,9 +3,10 @@ using System.Text.Json;
 using Tabligo.Domain.Enums;
 using Tabligo.Domain.Models.Integration;
 using Tabligo.EntityFramework;
-using Tabligo.Handlers.Integration.GetCourse;
-using Tabligo.Handlers.Integration.PowerBI;
-using Tabligo.Handlers.Integration.Ozon;
+using Tabligo.Integrations.Integrations.GetCourse;
+using Tabligo.Integrations.Integrations.PowerBI;
+using Tabligo.Integrations.Integrations.Ozon;
+using Tabligo.Integrations.Integrations.GoogleSheets;
 
 namespace Tabligo.Handlers.Integration;
 
@@ -13,7 +14,8 @@ public class IntegrationSettingsHandler(
     TabligoContext db,
     GetCourseSettingsHandler getCourseHandler,
     PowerBISettingsHandler powerBIHandler,
-    OzonSettingsHandler ozonHandler)
+    OzonSettingsHandler ozonHandler,
+    GoogleSheetsSettingsHandler googleSheetsHandler)
 {
     public async Task<object> SaveIntegrationSettingsAsync(int companyId, IntegrationTypeEnum integrationType, JsonDocument settings, CancellationToken ct = default)
     {
@@ -68,6 +70,7 @@ public class IntegrationSettingsHandler(
             IntegrationTypeEnum.GetCourse => getCourseHandler.GetDefaultSettings(),
             IntegrationTypeEnum.PowerBI => powerBIHandler.GetDefaultSettings(),
             IntegrationTypeEnum.Ozon => ozonHandler.GetDefaultSettings(),
+            IntegrationTypeEnum.GoogleSheets => googleSheetsHandler.GetDefaultSettings(),
             _ => throw new NotSupportedException($"Integration type {integrationType} is not supported")
         };
     }
@@ -84,6 +87,7 @@ public class IntegrationSettingsHandler(
                 IntegrationTypeEnum.GetCourse => JsonSerializer.Deserialize<GetCourseConfiguration>(configuration),
                 IntegrationTypeEnum.PowerBI => JsonSerializer.Deserialize<PowerBIConfiguration>(configuration),
                 IntegrationTypeEnum.Ozon => JsonSerializer.Deserialize<OzonConfiguration>(configuration),
+                IntegrationTypeEnum.GoogleSheets => JsonSerializer.Deserialize<GoogleSheetsConfiguration>(configuration),
                 _ => null
             };
         }
@@ -100,6 +104,7 @@ public class IntegrationSettingsHandler(
             IntegrationTypeEnum.GetCourse => getCourseHandler.CreateSettings(integration, config as GetCourseConfiguration, lastSyncDate),
             IntegrationTypeEnum.PowerBI => powerBIHandler.CreateSettings(integration, config as PowerBIConfiguration, lastSyncDate),
             IntegrationTypeEnum.Ozon => ozonHandler.CreateSettings(integration, config as OzonConfiguration, lastSyncDate),
+            IntegrationTypeEnum.GoogleSheets => googleSheetsHandler.CreateSettings(integration, config as GoogleSheetsConfiguration, lastSyncDate),
             _ => throw new NotSupportedException($"Integration type {integrationType} is not supported")
         };
     }
@@ -111,6 +116,7 @@ public class IntegrationSettingsHandler(
             IntegrationTypeEnum.GetCourse => getCourseHandler.UpdateConfiguration(existingConfig as GetCourseConfiguration, settings),
             IntegrationTypeEnum.PowerBI => powerBIHandler.UpdateConfiguration(existingConfig as PowerBIConfiguration, settings),
             IntegrationTypeEnum.Ozon => ozonHandler.UpdateConfiguration(existingConfig as OzonConfiguration, settings),
+            IntegrationTypeEnum.GoogleSheets => googleSheetsHandler.UpdateConfiguration(existingConfig as GoogleSheetsConfiguration, settings),
             _ => throw new NotSupportedException($"Integration type {integrationType} is not supported")
         };
     }
