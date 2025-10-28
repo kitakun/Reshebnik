@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using Tabligo.Domain.Models;
 using Tabligo.Domain.Enums;
 using Tabligo.EntityFramework;
@@ -43,10 +44,31 @@ public class JobOperationsTypeaheadHandler(
             Status = j.Status,
             CreatedAt = j.CreatedAt,
             CompletedAt = j.CompletedAt,
-            RetryCount = j.RetryCount
+            RetryCount = j.RetryCount,
+            Error = ExtractErrorFromData(j.Data)
         }).ToList();
 
         return new PaginationDto<JobOperationDto>(items, count, (int)Math.Ceiling((float)count / COUNT));
+    }
+
+    private static string? ExtractErrorFromData(JsonDocument? data)
+    {
+        if (data == null) return null;
+
+        try
+        {
+            var root = data.RootElement;
+            if (root.TryGetProperty("error", out var errorElement))
+            {
+                return errorElement.GetString();
+            }
+        }
+        catch
+        {
+            // Ignore parsing errors
+        }
+
+        return null;
     }
 }
 
@@ -59,4 +81,5 @@ public class JobOperationDto
     public DateTime CreatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     public int RetryCount { get; set; }
+    public string? Error { get; set; }
 }

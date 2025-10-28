@@ -194,8 +194,7 @@ public class GoogleSheetsApiClient(HttpClient httpClient, ILogger<GoogleSheetsAp
     {
         var result = new List<List<string>>();
         using var reader = new StringReader(csv);
-        string? line;
-        while ((line = reader.ReadLine()) != null)
+        while (reader.ReadLine() is { } line)
         {
             // Basic CSV split; handles quoted fields with commas
             var row = new List<string>();
